@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 1.0
+-- ZIP HUB - VIOLENCE DISTRICT (FIX)
+-- VERSION 1.1
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -38,7 +38,7 @@ ScreenGui.ResetOnSpawn = false
 -- ========================================
 -- LOGO DI POJOK KIRI ATAS
 -- ========================================
-local Logo = Instance.new("Frame")
+local Logo = Instance.new("TextButton")  -- PAKAI TEXTButton BIAR BISA DI KLIK
 Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 55, 0, 55)
 Logo.Position = UDim2.new(0, 10, 0, 10)
@@ -48,22 +48,17 @@ Logo.BorderSizePixel = 2
 Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
 Logo.Visible = true
 Logo.ZIndex = 100
+Logo.Text = "ZH"
+Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
+Logo.TextSize = 22
+Logo.Font = Enum.Font.GothamBlack
+Logo.TextScaled = true
 Logo.Active = true
 Logo.Draggable = true
 
 local LogoCorner = Instance.new("UICorner")
 LogoCorner.Parent = Logo
 LogoCorner.CornerRadius = UDim.new(1, 0)
-
-local LogoText = Instance.new("TextLabel")
-LogoText.Parent = Logo
-LogoText.Size = UDim2.new(1, 0, 1, 0)
-LogoText.BackgroundTransparency = 1
-LogoText.Text = "ZH"
-LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
-LogoText.TextSize = 22
-LogoText.Font = Enum.Font.GothamBlack
-LogoText.TextScaled = true
 
 local LogoLabel = Instance.new("TextLabel")
 LogoLabel.Parent = ScreenGui
@@ -77,7 +72,7 @@ LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextTransparency = 0.3
 
 -- ========================================
--- MENU UTAMA (STANDAR VIOLENCE DISTRICT)
+-- MENU UTAMA
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
@@ -90,14 +85,14 @@ MainFrame.BorderColor3 = Color3.fromRGB(255, 50, 50)
 MainFrame.ClipsDescendants = true
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false
+MainFrame.Visible = false  -- AWALNYA HIDE
 MainFrame.ZIndex = 50
 
 local UICorner = Instance.new("UICorner")
 UICorner.Parent = MainFrame
 UICorner.CornerRadius = UDim.new(0, 8)
 
--- Header Merah (Standar VD)
+-- Header Merah
 local HeaderFrame = Instance.new("Frame")
 HeaderFrame.Parent = MainFrame
 HeaderFrame.Size = UDim2.new(1, 0, 0, 45)
@@ -162,7 +157,7 @@ ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
 ScrollingFrame.BorderSizePixel = 0
 
 -- ========================================
--- FUNGSI UI (STYLE STANDAR VD)
+-- FUNGSI UI
 -- ========================================
 
 local function CreateDivider(yPos)
@@ -739,15 +734,19 @@ yPos = yPos + 34
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
 
 -- ========================================
--- TOGGLE MENU VIA LOGO
+-- 🔥 INI YANG DI FIX: LOGO KLIK → MENU MUNCUL
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-
+    
+    -- Animasi logo
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 60, 0, 60)}):Play()
     task.wait(0.15)
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 55, 0, 55)}):Play()
+    
+    -- Debug di console
+    print("Logo diklik! Menu Visible:", menuVisible)
 end)
 
 -- ========================================
