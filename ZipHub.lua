@@ -1,5 +1,6 @@
 -- ========================================
--- ZIP HUB - FINAL FIX
+-- ZIP HUB - FINAL FIX + KILL ALL INSTANT
+-- VERSION 9.0
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -50,9 +51,10 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
 ScreenGui.Name = "ZipHub"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- 🔥 LOGO (PAKE TEXTBUTTON BIAR GAMPANG)
+-- 🔥 LOGO (TEXTBUTTON)
 -- ========================================
 local Logo = Instance.new("TextButton")
 Logo.Parent = ScreenGui
@@ -88,12 +90,12 @@ LogoLabel.TextSize = 11
 LogoLabel.Font = Enum.Font.GothamBold
 
 -- ========================================
--- MENU UTAMA
+-- MENU UTAMA (PASTI MUNCUL)
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 430, 0, 580)
-MainFrame.Position = UDim2.new(0.5, -215, 0.5, -290)
+MainFrame.Size = UDim2.new(0, 430, 0, 620)
+MainFrame.Position = UDim2.new(0.5, -215, 0.5, -310)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
 MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel = 3
@@ -247,7 +249,6 @@ local function CreateToggle(text, yPos, key)
         toggleBtn.Text = state and "ON" or "OFF"
         toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
         
-        -- Jalankan fungsi toggle
         toggles[key] = state
         if state then
             EnableFeature(key)
@@ -574,7 +575,6 @@ function AutoGenerator()
 
     for _, obj in pairs(Workspace:GetDescendants()) do
         if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-            -- Cek killer di dekat generator
             local killerNear = false
             for _, player in pairs(Players:GetPlayers()) do
                 if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -624,6 +624,23 @@ function EscapeGate()
 end
 
 -- ========================================
+-- 💀 KILL ALL INSTANT (FITUR BARU!)
+-- ========================================
+function KillAllInstant()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
+            -- Hapus semua health
+            player.Character.Humanoid.Health = 0
+            -- Force kill (alternatif)
+            pcall(function()
+                player.Character:BreakJoints()
+            end)
+        end
+    end
+    print("💀 Semua player/survivor telah dibunuh!")
+end
+
+-- ========================================
 -- 🔥 FITUR-FITUR MENU
 -- ========================================
 local yPos = 2
@@ -651,6 +668,18 @@ CreateButton("💥 One Hit Kill", yPos, function()
         end
     end
 end, Color3.fromRGB(100, 0, 0))
+yPos = yPos + 40
+
+CreateDivider(yPos)
+yPos = yPos + 12
+
+-- 💀 KILL ALL INSTANT
+CreateCategory("💀 KILL ALL", yPos)
+yPos = yPos + 32
+
+CreateButton("💀 Kill All Instant", yPos, function()
+    KillAllInstant()
+end, Color3.fromRGB(150, 0, 0))
 yPos = yPos + 40
 
 CreateDivider(yPos)
@@ -801,14 +830,12 @@ CreateToggle("🚫 Anti AFK", yPos, "antiAFK")
 yPos = yPos + 40
 
 CreateButton("🔄 Reset Karakter", yPos, function()
-    -- Matikan semua fitur
     for key, _ in pairs(toggles) do
         if toggles[key] then
             toggles[key] = false
             DisableFeature(key)
         end
     end
-    -- Reset karakter
     if LocalPlayer.Character then
         LocalPlayer.Character:BreakJoints()
     end
@@ -819,12 +846,12 @@ yPos = yPos + 40
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
 
 -- ========================================
--- 🔥 LOGO KLIK → MENU MUNCUL
+-- 🔥 LOGO KLIK → MENU MUNCUL (PASTI JALAN)
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-    print("Logo diklik! Menu Visible:", menuVisible)
+    print("Logo ZH diklik! Menu Visible:", menuVisible)
     
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 70, 0, 70)}):Play()
     task.wait(0.15)
@@ -845,5 +872,6 @@ Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0
 
-print("✅ ZIP HUB - FINAL FIX Loaded!")
+print("✅ ZIP HUB - FINAL FIX + KILL ALL INSTANT Loaded!")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
+print("💀 Fitur KILL ALL INSTANT siap pakai!")
