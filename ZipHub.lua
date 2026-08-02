@@ -1,6 +1,6 @@
 -- ========================================
 -- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 4.0 (FIX TOTAL)
+-- VERSION 6.0 (DENGAN LOGO KAMU)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -26,6 +26,13 @@ local flySpeed = 50
 local menuVisible = false
 local noClipActive = false
 local noClipConnection = nil
+local silentAimActive = false
+local aimBotActive = false
+local autoKillerActive = false
+local escapeGateActive = false
+local moonWalkActive = false
+local antiAFKActive = false
+local autoTeleportToGenActive = false
 
 -- ========================================
 -- CREATE GUI
@@ -37,35 +44,24 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- LOGO (TextButton)
+-- 🔥 LOGO KAMU (GAMBAR DARI IMGUR)
 -- ========================================
-local Logo = Instance.new("TextButton")
+local Logo = Instance.new("ImageButton")
 Logo.Parent = ScreenGui
-Logo.Size = UDim2.new(0, 60, 0, 60)
+Logo.Size = UDim2.new(0, 65, 0, 65)
 Logo.Position = UDim2.new(0, 10, 0, 10)
-Logo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-Logo.BackgroundTransparency = 0
-Logo.BorderSizePixel = 3
-Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
+Logo.Image = "https://i.imgur.com/BSsEh2j.jpeg"
+Logo.BackgroundTransparency = 1
 Logo.Visible = true
 Logo.ZIndex = 100
-Logo.Text = "ZH"
-Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
-Logo.TextSize = 25
-Logo.Font = Enum.Font.GothamBlack
-Logo.TextScaled = true
 Logo.Active = true
 Logo.Draggable = true
-
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.Parent = Logo
-LogoCorner.CornerRadius = UDim.new(1, 0)
 
 -- Label "ZIP HUB"
 local LogoLabel = Instance.new("TextLabel")
 LogoLabel.Parent = ScreenGui
 LogoLabel.Size = UDim2.new(0, 70, 0, 18)
-LogoLabel.Position = UDim2.new(0, 5, 0, 72)
+LogoLabel.Position = UDim2.new(0, 8, 0, 77)
 LogoLabel.BackgroundTransparency = 1
 LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
@@ -74,12 +70,12 @@ LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextTransparency = 0
 
 -- ========================================
--- 🟢 MENU UTAMA (TERANG BANGET)
+-- MENU UTAMA
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 400, 0, 550)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -275)
+MainFrame.Size = UDim2.new(0, 430, 0, 580)
+MainFrame.Position = UDim2.new(0.5, -215, 0.5, -290)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
 MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel = 3
@@ -94,9 +90,7 @@ local UICorner = Instance.new("UICorner")
 UICorner.Parent = MainFrame
 UICorner.CornerRadius = UDim.new(0, 12)
 
--- ========================================
--- HEADER MERAH TERANG
--- ========================================
+-- HEADER
 local HeaderFrame = Instance.new("Frame")
 HeaderFrame.Parent = MainFrame
 HeaderFrame.Size = UDim2.new(1, 0, 0, 55)
@@ -128,9 +122,7 @@ SubTitle.TextColor3 = Color3.fromRGB(255, 200, 200)
 SubTitle.TextSize = 12
 SubTitle.Font = Enum.Font.GothamMedium
 
--- ========================================
--- TOMBOL CLOSE (X) - BISA DIKLIK
--- ========================================
+-- CLOSE
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = HeaderFrame
 CloseBtn.Size = UDim2.new(0, 35, 0, 35)
@@ -152,9 +144,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
 end)
 
--- ========================================
--- SCROLLING FRAME
--- ========================================
+-- SCROLLING
 local ScrollingFrame = Instance.new("ScrollingFrame")
 ScrollingFrame.Parent = MainFrame
 ScrollingFrame.Size = UDim2.new(1, -16, 1, -65)
@@ -166,7 +156,7 @@ ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
 ScrollingFrame.BorderSizePixel = 0
 
 -- ========================================
--- 🟢 FUNGSI UI (TERANG & GAK REDUP)
+-- FUNGSI UI
 -- ========================================
 
 local function CreateDivider(yPos)
@@ -194,9 +184,6 @@ local function CreateCategory(text, yPos)
     return cat
 end
 
--- ========================================
--- 🟢 TOGGLE (PASTI BISA DIKLIK)
--- ========================================
 local function CreateToggle(text, yPos, callback)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
@@ -217,7 +204,7 @@ local function CreateToggle(text, yPos, callback)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 13
+    label.TextSize = 12
     label.Font = Enum.Font.GothamMedium
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Position = UDim2.new(0, 10, 0, 0)
@@ -263,9 +250,6 @@ local function CreateToggle(text, yPos, callback)
     return toggleBtn
 end
 
--- ========================================
--- 🟢 BUTTON (PASTI BISA DIKLIK)
--- ========================================
 local function CreateButton(text, yPos, callback, color)
     local btn = Instance.new("TextButton")
     btn.Parent = ScrollingFrame
@@ -275,7 +259,7 @@ local function CreateButton(text, yPos, callback, color)
     btn.BackgroundTransparency = 0
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 13
+    btn.TextSize = 12
     btn.Font = Enum.Font.GothamMedium
     btn.BorderSizePixel = 2
     btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
@@ -289,34 +273,151 @@ local function CreateButton(text, yPos, callback, color)
 end
 
 -- ========================================
--- FUNGSI ESP
+-- 🎯 AIM BOT
 -- ========================================
-local function CreateESP(player, espType)
-    if not player.Character then return end
+local function GetClosestPlayer()
+    local closest = nil
+    local shortest = math.huge
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
 
-    local highlight = Instance.new("Highlight")
-    highlight.Parent = player.Character
-    highlight.FillTransparency = 0.4
-    highlight.OutlineTransparency = 0.2
-
-    if espType == "killer" then
-        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-    elseif espType == "generator" then
-        highlight.FillColor = Color3.fromRGB(0, 255, 0)
-        highlight.OutlineColor = Color3.fromRGB(0, 255, 255)
-    else
-        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if dist < shortest then
+                shortest = dist
+                closest = player
+            end
+        end
     end
+    return closest
+end
 
-    table.insert(espObjects, highlight)
+local function AimBot()
+    local target = GetClosestPlayer()
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local targetPos = target.Character.HumanoidRootPart.Position
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+    end
 end
 
 -- ========================================
--- FUNGSI FLY
+-- 🤫 SILENT AIM
 -- ========================================
-local function StartFly()
+local function SilentAim()
+    local target = GetClosestPlayer()
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local targetPos = target.Character.HumanoidRootPart.Position
+        local direction = (targetPos - Camera.CFrame.Position).Unit
+        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction * 100)
+    end
+end
+
+-- ========================================
+-- 🏃 MOON WALK
+-- ========================================
+local function MoonWalk()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local humanoid = LocalPlayer.Character.Humanoid
+        humanoid.WalkSpeed = 50
+        humanoid.JumpPower = 0
+        humanoid.Sit = false
+    end
+end
+
+-- ========================================
+-- 🔄 AUTO GENERATOR + TELEPORT
+-- ========================================
+local function AutoGenerator()
+    if not LocalPlayer.Character then return end
+    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
+            local killerNear = false
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (obj.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < 20 then
+                        killerNear = true
+                        break
+                    end
+                end
+            end
+
+            if killerNear and autoTeleportToGenActive then
+                hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 3, 0))
+            end
+
+            local dist = (hrp.Position - obj.Position).Magnitude
+            if dist < 10 then
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                    wait(0.5)
+                end)
+            else
+                pcall(function()
+                    hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
+                end)
+            end
+            break
+        end
+    end
+end
+
+-- ========================================
+-- 🚪 ESCAPE GATE (AUTO WIN)
+-- ========================================
+local function EscapeGate()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
+                wait(0.5)
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                end)
+                return
+            end
+        end
+    end
+end
+
+-- ========================================
+-- 🚫 ANTI AFK
+-- ========================================
+local function AntiAFK()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+    wait(60)
+end
+
+-- ========================================
+-- 🎯 AUTO AIM KILLER
+-- ========================================
+local function AutoAimKiller()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = player.Character.HumanoidRootPart.Position
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+            pcall(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+            break
+        end
+    end
+end
+
+-- ========================================
+-- 🕊️ FLY SEIMBANG + GRAVITASI
+-- ========================================
+local function StartFlyBalanced()
     if flyActive then return end
     flyActive = true
 
@@ -361,13 +462,15 @@ local function StartFly()
 
         if moveDir.Magnitude > 0 then
             moveDir = moveDir.Unit * flySpeed
+        else
+            moveDir = Vector3.new(0, 0.1, 0)
         end
 
         flyBV.Velocity = moveDir
     end)
 end
 
-local function StopFly()
+local function StopFlyBalanced()
     flyActive = false
     if flyBV then
         flyBV:Destroy()
@@ -417,7 +520,7 @@ local function StopNoClip()
 end
 
 -- ========================================
--- 🟢 FITUR-FITUR (SEMUA BISA DIKLIK)
+-- FITUR-FITUR
 -- ========================================
 local yPos = 2
 
@@ -502,102 +605,42 @@ yPos = yPos + 40
 CreateDivider(yPos)
 yPos = yPos + 12
 
--- TELEPORT
-CreateCategory("📦 TELEPORT", yPos)
+-- AIM
+CreateCategory("🎯 AIM", yPos)
 yPos = yPos + 32
 
-CreateButton("🎯 Ke Player Terdekat", yPos, function()
-    local nearest = nil
-    local shortDist = math.huge
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if dist < shortDist then
-                shortDist = dist
-                nearest = player
-            end
-        end
-    end
-    if nearest and nearest.Character then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = nearest.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -3)
-    end
-end, Color3.fromRGB(0, 50, 150))
-yPos = yPos + 40
-
-CreateButton("⚡ Ke Generator", yPos, function()
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-            return
-        end
-    end
-end, Color3.fromRGB(0, 100, 50))
-yPos = yPos + 40
-
-CreateButton("🏠 Ke Spawn", yPos, function()
-    local spawn = Workspace:FindFirstChild("SpawnLocation")
-    if spawn then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = spawn.CFrame * CFrame.new(0, 3, 0)
-    end
-end, Color3.fromRGB(50, 50, 150))
-yPos = yPos + 40
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- ESP
-CreateCategory("👁️ ESP", yPos)
-yPos = yPos + 32
-
-CreateToggle("🔴 ESP Player", yPos, function(state)
+CreateToggle("🎯 Aim Bot", yPos, function(state)
+    aimBotActive = state
     if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                CreateESP(player, "normal")
+        return RunService.RenderStepped:Connect(function()
+            if aimBotActive then
+                AimBot()
             end
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
+        end)
     end
 end)
 yPos = yPos + 40
 
-CreateToggle("🔴 ESP Killer", yPos, function(state)
+CreateToggle("🤫 Silent Aim", yPos, function(state)
+    silentAimActive = state
     if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                CreateESP(player, "killer")
+        return RunService.RenderStepped:Connect(function()
+            if silentAimActive then
+                SilentAim()
             end
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
+        end)
     end
 end)
 yPos = yPos + 40
 
-CreateToggle("🟢 ESP Generator", yPos, function(state)
+CreateToggle("🔪 Auto Aim Killer", yPos, function(state)
+    autoKillerActive = state
     if state then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = obj.Parent or obj
-                highlight.FillColor = Color3.fromRGB(0, 255, 0)
-                highlight.FillTransparency = 0.4
-                highlight.OutlineColor = Color3.fromRGB(0, 255, 255)
-                table.insert(espObjects, highlight)
+        return RunService.RenderStepped:Connect(function()
+            if autoKillerActive then
+                AutoAimKiller()
             end
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
+        end)
     end
 end)
 yPos = yPos + 40
@@ -614,27 +657,15 @@ CreateToggle("🔄 Auto Generator", yPos, function(state)
     if state then
         return RunService.RenderStepped:Connect(function()
             if autoGeneratorActive then
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-                        if obj.Parent and obj.Parent:FindFirstChild("Humanoid") == nil then
-                            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - obj.Position).Magnitude
-                            if dist < 10 then
-                                pcall(function()
-                                    VirtualUser:CaptureController()
-                                    VirtualUser:ClickButton2(Vector2.new())
-                                    wait(0.5)
-                                end)
-                            else
-                                pcall(function()
-                                    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                                end)
-                            end
-                        end
-                    end
-                end
+                AutoGenerator()
             end
         end)
     end
+end)
+yPos = yPos + 40
+
+CreateToggle("🚀 Teleport ke Gen (Auto)", yPos, function(state)
+    autoTeleportToGenActive = state
 end)
 yPos = yPos + 40
 
@@ -650,6 +681,25 @@ CreateButton("📦 Drop All Palette", yPos, function()
         end
     end
 end, Color3.fromRGB(120, 60, 0))
+yPos = yPos + 40
+
+CreateDivider(yPos)
+yPos = yPos + 12
+
+-- ESCAPE
+CreateCategory("🚪 ESCAPE", yPos)
+yPos = yPos + 32
+
+CreateToggle("🚪 Escape Gate (Auto Win)", yPos, function(state)
+    escapeGateActive = state
+    if state then
+        return RunService.RenderStepped:Connect(function()
+            if escapeGateActive then
+                EscapeGate()
+            end
+        end)
+    end
+end)
 yPos = yPos + 40
 
 CreateDivider(yPos)
@@ -674,11 +724,11 @@ CreateToggle("⚡ Speed Hack", yPos, function(state)
 end)
 yPos = yPos + 40
 
-CreateToggle("🕊️ Fly Mode", yPos, function(state)
+CreateToggle("🕊️ Fly Mode (Seimbang)", yPos, function(state)
     if state then
-        StartFly()
+        StartFlyBalanced()
     else
-        StopFly()
+        StopFlyBalanced()
     end
 end)
 yPos = yPos + 40
@@ -688,6 +738,18 @@ CreateToggle("🧱 No Clip", yPos, function(state)
         StartNoClip()
     else
         StopNoClip()
+    end
+end)
+yPos = yPos + 40
+
+CreateToggle("🌙 Moon Walk", yPos, function(state)
+    moonWalkActive = state
+    if state then
+        return RunService.RenderStepped:Connect(function()
+            if moonWalkActive then
+                MoonWalk()
+            end
+        end)
     end
 end)
 yPos = yPos + 40
@@ -743,6 +805,18 @@ yPos = yPos + 12
 CreateCategory("🔧 UTILITY", yPos)
 yPos = yPos + 32
 
+CreateToggle("🚫 Anti AFK", yPos, function(state)
+    antiAFKActive = state
+    if state then
+        return RunService.RenderStepped:Connect(function()
+            if antiAFKActive then
+                AntiAFK()
+            end
+        end)
+    end
+end)
+yPos = yPos + 40
+
 CreateButton("🔄 Reset Karakter", yPos, function()
     if noClipActive then
         StopNoClip()
@@ -755,16 +829,16 @@ yPos = yPos + 40
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
 
 -- ========================================
--- 🟢 LOGO KLIK → MENU MUNCUL
+-- 🔥 LOGO KLIK → MENU MUNCUL
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-    print("Logo ZH diklik! Menu:", menuVisible)
+    print("Logo diklik! Menu:", menuVisible)
 
-    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 65, 0, 65)}):Play()
+    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 70, 0, 70)}):Play()
     task.wait(0.15)
-    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 60, 0, 60)}):Play()
+    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 65, 0, 65)}):Play()
 end)
 
 -- ========================================
@@ -781,6 +855,5 @@ Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0
 
-print("✅ ZIP HUB FIX TOTAL Loaded!")
-print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
-print("✅ SEMUA TOMBOL BISA DIKLIK!")
+print("✅ ZIP HUB - DENGAN LOGO KAMU Loaded!")
+print("✅ Klik LOGO di pojok kiri atas untuk buka menu!")
