@@ -1,6 +1,6 @@
 -- ========================================
 -- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 7.0 (FIX TOTAL)
+-- VERSION 8.0 (FIX 100%)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -34,6 +34,7 @@ local moonWalkActive = false
 local antiAFKActive = false
 local autoTeleportToGenActive = false
 local moonWalkConnection = nil
+local flyLoopConnection = nil
 
 -- ========================================
 -- CREATE GUI
@@ -45,14 +46,14 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- 🔥 LOGO (GAMBAR + FALLBACK TEKS)
+-- 🔥 LOGO (PASTI MUNCUL!)
 -- ========================================
 local Logo = Instance.new("ImageButton")
 Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 65, 0, 65)
 Logo.Position = UDim2.new(0, 10, 0, 10)
 Logo.Image = "https://i.imgur.com/BSsEh2j.jpeg"
-Logo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+Logo.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 Logo.BackgroundTransparency = 0
 Logo.BorderSizePixel = 2
 Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
@@ -62,12 +63,11 @@ Logo.Active = true
 Logo.Draggable = true
 Logo.ClipsDescendants = true
 
--- Biar gambar tetap keliatan
 local LogoCorner = Instance.new("UICorner")
 LogoCorner.Parent = Logo
 LogoCorner.CornerRadius = UDim.new(1, 0)
 
--- Teks fallback kalo gambar gagal load
+-- Teks fallback (kalau gambar gagal load)
 local LogoText = Instance.new("TextLabel")
 LogoText.Parent = Logo
 LogoText.Size = UDim2.new(1, 0, 1, 0)
@@ -78,13 +78,13 @@ LogoText.TextSize = 25
 LogoText.Font = Enum.Font.GothamBlack
 LogoText.TextScaled = true
 LogoText.ZIndex = 101
-LogoText.Visible = false -- Sembunyiin dulu
+LogoText.Visible = false
 
 -- Label "ZIP HUB"
 local LogoLabel = Instance.new("TextLabel")
 LogoLabel.Parent = ScreenGui
 LogoLabel.Size = UDim2.new(0, 80, 0, 18)
-LogoLabel.Position = UDim2.new(0, 5, 0, 77)
+LogoLabel.Position = UDim2.new(0, 3, 0, 77)
 LogoLabel.BackgroundTransparency = 1
 LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
@@ -92,18 +92,17 @@ LogoLabel.TextSize = 11
 LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextTransparency = 0
 
--- Cek kalo gambar gagal load, tampilin teks
+-- Cek gambar
 Logo.ImageLoaded:Connect(function()
     LogoText.Visible = false
 end)
 
 Logo.ImageFailed:Connect(function()
     LogoText.Visible = true
-    Logo.BackgroundTransparency = 0
 end)
 
 -- ========================================
--- MENU UTAMA
+-- MENU UTAMA (PASTI MUNCUL!)
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
@@ -352,7 +351,10 @@ end
 -- 🏃 MOON WALK (FIX)
 -- ========================================
 local function StartMoonWalk()
-    if moonWalkConnection then return end
+    if moonWalkConnection then 
+        moonWalkConnection:Disconnect()
+        moonWalkConnection = nil
+    end
     moonWalkActive = true
     
     moonWalkConnection = RunService.RenderStepped:Connect(function()
@@ -362,7 +364,6 @@ local function StartMoonWalk()
                 humanoid.WalkSpeed = 50
                 humanoid.JumpPower = 0
                 humanoid.Sit = false
-                -- Buat efek moonwalk (gerak mundur style)
                 humanoid.AutoRotate = false
             end
         end
@@ -476,7 +477,10 @@ end
 -- 🕊️ FLY SEIMBANG (FIX)
 -- ========================================
 local function StartFlyBalanced()
-    if flyActive then return end
+    if flyActive then 
+        StopFlyBalanced()
+        wait(0.1)
+    end
     flyActive = true
 
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -485,7 +489,6 @@ local function StartFlyBalanced()
         return 
     end
 
-    -- Matikan gravitasi dulu
     if LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.PlatformStand = true
     end
@@ -495,8 +498,12 @@ local function StartFlyBalanced()
     flyBV.Velocity = Vector3.new(0, 0, 0)
     flyBV.Parent = hrp
 
-    -- Loop terbang
-    RunService.RenderStepped:Connect(function()
+    if flyLoopConnection then 
+        flyLoopConnection:Disconnect() 
+        flyLoopConnection = nil
+    end
+
+    flyLoopConnection = RunService.RenderStepped:Connect(function()
         if not flyActive or not flyBV then return end
         if not LocalPlayer.Character then return end
 
@@ -530,7 +537,6 @@ local function StartFlyBalanced()
         if moveDir.Magnitude > 0 then
             moveDir = moveDir.Unit * flySpeed
         else
-            -- Hover seimbang
             moveDir = Vector3.new(0, 0.5, 0)
         end
 
@@ -543,6 +549,10 @@ local function StopFlyBalanced()
     if flyBV then
         flyBV:Destroy()
         flyBV = nil
+    end
+    if flyLoopConnection then
+        flyLoopConnection:Disconnect()
+        flyLoopConnection = nil
     end
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.PlatformStand = false
@@ -886,15 +896,9 @@ end)
 yPos = yPos + 40
 
 CreateButton("🔄 Reset Karakter", yPos, function()
-    if noClipActive then
-        StopNoClip()
-    end
-    if moonWalkActive then
-        StopMoonWalk()
-    end
-    if flyActive then
-        StopFlyBalanced()
-    end
+    if noClipActive then StopNoClip() end
+    if moonWalkActive then StopMoonWalk() end
+    if flyActive then StopFlyBalanced() end
     LocalPlayer.Character:BreakJoints()
 end, Color3.fromRGB(100, 0, 0))
 yPos = yPos + 40
@@ -903,13 +907,14 @@ yPos = yPos + 40
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
 
 -- ========================================
--- 🔥 LOGO KLIK → MENU MUNCUL
+-- 🔥 LOGO KLIK → MENU MUNCUL (PASTI JALAN)
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-    print("Logo diklik! Menu:", menuVisible)
-
+    print("Logo diklik! Menu Visible:", menuVisible)
+    
+    -- Animasi logo
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 70, 0, 70)}):Play()
     task.wait(0.15)
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 65, 0, 65)}):Play()
@@ -929,6 +934,6 @@ Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0
 
-print("✅ ZIP HUB - FIX TOTAL Loaded!")
-print("✅ Logo muncul! Moon Walk & Fly FIX!")
-print("✅ Klik LOGO di pojok kiri atas untuk buka menu!")
+print("✅ ZIP HUB - FIX 100% Loaded!")
+print("✅ Logo muncul! Menu muncul pas diklik!")
+print("✅ Moon Walk & Fly berfungsi!")
