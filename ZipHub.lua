@@ -1,6 +1,6 @@
 -- ========================================
 -- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 2.0 (FIX)
+-- VERSION 3.0 (FIX LAYAR)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -43,7 +43,7 @@ Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 55, 0, 55)
 Logo.Position = UDim2.new(0, 10, 0, 10)
 Logo.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-Logo.BackgroundTransparency = 0.15
+Logo.BackgroundTransparency = 0
 Logo.BorderSizePixel = 2
 Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
 Logo.Visible = true
@@ -69,17 +69,17 @@ LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
 LogoLabel.TextSize = 10
 LogoLabel.Font = Enum.Font.GothamBold
-LogoLabel.TextTransparency = 0.3
+LogoLabel.TextTransparency = 0
 
 -- ========================================
--- MENU UTAMA
+-- MENU UTAMA (TERANG & JELAS)
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
 MainFrame.Size = UDim2.new(0, 380, 0, 520)
 MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-MainFrame.BackgroundTransparency = 0.05
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel = 2
 MainFrame.BorderColor3 = Color3.fromRGB(255, 50, 50)
 MainFrame.ClipsDescendants = true
@@ -92,13 +92,13 @@ local UICorner = Instance.new("UICorner")
 UICorner.Parent = MainFrame
 UICorner.CornerRadius = UDim.new(0, 8)
 
--- Header
+-- Header Merah
 local HeaderFrame = Instance.new("Frame")
 HeaderFrame.Parent = MainFrame
-HeaderFrame.Size = UDim2.new(1, 0, 0, 45)
+HeaderFrame.Size = UDim2.new(1, 0, 0, 50)
 HeaderFrame.Position = UDim2.new(0, 0, 0, 0)
 HeaderFrame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-HeaderFrame.BackgroundTransparency = 0.2
+HeaderFrame.BackgroundTransparency = 0.8
 HeaderFrame.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner")
@@ -111,28 +111,28 @@ Title.Size = UDim2.new(1, 0, 1, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "⚡ ZIP HUB ⚡"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 18
+Title.TextSize = 20
 Title.Font = Enum.Font.GothamBold
 
 local SubTitle = Instance.new("TextLabel")
 SubTitle.Parent = HeaderFrame
-SubTitle.Size = UDim2.new(1, 0, 0, 15)
-SubTitle.Position = UDim2.new(0, 0, 1, -18)
+SubTitle.Size = UDim2.new(1, 0, 0, 18)
+SubTitle.Position = UDim2.new(0, 0, 1, -20)
 SubTitle.BackgroundTransparency = 1
 SubTitle.Text = "VIOLENCE DISTRICT"
 SubTitle.TextColor3 = Color3.fromRGB(255, 200, 200)
-SubTitle.TextSize = 10
+SubTitle.TextSize = 11
 SubTitle.Font = Enum.Font.GothamMedium
 
--- Tombol Close
+-- Tombol Close (X)
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = HeaderFrame
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 7)
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -38, 0, 9)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 14
+CloseBtn.TextSize = 16
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
 
@@ -148,25 +148,25 @@ end)
 -- Scrolling Frame
 local ScrollingFrame = Instance.new("ScrollingFrame")
 ScrollingFrame.Parent = MainFrame
-ScrollingFrame.Size = UDim2.new(1, -16, 1, -55)
-ScrollingFrame.Position = UDim2.new(0, 8, 0, 50)
+ScrollingFrame.Size = UDim2.new(1, -16, 1, -60)
+ScrollingFrame.Position = UDim2.new(0, 8, 0, 55)
 ScrollingFrame.BackgroundTransparency = 1
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.ScrollBarThickness = 3
+ScrollingFrame.ScrollBarThickness = 4
 ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
 ScrollingFrame.BorderSizePixel = 0
 
 -- ========================================
--- FUNGSI UI
+-- FUNGSI UI (TERANG & JELAS)
 -- ========================================
 
 local function CreateDivider(yPos)
     local div = Instance.new("Frame")
     div.Parent = ScrollingFrame
-    div.Size = UDim2.new(0.9, 0, 0, 1)
+    div.Size = UDim2.new(0.9, 0, 0, 2)
     div.Position = UDim2.new(0.05, 0, 0, yPos)
     div.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    div.BackgroundTransparency = 0.5
+    div.BackgroundTransparency = 0
     div.BorderSizePixel = 0
     return div
 end
@@ -174,12 +174,12 @@ end
 local function CreateCategory(text, yPos)
     local cat = Instance.new("TextLabel")
     cat.Parent = ScrollingFrame
-    cat.Size = UDim2.new(1, -10, 0, 25)
+    cat.Size = UDim2.new(1, -10, 0, 28)
     cat.Position = UDim2.new(0, 0, 0, yPos)
     cat.BackgroundTransparency = 1
     cat.Text = "▸ " .. text
-    cat.TextColor3 = Color3.fromRGB(255, 50, 50)
-    cat.TextSize = 13
+    cat.TextColor3 = Color3.fromRGB(255, 80, 80)
+    cat.TextSize = 14
     cat.Font = Enum.Font.GothamBold
     cat.TextXAlignment = Enum.TextXAlignment.Left
     return cat
@@ -188,42 +188,42 @@ end
 local function CreateToggle(text, yPos, callback)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 30)
+    frame.Size = UDim2.new(1, -10, 0, 34)
     frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    frame.BackgroundTransparency = 0.3
+    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+    frame.BackgroundTransparency = 0
     frame.BorderSizePixel = 1
     frame.BorderColor3 = Color3.fromRGB(255, 50, 50)
 
     local corner = Instance.new("UICorner")
     corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 4)
+    corner.CornerRadius = UDim.new(0, 6)
 
     local label = Instance.new("TextLabel")
     label.Parent = frame
     label.Size = UDim2.new(0.6, 0, 1, 0)
     label.BackgroundTransparency = 1
     label.Text = text
-    label.TextColor3 = Color3.fromRGB(220, 220, 255)
-    label.TextSize = 11
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 12
     label.Font = Enum.Font.GothamMedium
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Position = UDim2.new(0, 8, 0, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
 
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Parent = frame
-    toggleBtn.Size = UDim2.new(0, 50, 0, 22)
-    toggleBtn.Position = UDim2.new(1, -56, 0, 4)
+    toggleBtn.Size = UDim2.new(0, 55, 0, 26)
+    toggleBtn.Position = UDim2.new(1, -62, 0, 4)
     toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
     toggleBtn.Text = "OFF"
     toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 10
+    toggleBtn.TextSize = 11
     toggleBtn.Font = Enum.Font.GothamBold
     toggleBtn.BorderSizePixel = 0
 
     local toggleCorner = Instance.new("UICorner")
     toggleCorner.Parent = toggleBtn
-    toggleCorner.CornerRadius = UDim.new(0, 4)
+    toggleCorner.CornerRadius = UDim.new(0, 6)
 
     local state = false
     local connection
@@ -253,20 +253,20 @@ end
 local function CreateButton(text, yPos, callback, color)
     local btn = Instance.new("TextButton")
     btn.Parent = ScrollingFrame
-    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.Size = UDim2.new(1, -10, 0, 34)
     btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.BackgroundColor3 = color or Color3.fromRGB(40, 40, 60)
-    btn.BackgroundTransparency = 0.3
+    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 75)
+    btn.BackgroundTransparency = 0
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 11
+    btn.TextSize = 12
     btn.Font = Enum.Font.GothamMedium
     btn.BorderSizePixel = 1
     btn.BorderColor3 = Color3.fromRGB(255, 50, 50)
 
     local corner = Instance.new("UICorner")
     corner.Parent = btn
-    corner.CornerRadius = UDim.new(0, 4)
+    corner.CornerRadius = UDim.new(0, 6)
 
     btn.MouseButton1Click:Connect(callback)
     return btn
@@ -280,8 +280,8 @@ local function CreateESP(player, espType)
 
     local highlight = Instance.new("Highlight")
     highlight.Parent = player.Character
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0.3
+    highlight.FillTransparency = 0.4
+    highlight.OutlineTransparency = 0.2
 
     if espType == "killer" then
         highlight.FillColor = Color3.fromRGB(255, 0, 0)
@@ -407,7 +407,7 @@ local yPos = 2
 
 -- COMBAT
 CreateCategory("⚔️ COMBAT", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateToggle("🛡️ Auto Parry", yPos, function(state)
     if state then
@@ -421,7 +421,7 @@ CreateToggle("🛡️ Auto Parry", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateToggle("💀 God Mode", yPos, function(state)
     if state then
@@ -432,7 +432,7 @@ CreateToggle("💀 God Mode", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateToggle("💚 Auto Heal", yPos, function(state)
     autoHealActive = state
@@ -450,7 +450,7 @@ CreateToggle("💚 Auto Heal", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateToggle("🔫 Auto Shoot", yPos, function(state)
     autoShootActive = state
@@ -472,7 +472,7 @@ CreateToggle("🔫 Auto Shoot", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateButton("💥 One Hit Kill", yPos, function()
     for _, player in pairs(Players:GetPlayers()) do
@@ -480,15 +480,15 @@ CreateButton("💥 One Hit Kill", yPos, function()
             player.Character.Humanoid.Health = 0
         end
     end
-end, Color3.fromRGB(60, 20, 20))
-yPos = yPos + 34
+end, Color3.fromRGB(80, 30, 30))
+yPos = yPos + 38
 
 CreateDivider(yPos)
-yPos = yPos + 10
+yPos = yPos + 12
 
 -- TELEPORT
 CreateCategory("📦 TELEPORT", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateButton("🎯 Ke Player Terdekat", yPos, function()
     local nearest = nil
@@ -505,8 +505,8 @@ CreateButton("🎯 Ke Player Terdekat", yPos, function()
     if nearest and nearest.Character then
         LocalPlayer.Character.HumanoidRootPart.CFrame = nearest.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -3)
     end
-end, Color3.fromRGB(20, 40, 80))
-yPos = yPos + 34
+end, Color3.fromRGB(30, 50, 90))
+yPos = yPos + 38
 
 CreateButton("⚡ Ke Generator", yPos, function()
     for _, obj in pairs(Workspace:GetDescendants()) do
@@ -515,23 +515,23 @@ CreateButton("⚡ Ke Generator", yPos, function()
             return
         end
     end
-end, Color3.fromRGB(20, 60, 40))
-yPos = yPos + 34
+end, Color3.fromRGB(30, 70, 50))
+yPos = yPos + 38
 
 CreateButton("🏠 Ke Spawn", yPos, function()
     local spawn = Workspace:FindFirstChild("SpawnLocation")
     if spawn then
         LocalPlayer.Character.HumanoidRootPart.CFrame = spawn.CFrame * CFrame.new(0, 3, 0)
     end
-end, Color3.fromRGB(40, 40, 80))
-yPos = yPos + 34
+end, Color3.fromRGB(50, 50, 90))
+yPos = yPos + 38
 
 CreateDivider(yPos)
-yPos = yPos + 10
+yPos = yPos + 12
 
 -- ESP
 CreateCategory("👁️ ESP", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateToggle("🔴 ESP Player", yPos, function(state)
     if state then
@@ -547,7 +547,7 @@ CreateToggle("🔴 ESP Player", yPos, function(state)
         espObjects = {}
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateToggle("🔴 ESP Killer", yPos, function(state)
     if state then
@@ -563,7 +563,7 @@ CreateToggle("🔴 ESP Killer", yPos, function(state)
         espObjects = {}
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateToggle("🟢 ESP Generator", yPos, function(state)
     if state then
@@ -572,7 +572,7 @@ CreateToggle("🟢 ESP Generator", yPos, function(state)
                 local highlight = Instance.new("Highlight")
                 highlight.Parent = obj.Parent or obj
                 highlight.FillColor = Color3.fromRGB(0, 255, 0)
-                highlight.FillTransparency = 0.5
+                highlight.FillTransparency = 0.4
                 highlight.OutlineColor = Color3.fromRGB(0, 255, 255)
                 table.insert(espObjects, highlight)
             end
@@ -584,14 +584,14 @@ CreateToggle("🟢 ESP Generator", yPos, function(state)
         espObjects = {}
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateDivider(yPos)
-yPos = yPos + 10
+yPos = yPos + 12
 
 -- GENERATOR
 CreateCategory("⚡ GENERATOR", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateToggle("🔄 Auto Generator", yPos, function(state)
     autoGeneratorActive = state
@@ -620,7 +620,7 @@ CreateToggle("🔄 Auto Generator", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateButton("📦 Drop All Palette", yPos, function()
     local inventory = LocalPlayer:FindFirstChild("Inventory")
@@ -633,15 +633,15 @@ CreateButton("📦 Drop All Palette", yPos, function()
             end
         end
     end
-end, Color3.fromRGB(80, 40, 20))
-yPos = yPos + 34
+end, Color3.fromRGB(90, 50, 30))
+yPos = yPos + 38
 
 CreateDivider(yPos)
-yPos = yPos + 10
+yPos = yPos + 12
 
 -- MOVEMENT
 CreateCategory("🏃 MOVEMENT", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateToggle("⚡ Speed Hack", yPos, function(state)
     if state then
@@ -656,16 +656,16 @@ CreateToggle("⚡ Speed Hack", yPos, function(state)
         end
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
-CreateToggle("🕊️ Fly Mode", yPos, function(state)
+CreateToggle("🕊️ Fly Mode (WASD+Spasi/Shift)", yPos, function(state)
     if state then
         StartFly()
     else
         StopFly()
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateToggle("🧱 No Clip", yPos, function(state)
     if state then
@@ -674,19 +674,24 @@ CreateToggle("🧱 No Clip", yPos, function(state)
         StopNoClip()
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateButton("🚀 Speed +10", yPos, function()
     flySpeed = math.min(flySpeed + 10, 150)
-end, Color3.fromRGB(20, 60, 80))
-yPos = yPos + 34
+end, Color3.fromRGB(30, 70, 90))
+yPos = yPos + 38
+
+CreateButton("🐢 Speed -10", yPos, function()
+    flySpeed = math.max(flySpeed - 10, 10)
+end, Color3.fromRGB(90, 50, 30))
+yPos = yPos + 38
 
 CreateDivider(yPos)
-yPos = yPos + 10
+yPos = yPos + 12
 
 -- FARM
 CreateCategory("🌾 FARM", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateToggle("🤖 Auto Farm", yPos, function(state)
     if state then
@@ -713,28 +718,28 @@ CreateToggle("🤖 Auto Farm", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 34
+yPos = yPos + 38
 
 CreateDivider(yPos)
-yPos = yPos + 10
+yPos = yPos + 12
 
 -- UTILITY
 CreateCategory("🔧 UTILITY", yPos)
-yPos = yPos + 28
+yPos = yPos + 30
 
 CreateButton("🔄 Reset Karakter", yPos, function()
     if noClipActive then
         StopNoClip()
     end
     LocalPlayer.Character:BreakJoints()
-end, Color3.fromRGB(60, 30, 30))
-yPos = yPos + 34
+end, Color3.fromRGB(80, 40, 40))
+yPos = yPos + 38
 
 -- Update Canvas
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
 
 -- ========================================
--- 🔥 LOGO KLIK → MENU MUNCUL (FIX)
+-- 🔥 LOGO KLIK → MENU MUNCUL
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
@@ -756,9 +761,9 @@ Watermark.Position = UDim2.new(0, 8, 1, -25)
 Watermark.BackgroundTransparency = 1
 Watermark.Text = "⚡ ZIP HUB"
 Watermark.TextColor3 = Color3.fromRGB(255, 50, 50)
-Watermark.TextSize = 10
+Watermark.TextSize = 11
 Watermark.Font = Enum.Font.GothamMedium
-Watermark.TextTransparency = 0.5
+Watermark.TextTransparency = 0
 
 print("✅ ZIP HUB FIX Loaded!")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
