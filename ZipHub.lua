@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - FULL FEATURES + FLY SPEED 100
--- VERSION 22.0 (FINAL)
+-- ZIP HUB - FULL FEATURES + FLY SPEED 200
+-- VERSION 23.0 (FINAL)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -23,7 +23,7 @@ local espObjects = {}
 local flyActive = false
 local flyBV = nil
 local flyLoop = nil
-local flySpeed = 100  -- 🔥 SPEED 100!
+local flySpeed = 200  -- 🔥 SPEED 200!
 local noClipActive = false
 local noClipConn = nil
 local moonWalkActive = false
@@ -390,7 +390,7 @@ function KillAll()
 end
 
 -- ========================================
--- 🔥 FLY MODE (SPEED 100 + GERAK BEBAS!)
+-- 🔥 FLY MODE (SPEED 200 - BENERAN CEPAT!)
 -- ========================================
 function StartFly()
     if flyActive then return end
@@ -407,7 +407,7 @@ function StartFly()
     end
     
     flyBV = Instance.new("BodyVelocity")
-    flyBV.MaxForce = Vector3.new(100000, 100000, 100000)
+    flyBV.MaxForce = Vector3.new(999999, 999999, 999999)  -- 🔥 FORCE MAX!
     flyBV.Velocity = Vector3.new(0, 0, 0)
     flyBV.Parent = hrp
     
@@ -426,6 +426,7 @@ function StartFly()
         if right.Magnitude > 0 then right = right.Unit end
         
         local moveDir = Vector3.new()
+        local speed = 200  -- 🔥 SPEED 200!
         
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then
             moveDir = moveDir + forward
@@ -447,7 +448,7 @@ function StartFly()
         end
         
         if moveDir.Magnitude > 0 then
-            flyBV.Velocity = moveDir.Unit * 100  -- 🔥 SPEED 100!
+            flyBV.Velocity = moveDir.Unit * speed
         else
             flyBV.Velocity = Vector3.new(0, 0.5, 0)
         end
@@ -862,7 +863,7 @@ CreateToggle("⚡ Speed Hack", yPos, "speedHack", function(state)
 end)
 yPos = yPos + 36
 
-CreateToggle("🕊️ Fly Mode (Speed 100!)", yPos, "fly", function(state)
+CreateToggle("🕊️ Fly Mode (Speed 200!)", yPos, "fly", function(state)
     if state then StartFly() else StopFly() end
 end)
 yPos = yPos + 36
@@ -962,6 +963,6 @@ Logo.MouseButton1Click:Connect(function()
     print("Logo ZH diklik! Menu Visible:", MenuFrame.Visible)
 end)
 
-print("✅ ZIP HUB - FULL FEATURES + FLY SPEED 100 Loaded!")
-print("✅ Fly Mode: Speed 100 + Gerak Bebas (WASD + Spasi/Shift)")
+print("✅ ZIP HUB - FULL FEATURES + FLY SPEED 200 Loaded!")
+print("🕊️ Fly Mode: Speed 200 + Gerak Bebas (WASD + Spasi/Shift)")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
