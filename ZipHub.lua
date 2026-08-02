@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - VIOLENCE DISTRICT (FIX)
--- VERSION 1.1
+-- ZIP HUB - VIOLENCE DISTRICT
+-- VERSION 2.0 (FIX)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -36,9 +36,9 @@ ScreenGui.Name = "ZipHub"
 ScreenGui.ResetOnSpawn = false
 
 -- ========================================
--- LOGO DI POJOK KIRI ATAS
+-- LOGO (TextButton biar gampang diklik)
 -- ========================================
-local Logo = Instance.new("TextButton")  -- PAKAI TEXTButton BIAR BISA DI KLIK
+local Logo = Instance.new("TextButton")
 Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 55, 0, 55)
 Logo.Position = UDim2.new(0, 10, 0, 10)
@@ -85,14 +85,14 @@ MainFrame.BorderColor3 = Color3.fromRGB(255, 50, 50)
 MainFrame.ClipsDescendants = true
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false  -- AWALNYA HIDE
+MainFrame.Visible = false
 MainFrame.ZIndex = 50
 
 local UICorner = Instance.new("UICorner")
 UICorner.Parent = MainFrame
 UICorner.CornerRadius = UDim.new(0, 8)
 
--- Header Merah
+-- Header
 local HeaderFrame = Instance.new("Frame")
 HeaderFrame.Parent = MainFrame
 HeaderFrame.Size = UDim2.new(1, 0, 0, 45)
@@ -124,7 +124,7 @@ SubTitle.TextColor3 = Color3.fromRGB(255, 200, 200)
 SubTitle.TextSize = 10
 SubTitle.Font = Enum.Font.GothamMedium
 
--- Tombol Close (X)
+-- Tombol Close
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = HeaderFrame
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -734,19 +734,16 @@ yPos = yPos + 34
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
 
 -- ========================================
--- 🔥 INI YANG DI FIX: LOGO KLIK → MENU MUNCUL
+-- 🔥 LOGO KLIK → MENU MUNCUL (FIX)
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
-    
-    -- Animasi logo
+    print("Logo ZH diklik! Menu:", menuVisible)
+
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 60, 0, 60)}):Play()
     task.wait(0.15)
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 55, 0, 55)}):Play()
-    
-    -- Debug di console
-    print("Logo diklik! Menu Visible:", menuVisible)
 end)
 
 -- ========================================
@@ -763,5 +760,5 @@ Watermark.TextSize = 10
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0.5
 
-print("✅ ZIP HUB Loaded!")
+print("✅ ZIP HUB FIX Loaded!")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
