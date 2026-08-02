@@ -1,45 +1,216 @@
 -- ========================================
--- ZIP HUB - AUTO ESCAPE + GENERATOR FIX
--- VERSION 16.0 (FINAL)
+-- ZIP HUB - AUTO ESCAPE INSTANT
+-- VERSION 20.0 (TELEPORT LANGSUNG!)
 -- ========================================
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
-local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
-local Camera = Workspace.CurrentCamera
-local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Lighting = game:GetService("Lighting")
 
 -- ========================================
--- VARIABEL
+-- 🔥 FIND GATE (CEPET!)
 -- ========================================
-local connections = {}
-local espObjects = {}
-local flyActive = false
-local flyBV = nil
-local flyLoop = nil
-local flySpeed = 50
-local noClipActive = false
-local noClipConn = nil
-local moonWalkActive = false
-local moonWalkConn = nil
+function FindGate()
+    local gates = {}
+    local keywords = {
+        "gate", "escape", "exit", "door", "win", "finish", 
+        "end", "portal", "teleport", "out", "leave", "safe",
+        "goal", "complete", "done", "victory"
+    }
+    
+    -- Cari di SEMUA tempat
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local name = obj.Name:lower()
+            for _, keyword in pairs(keywords) do
+                if name:find(keyword) then
+                    table.insert(gates, {obj = obj, pos = obj.Position})
+                    break
+                end
+            end
+        end
+    end
+    
+    -- Cari berdasarkan warna (hijau/kuning)
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local color = obj.BrickColor
+            if color == BrickColor.new("Bright green") or 
+               color == BrickColor.new("Lime green") or
+               color == BrickColor.new("Bright yellow") then
+                table.insert(gates, {obj = obj, pos = obj.Position})
+            end
+        end
+    end
+    
+    -- Cari model
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("Model") then
+            local name = obj.Name:lower()
+            for _, keyword in pairs(keywords) do
+                if name:find(keyword) then
+                    local primary = obj:FindFirstChild("PrimaryPart") or obj:FindFirstChild("HumanoidRootPart")
+                    if primary and primary:IsA("BasePart") then
+                        table.insert(gates, {obj = obj, pos = primary.Position})
+                    end
+                    break
+                end
+            end
+        end
+    end
+    
+    return gates
+end
+
+-- ========================================
+-- 🔥 AUTO ESCAPE (INSTANT TELEPORT!)
+-- ========================================
+function AutoEscape()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then 
+        print("❌ Karakter tidak ditemukan!")
+        return false
+    end
+    
+    -- Cari gate
+    local gates = FindGate()
+    
+    -- Filter duplicate
+    local unique = {}
+    local seen = {}
+    for _, gate in pairs(gates) do
+        local key = tostring(gate.pos.X) .. tostring(gate.pos.Y) .. tostring(gate.pos.Z)
+        if not seen[key] then
+            seen[key] = true
+            table.insert(unique, gate)
+        end
+    end
+    
+    print("🔍 Ditemukan " .. #unique .. " gate!")
+    
+    if #unique > 0 then
+        -- Cari gate terdekat
+        local nearest = nil
+        local nearestDist = math.huge
+        local nearestPos = nil
+        
+        for _, gate in pairs(unique) do
+            local dist = (hrp.Position - gate.pos).Magnitude
+            if dist < nearestDist then
+                nearestDist = dist
+                nearest = gate
+                nearestPos = gate.pos
+            end
+        end
+        
+        if nearest and nearestPos then
+            -- ========================================
+            -- 🔥 LANGSUNG TELEPORT KE GATE!
+            -- ========================================
+            hrp.CFrame = CFrame.new(nearestPos + Vector3.new(0, 3, 0))
+            wait(0.2)
+            
+            -- ========================================
+            -- 🔥 INTERAKSI OTOMATIS (20x klik!)
+            -- ========================================
+            for i = 1, 20 do
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                    wait(0.05)
+                end)
+            end
+            
+            -- ========================================
+            -- 🔥 TRIGGER SEMUA REMOTE (PASTI WIN!)
+            -- ========================================
+            pcall(function()
+                for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+                    if obj:IsA("RemoteEvent") then
+                        pcall(function()
+                            obj:FireServer()
+                        end)
+                    end
+                end
+            end)
+            
+            print("✅ LANGSUNG TELEPORT KE GATE! Posisi:", nearestPos)
+            return true
+        end
+    end
+    
+    -- FALLBACK: Teleport ke luar map
+    print("❌ Gate tidak ditemukan! Teleport ke luar map...")
+    hrp.CFrame = CFrame.new(99999, 99999, 99999)
+    wait(0.3)
+    pcall(function()
+        for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+            if obj:IsA("RemoteEvent") then
+                pcall(function()
+                    obj:FireServer()
+                end)
+            end
+        end
+    end)
+    return false
+end
+
+-- ========================================
+-- 🔥 INVISIBLE REAL
+-- ========================================
 local invisibleActive = false
 local invisibleConn = nil
 
--- ESP status
-local espStatus = {
-    player = false,
-    killer = false,
-    generator = false,
-    survivor = false,
-    gate = false,
-    pallet = false
-}
+function ToggleInvisible(state)
+    invisibleActive = state
+    
+    if state then
+        if invisibleConn then 
+            invisibleConn:Disconnect() 
+            invisibleConn = nil 
+        end
+        
+        invisibleConn = RunService.RenderStepped:Connect(function()
+            if invisibleActive and LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Transparency = 1
+                        part.CanCollide = false
+                        part.CastShadow = false
+                    end
+                    if part:IsA("Humanoid") then
+                        part.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+                        part.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+                        part.NameDisplayDistance = 0
+                    end
+                end
+            end
+        end)
+    else
+        if invisibleConn then
+            invisibleConn:Disconnect()
+            invisibleConn = nil
+        end
+        if LocalPlayer.Character then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Transparency = 0
+                    part.CanCollide = true
+                    part.CastShadow = true
+                end
+                if part:IsA("Humanoid") then
+                    part.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+                    part.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOn
+                    part.NameDisplayDistance = 100
+                end
+            end
+        end
+    end
+end
 
 -- ========================================
 -- GUI SETUP
@@ -49,9 +220,7 @@ ScreenGui.Parent = CoreGui
 ScreenGui.Name = "ZipHubGUI"
 ScreenGui.ResetOnSpawn = false
 
--- ========================================
 -- LOGO
--- ========================================
 local Logo = Instance.new("TextButton")
 Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 60, 0, 60)
@@ -82,13 +251,11 @@ LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
 LogoLabel.TextSize = 10
 LogoLabel.Font = Enum.Font.GothamBold
 
--- ========================================
--- MENU UTAMA
--- ========================================
+-- MENU
 local MenuFrame = Instance.new("Frame")
 MenuFrame.Parent = ScreenGui
-MenuFrame.Size = UDim2.new(0, 420, 0, 650)
-MenuFrame.Position = UDim2.new(0.5, -210, 0.5, -325)
+MenuFrame.Size = UDim2.new(0, 320, 0, 200)
+MenuFrame.Position = UDim2.new(0.5, -160, 0.5, -100)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
 MenuFrame.BackgroundTransparency = 0
 MenuFrame.BorderSizePixel = 3
@@ -120,7 +287,7 @@ MenuTitle.Size = UDim2.new(1, 0, 1, 0)
 MenuTitle.BackgroundTransparency = 1
 MenuTitle.Text = "⚡ ZIP HUB ⚡"
 MenuTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-MenuTitle.TextSize = 20
+MenuTitle.TextSize = 18
 MenuTitle.Font = Enum.Font.GothamBold
 
 local MenuClose = Instance.new("TextButton")
@@ -142,874 +309,112 @@ MenuClose.MouseButton1Click:Connect(function()
     MenuFrame.Visible = false
 end)
 
--- SCROLLING
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Parent = MenuFrame
-ScrollingFrame.Size = UDim2.new(1, -10, 1, -50)
-ScrollingFrame.Position = UDim2.new(0, 5, 0, 45)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.ScrollBarThickness = 4
-ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
-ScrollingFrame.BorderSizePixel = 0
+-- ISI MENU
+local frame = Instance.new("Frame")
+frame.Parent = MenuFrame
+frame.Size = UDim2.new(1, 0, 1, -50)
+frame.Position = UDim2.new(0, 0, 0, 45)
+frame.BackgroundTransparency = 1
 
--- ========================================
--- FUNGSI UI
--- ========================================
-local function CreateCategory(text, yPos)
-    local cat = Instance.new("TextLabel")
-    cat.Parent = ScrollingFrame
-    cat.Size = UDim2.new(1, -10, 0, 25)
-    cat.Position = UDim2.new(0, 0, 0, yPos)
-    cat.BackgroundTransparency = 1
-    cat.Text = "▸ " .. text
-    cat.TextColor3 = Color3.fromRGB(255, 100, 100)
-    cat.TextSize = 14
-    cat.Font = Enum.Font.GothamBold
-    cat.TextXAlignment = Enum.TextXAlignment.Left
-    return cat
-end
+-- Tombol Auto Escape
+local btnEscape = Instance.new("TextButton")
+btnEscape.Parent = frame
+btnEscape.Size = UDim2.new(0.9, 0, 0, 45)
+btnEscape.Position = UDim2.new(0.05, 0, 0.02, 0)
+btnEscape.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
+btnEscape.BackgroundTransparency = 0
+btnEscape.Text = "🚪 LANGSUNG TELEPORT KE GATE!"
+btnEscape.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnEscape.TextSize = 14
+btnEscape.Font = Enum.Font.GothamBold
+btnEscape.BorderSizePixel = 2
+btnEscape.BorderColor3 = Color3.fromRGB(255, 255, 255)
 
-local function CreateDivider(yPos)
-    local div = Instance.new("Frame")
-    div.Parent = ScrollingFrame
-    div.Size = UDim2.new(0.9, 0, 0, 2)
-    div.Position = UDim2.new(0.05, 0, 0, yPos)
-    div.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    div.BackgroundTransparency = 0
-    div.BorderSizePixel = 0
-    return div
-end
+local btnCorner = Instance.new("UICorner")
+btnCorner.Parent = btnEscape
+btnCorner.CornerRadius = UDim.new(0, 8)
 
-local function CreateButton(text, yPos, callback, color)
-    local btn = Instance.new("TextButton")
-    btn.Parent = ScrollingFrame
-    btn.Size = UDim2.new(1, -10, 0, 32)
-    btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 80)
-    btn.BackgroundTransparency = 0
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 12
-    btn.Font = Enum.Font.GothamMedium
-    btn.BorderSizePixel = 2
-    btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
-
-    local corner = Instance.new("UICorner")
-    corner.Parent = btn
-    corner.CornerRadius = UDim.new(0, 6)
-
-    btn.MouseButton1Click:Connect(callback)
-    return btn
-end
-
-local function CreateToggle(text, yPos, key, callback)
-    local frame = Instance.new("Frame")
-    frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 32)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    frame.BackgroundTransparency = 0
-    frame.BorderSizePixel = 2
-    frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-
-    local corner = Instance.new("UICorner")
-    corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 6)
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.Size = UDim2.new(0.55, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 11
-    label.Font = Enum.Font.GothamMedium
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Position = UDim2.new(0, 8, 0, 0)
-
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Parent = frame
-    toggleBtn.Size = UDim2.new(0, 50, 0, 24)
-    toggleBtn.Position = UDim2.new(1, -58, 0, 4)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    toggleBtn.Text = "OFF"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 11
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.BorderSizePixel = 0
-
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.Parent = toggleBtn
-    toggleCorner.CornerRadius = UDim.new(0, 5)
-
-    local state = false
-    toggleBtn.MouseButton1Click:Connect(function()
-        state = not state
-        toggleBtn.Text = state and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
-        
-        if connections[key] then
-            connections[key]:Disconnect()
-            connections[key] = nil
-        end
-        
-        callback(state)
-    end)
-end
-
--- ========================================
--- 🔥 FIND GATE (SEMUA MAP!)
--- ========================================
-local gateKeywords = {
-    "gate", "escape", "exit", "door", "win", "finish", 
-    "end", "portal", "teleport", "out", "leave", "safe",
-    "goal", "complete", "done", "victory", "success"
-}
-
-function FindEscapeGate()
-    local gates = {}
-    local searchPlaces = {
-        Workspace,
-        ReplicatedStorage,
-        Lighting,
-        game
-    }
-    
-    for _, place in pairs(searchPlaces) do
-        for _, obj in pairs(place:GetDescendants()) do
-            if obj:IsA("BasePart") or obj:IsA("Model") then
-                local nameLower = obj.Name:lower()
-                local isGate = false
-                
-                -- Cek berdasarkan nama
-                for _, keyword in pairs(gateKeywords) do
-                    if nameLower:find(keyword) then
-                        isGate = true
-                        break
-                    end
-                end
-                
-                -- Cek berdasarkan warna (gate sering hijau/kuning)
-                if obj:IsA("BasePart") then
-                    local color = obj.BrickColor
-                    if color == BrickColor.new("Bright green") or 
-                       color == BrickColor.new("Bright yellow") or
-                       color == BrickColor.new("Lime green") then
-                        isGate = true
-                    end
-                end
-                
-                -- Cek berdasarkan ukuran (gate biasanya besar)
-                if obj:IsA("BasePart") and obj.Size.Magnitude > 10 then
-                    isGate = true
-                end
-                
-                if isGate then
-                    table.insert(gates, obj)
-                end
-            end
-        end
-    end
-    
-    return gates
-end
-
--- ========================================
--- 🔥 AUTO ESCAPE (FIX SEMUA MAP!)
--- ========================================
-function AutoEscape()
-    local gates = FindEscapeGate()
-    
-    if #gates > 0 then
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then 
-            print("❌ Karakter tidak ditemukan!")
-            return false 
-        end
-        
-        -- Cari gate terdekat
-        local nearestGate = nil
-        local nearestDist = math.huge
-        local gatePosition = nil
-        
-        for _, gate in pairs(gates) do
-            local pos = nil
-            if gate:IsA("BasePart") then
-                pos = gate.Position
-            elseif gate:IsA("Model") and gate:FindFirstChild("PrimaryPart") then
-                pos = gate.PrimaryPart.Position
-            elseif gate:IsA("Model") then
-                for _, part in pairs(gate:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        pos = part.Position
-                        break
-                    end
-                end
-            end
-            
-            if pos then
-                local dist = (hrp.Position - pos).Magnitude
-                if dist < nearestDist then
-                    nearestDist = dist
-                    nearestGate = gate
-                    gatePosition = pos
-                end
-            end
-        end
-        
-        if nearestGate and gatePosition then
-            -- Teleport ke gate
-            hrp.CFrame = CFrame.new(gatePosition + Vector3.new(0, 3, 0))
-            wait(0.3)
-            
-            -- Interaksi otomatis (klik gate berkali-kali)
-            for i = 1, 10 do
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.1)
-                end)
-            end
-            
-            print("🚪 Auto Escape Berhasil! Gate ditemukan di:", gatePosition)
-            return true
-        end
-    end
-    
-    print("❌ Gate tidak ditemukan! Mencoba teleport ke lokasi aman...")
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
-    end
-    return false
-end
-
--- ========================================
--- 🔥 FIND GENERATOR (SEMUA MAP!)
--- ========================================
-local genKeywords = {
-    "generator", "gen", "power", "engine", "machine",
-    "electric", "energy", "core", "reactor", "turbine"
-}
-
-function FindGenerators()
-    local gens = {}
-    
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local nameLower = obj.Name:lower()
-            for _, keyword in pairs(genKeywords) do
-                if nameLower:find(keyword) then
-                    table.insert(gens, obj)
-                    break
-                end
-            end
-        end
-    end
-    
-    return gens
-end
-
--- ========================================
--- 🔥 AUTO GENERATOR (INSTANT - TANPA PUTAR JARUM!)
--- ========================================
-function AutoGenerator()
-    local gens = FindGenerators()
-    
-    if #gens > 0 then
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then 
-            print("❌ Karakter tidak ditemukan!")
-            return 
-        end
-        
-        local nearestGen = nil
-        local nearestDist = math.huge
-        local genPosition = nil
-        
-        for _, gen in pairs(gens) do
-            local pos = gen.Position
-            local dist = (hrp.Position - pos).Magnitude
-            if dist < nearestDist then
-                nearestDist = dist
-                nearestGen = gen
-                genPosition = pos
-            end
-        end
-        
-        if nearestGen and genPosition then
-            -- Teleport ke generator
-            if nearestDist > 10 then
-                hrp.CFrame = CFrame.new(genPosition + Vector3.new(0, 2, 0))
-                wait(0.3)
-            end
-            
-            -- INTERAKSI LANGSUNG (TANPA PUTAR JARUM!)
-            for i = 1, 10 do
-                pcall(function()
-                    -- Klik interaksi
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.1)
-                    
-                    -- Klik lagi untuk fix (skip animasi)
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.1)
-                end)
-            end
-            
-            -- Simulasi selesai
-            pcall(function()
-                -- Trigger event selesai
-                local remote = ReplicatedStorage:FindFirstChild("GeneratorComplete") or 
-                               ReplicatedStorage:FindFirstChild("GenDone") or
-                               ReplicatedStorage:FindFirstChild("FinishGen")
-                if remote then
-                    remote:FireServer(nearestGen)
-                end
-            end)
-            
-            print("⚡ Generator selesai! (Tanpa putar jarum)")
-            return
-        end
-    end
-    print("❌ Generator tidak ditemukan!")
-end
-
--- ========================================
--- 🔥 FUNGSI LAINNYA (SAMA)
--- ========================================
-function KillAll()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local humanoid = player.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.Health = 0
-                pcall(function()
-                    player.Character:BreakJoints()
-                end)
-                pcall(function()
-                    player.Character:Destroy()
-                end)
-            end
-        end
-    end
-    print("💀 Semua player/survivor telah dibunuh!")
-end
-
--- ========================================
--- [SEMUA FUNGSI LAIN SAMA KAYAK SEBELUMNYA]
--- ========================================
-
--- ========================================
--- 📋 MENU FITUR
--- ========================================
-local yPos = 5
-
--- COMBAT
-CreateCategory("⚔️ COMBAT", yPos)
-yPos = yPos + 28
-
-CreateToggle("🛡️ Auto Parry", yPos, "autoParry", function(state)
-    if state then
-        connections.autoParry = RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-            end
-        end)
-    end
-end)
-yPos = yPos + 36
-
-CreateToggle("💀 God Mode", yPos, "godMode", function(state)
-    if state then
-        connections.godMode = RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
-            end
-        end)
-    end
-end)
-yPos = yPos + 36
-
-CreateToggle("💚 Auto Heal", yPos, "autoHeal", function(state)
-    if state then
-        connections.autoHeal = RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character then
-                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health < humanoid.MaxHealth then
-                    pcall(function()
-                        VirtualUser:CaptureController()
-                        VirtualUser:ClickButton2(Vector2.new())
-                    end)
-                end
-            end
-        end)
-    end
-end)
-yPos = yPos + 36
-
-CreateToggle("🔫 Auto Shoot", yPos, "autoShoot", function(state)
-    if state then
-        connections.autoShoot = RunService.RenderStepped:Connect(function()
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                    if dist < 30 then
-                        pcall(function()
-                            VirtualUser:CaptureController()
-                            VirtualUser:ClickButton2(Vector2.new())
-                        end)
-                    end
-                end
-            end
-        end)
-    end
-end)
-yPos = yPos + 36
-
-CreateButton("💥 One Hit Kill", yPos, function()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.Health = 0
-        end
-    end
-end, Color3.fromRGB(100, 0, 0))
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- GENERATOR
-CreateCategory("⚡ GENERATOR", yPos)
-yPos = yPos + 28
-
-CreateButton("⚡ Auto Generator (Instant)", yPos, function()
-    AutoGenerator()
-end, Color3.fromRGB(0, 100, 0))
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- ESCAPE / AUTO WIN
-CreateCategory("🚪 ESCAPE / AUTO WIN", yPos)
-yPos = yPos + 28
-
-CreateButton("🏆 Auto Escape (All Map)", yPos, function()
+btnEscape.MouseButton1Click:Connect(function()
     AutoEscape()
-end, Color3.fromRGB(0, 150, 255))
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- ESP
-CreateCategory("👁️ ESP", yPos)
-yPos = yPos + 28
-
-CreateToggle("🔴 ESP Player", yPos, "espPlayer", function(state)
-    espStatus.player = state
-    if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = player.Character
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.OutlineTransparency = 0.2
-                table.insert(espObjects, highlight)
-            end
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
-    end
 end)
-yPos = yPos + 36
 
-CreateToggle("🔴 ESP Killer", yPos, "espKiller", function(state)
-    espStatus.killer = state
-    if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = player.Character
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-                highlight.OutlineTransparency = 0.2
-                table.insert(espObjects, highlight)
-            end
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
-    end
+-- Toggle Invisible
+local frameInvis = Instance.new("Frame")
+frameInvis.Parent = frame
+frameInvis.Size = UDim2.new(0.9, 0, 0, 40)
+frameInvis.Position = UDim2.new(0.05, 0, 0.28, 0)
+frameInvis.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+frameInvis.BackgroundTransparency = 0
+frameInvis.BorderSizePixel = 2
+frameInvis.BorderColor3 = Color3.fromRGB(255, 0, 0)
+
+local cornerInvis = Instance.new("UICorner")
+cornerInvis.Parent = frameInvis
+cornerInvis.CornerRadius = UDim.new(0, 8)
+
+local labelInvis = Instance.new("TextLabel")
+labelInvis.Parent = frameInvis
+labelInvis.Size = UDim2.new(0.6, 0, 1, 0)
+labelInvis.Position = UDim2.new(0, 10, 0, 0)
+labelInvis.BackgroundTransparency = 1
+labelInvis.Text = "👻 Invisible (REAL)"
+labelInvis.TextColor3 = Color3.fromRGB(255, 255, 255)
+labelInvis.TextSize = 13
+labelInvis.Font = Enum.Font.GothamMedium
+labelInvis.TextXAlignment = Enum.TextXAlignment.Left
+
+local toggleInvis = Instance.new("TextButton")
+toggleInvis.Parent = frameInvis
+toggleInvis.Size = UDim2.new(0, 50, 0, 30)
+toggleInvis.Position = UDim2.new(1, -58, 0, 5)
+toggleInvis.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+toggleInvis.Text = "OFF"
+toggleInvis.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleInvis.TextSize = 12
+toggleInvis.Font = Enum.Font.GothamBold
+toggleInvis.BorderSizePixel = 0
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.Parent = toggleInvis
+toggleCorner.CornerRadius = UDim.new(0, 5)
+
+local invisState = false
+toggleInvis.MouseButton1Click:Connect(function()
+    invisState = not invisState
+    toggleInvis.Text = invisState and "ON" or "OFF"
+    toggleInvis.BackgroundColor3 = invisState and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+    ToggleInvisible(invisState)
 end)
-yPos = yPos + 36
 
-CreateToggle("🟢 ESP Generator", yPos, "espGenerator", function(state)
-    espStatus.generator = state
-    if state then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = obj.Parent or obj
-                highlight.FillColor = Color3.fromRGB(0, 255, 0)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineColor = Color3.fromRGB(0, 255, 255)
-                highlight.OutlineTransparency = 0.2
-                table.insert(espObjects, highlight)
-            end
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
+-- Reset
+local btnReset = Instance.new("TextButton")
+btnReset.Parent = frame
+btnReset.Size = UDim2.new(0.9, 0, 0, 40)
+btnReset.Position = UDim2.new(0.05, 0, 0.50, 0)
+btnReset.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+btnReset.BackgroundTransparency = 0
+btnReset.Text = "🔄 Reset & Matikan Semua"
+btnReset.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnReset.TextSize = 13
+btnReset.Font = Enum.Font.GothamMedium
+btnReset.BorderSizePixel = 2
+btnReset.BorderColor3 = Color3.fromRGB(255, 255, 255)
+
+local btnCorner2 = Instance.new("UICorner")
+btnCorner2.Parent = btnReset
+btnCorner2.CornerRadius = UDim.new(0, 8)
+
+btnReset.MouseButton1Click:Connect(function()
+    if invisState then
+        invisState = false
+        toggleInvis.Text = "OFF"
+        toggleInvis.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        ToggleInvisible(false)
     end
-end)
-yPos = yPos + 36
-
-CreateToggle("🟡 ESP Gate", yPos, "espGate", function(state)
-    espStatus.gate = state
-    if state then
-        local gates = FindEscapeGate()
-        for _, gate in pairs(gates) do
-            local target = gate:IsA("BasePart") and gate or gate.Parent
-            local highlight = Instance.new("Highlight")
-            highlight.Parent = target or gate
-            highlight.FillColor = Color3.fromRGB(255, 255, 0)
-            highlight.FillTransparency = 0.5
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.OutlineTransparency = 0.2
-            table.insert(espObjects, highlight)
-        end
-    else
-        for _, obj in pairs(espObjects) do
-            pcall(function() obj:Destroy() end)
-        end
-        espObjects = {}
-    end
-end)
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- MOVEMENT
-CreateCategory("🏃 MOVEMENT", yPos)
-yPos = yPos + 28
-
-CreateToggle("⚡ Speed Hack", yPos, "speedHack", function(state)
-    if state then
-        connections.speedHack = RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.WalkSpeed = 50
-            end
-        end)
-    else
-        if connections.speedHack then
-            connections.speedHack:Disconnect()
-            connections.speedHack = nil
-        end
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        end
-    end
-end)
-yPos = yPos + 36
-
-CreateToggle("🕊️ Fly Mode", yPos, "fly", function(state)
-    if state then
-        if flyActive then return end
-        flyActive = true
-        
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then 
-            flyActive = false
-            return 
-        end
-        
-        if LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.PlatformStand = true
-        end
-        
-        flyBV = Instance.new("BodyVelocity")
-        flyBV.MaxForce = Vector3.new(10000, 10000, 10000)
-        flyBV.Velocity = Vector3.new(0, 0, 0)
-        flyBV.Parent = hrp
-        
-        flyLoop = RunService.RenderStepped:Connect(function()
-            if not flyActive or not flyBV then return end
-            if not LocalPlayer.Character then return end
-            
-            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if not hrp then return end
-            
-            local moveDir = Vector3.new()
-            local cam = Camera.CFrame
-            
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                moveDir = moveDir + cam.LookVector * Vector3.new(1, 0, 1)
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                moveDir = moveDir - cam.LookVector * Vector3.new(1, 0, 1)
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                moveDir = moveDir - cam.RightVector * Vector3.new(1, 0, 1)
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                moveDir = moveDir + cam.RightVector * Vector3.new(1, 0, 1)
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                moveDir = moveDir + Vector3.new(0, 1, 0)
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                moveDir = moveDir + Vector3.new(0, -1, 0)
-            end
-            
-            if moveDir.Magnitude > 0 then
-                flyBV.Velocity = moveDir.Unit * flySpeed
-            else
-                flyBV.Velocity = Vector3.new(0, 0.5, 0)
-            end
-        end)
-    else
-        flyActive = false
-        if flyLoop then
-            flyLoop:Disconnect()
-            flyLoop = nil
-        end
-        if flyBV then
-            flyBV:Destroy()
-            flyBV = nil
-        end
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.PlatformStand = false
-        end
-    end
-end)
-yPos = yPos + 36
-
-CreateButton("🚀 Speed +10", yPos, function()
-    flySpeed = math.min(flySpeed + 10, 200)
-    print("🕊️ Fly Speed:", flySpeed)
-end, Color3.fromRGB(0, 80, 120))
-yPos = yPos + 36
-
-CreateButton("🐢 Speed -10", yPos, function()
-    flySpeed = math.max(flySpeed - 10, 10)
-    print("🕊️ Fly Speed:", flySpeed)
-end, Color3.fromRGB(120, 60, 0))
-yPos = yPos + 36
-
-CreateToggle("🧱 No Clip", yPos, "noClip", function(state)
-    if state then
-        if noClipActive then return end
-        noClipActive = true
-        noClipConn = RunService.RenderStepped:Connect(function()
-            if noClipActive and LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        end)
-    else
-        noClipActive = false
-        if noClipConn then
-            noClipConn:Disconnect()
-            noClipConn = nil
-        end
-        if LocalPlayer.Character then
-            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = true
-                end
-            end
-        end
-    end
-end)
-yPos = yPos + 36
-
-CreateToggle("🌙 Moon Walk", yPos, "moonWalk", function(state)
-    if state then
-        if moonWalkActive then return end
-        moonWalkActive = true
-        moonWalkConn = RunService.RenderStepped:Connect(function()
-            if moonWalkActive and LocalPlayer.Character then
-                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid.WalkSpeed = 50
-                    humanoid.JumpPower = 0
-                    humanoid.AutoRotate = false
-                end
-            end
-        end)
-    else
-        moonWalkActive = false
-        if moonWalkConn then
-            moonWalkConn:Disconnect()
-            moonWalkConn = nil
-        end
-        if LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 16
-                humanoid.JumpPower = 50
-                humanoid.AutoRotate = true
-            end
-        end
-    end
-end)
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- STEALTH
-CreateCategory("👻 STEALTH", yPos)
-yPos = yPos + 28
-
-CreateToggle("👻 Invisible (Real)", yPos, "invisible", function(state)
-    if state then
-        if invisibleActive then return end
-        invisibleActive = true
-        
-        invisibleConn = RunService.RenderStepped:Connect(function()
-            if invisibleActive and LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Transparency = 1
-                        part.CanCollide = false
-                    end
-                    if part:IsA("Accessory") then
-                        pcall(function()
-                            part.Handle.Transparency = 1
-                        end)
-                    end
-                end
-                if LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    LocalPlayer.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-                    LocalPlayer.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-                end
-            end
-        end)
-        
-        if LocalPlayer.Character then
-            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Transparency = 1
-                    part.CanCollide = false
-                end
-                if part:IsA("Accessory") then
-                    pcall(function()
-                        part.Handle.Transparency = 1
-                    end)
-                end
-            end
-            if LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-                LocalPlayer.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-            end
-        end
-    else
-        invisibleActive = false
-        if invisibleConn then
-            invisibleConn:Disconnect()
-            invisibleConn = nil
-        end
-        if LocalPlayer.Character then
-            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Transparency = 0
-                    part.CanCollide = true
-                end
-                if part:IsA("Accessory") then
-                    pcall(function()
-                        part.Handle.Transparency = 0
-                    end)
-                end
-            end
-            if LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-                LocalPlayer.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOn
-            end
-        end
-    end
-end)
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- KILL ALL
-CreateCategory("💀 KILL ALL", yPos)
-yPos = yPos + 28
-
-CreateButton("💀 Kill All Instant (Real)", yPos, function()
-    KillAll()
-end, Color3.fromRGB(150, 0, 0))
-yPos = yPos + 36
-
-CreateDivider(yPos)
-yPos = yPos + 12
-
--- UTILITY
-CreateCategory("🔧 UTILITY", yPos)
-yPos = yPos + 28
-
-CreateButton("🔄 Reset Karakter", yPos, function()
-    if flyActive then
-        flyActive = false
-        if flyLoop then flyLoop:Disconnect() end
-        if flyBV then flyBV:Destroy() end
-    end
-    if noClipActive then
-        noClipActive = false
-        if noClipConn then noClipConn:Disconnect() end
-    end
-    if moonWalkActive then
-        moonWalkActive = false
-        if moonWalkConn then moonWalkConn:Disconnect() end
-    end
-    if invisibleActive then
-        invisibleActive = false
-        if invisibleConn then invisibleConn:Disconnect() end
-    end
-    
-    for key, conn in pairs(connections) do
-        if conn then
-            conn:Disconnect()
-            connections[key] = nil
-        end
-    end
-    
-    for _, obj in pairs(espObjects) do
-        pcall(function() obj:Destroy() end)
-    end
-    espObjects = {}
-    
     if LocalPlayer.Character then
         LocalPlayer.Character:BreakJoints()
     end
-end, Color3.fromRGB(100, 0, 0))
-yPos = yPos + 36
-
--- Update Canvas
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
+end)
 
 -- ========================================
 -- LOGO KLIK → MENU MUNCUL
@@ -1019,7 +424,6 @@ Logo.MouseButton1Click:Connect(function()
     print("Logo ZH diklik! Menu Visible:", MenuFrame.Visible)
 end)
 
-print("✅ ZIP HUB - AUTO ESCAPE + GENERATOR FIX Loaded!")
-print("✅ Auto Escape detect SEMUA GATE di semua map!")
-print("✅ Auto Generator INSTANT tanpa putar jarum!")
+print("✅ ZIP HUB - INSTANT TELEPORT TO GATE Loaded!")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
+print("✅ Klik tombol hijau untuk LANGSUNG TELEPORT KE GATE!")
