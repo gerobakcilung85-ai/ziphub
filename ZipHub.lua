@@ -1,6 +1,5 @@
 -- ========================================
--- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 8.0 (FIX 100%)
+-- ZIP HUB - FINAL FIX
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -14,71 +13,68 @@ local Camera = Workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 
 -- ========================================
--- VARIABEL
+-- VARIABEL GLOBAL
 -- ========================================
 local espObjects = {}
-local autoShootActive = false
-local autoGeneratorActive = false
-local autoHealActive = false
-local flyActive = false
-local flyBV = nil
 local flySpeed = 50
 local menuVisible = false
-local noClipActive = false
-local noClipConnection = nil
-local silentAimActive = false
-local aimBotActive = false
-local autoKillerActive = false
-local escapeGateActive = false
-local moonWalkActive = false
-local antiAFKActive = false
-local autoTeleportToGenActive = false
-local moonWalkConnection = nil
-local flyLoopConnection = nil
+
+-- Status toggle
+local toggles = {
+    autoParry = false,
+    godMode = false,
+    autoHeal = false,
+    autoShoot = false,
+    fly = false,
+    noClip = false,
+    moonWalk = false,
+    aimBot = false,
+    silentAim = false,
+    autoKiller = false,
+    autoGenerator = false,
+    escapeGate = false,
+    antiAFK = false,
+    teleportGen = false
+}
+
+local connections = {}
+local flyBV = nil
+local noClipConn = nil
+local moonWalkConn = nil
+local flyLoopConn = nil
 
 -- ========================================
--- CREATE GUI
+-- GUI SETUP
 -- ========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
 ScreenGui.Name = "ZipHub"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- 🔥 LOGO (PASTI MUNCUL!)
+-- 🔥 LOGO (PAKE TEXTBUTTON BIAR GAMPANG)
 -- ========================================
-local Logo = Instance.new("ImageButton")
+local Logo = Instance.new("TextButton")
 Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 65, 0, 65)
 Logo.Position = UDim2.new(0, 10, 0, 10)
-Logo.Image = "https://i.imgur.com/BSsEh2j.jpeg"
 Logo.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 Logo.BackgroundTransparency = 0
-Logo.BorderSizePixel = 2
+Logo.BorderSizePixel = 3
 Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
+Logo.Text = "ZH"
+Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
+Logo.TextSize = 30
+Logo.Font = Enum.Font.GothamBlack
+Logo.TextScaled = true
 Logo.Visible = true
 Logo.ZIndex = 100
 Logo.Active = true
 Logo.Draggable = true
-Logo.ClipsDescendants = true
 
 local LogoCorner = Instance.new("UICorner")
 LogoCorner.Parent = Logo
 LogoCorner.CornerRadius = UDim.new(1, 0)
-
--- Teks fallback (kalau gambar gagal load)
-local LogoText = Instance.new("TextLabel")
-LogoText.Parent = Logo
-LogoText.Size = UDim2.new(1, 0, 1, 0)
-LogoText.BackgroundTransparency = 1
-LogoText.Text = "ZH"
-LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
-LogoText.TextSize = 25
-LogoText.Font = Enum.Font.GothamBlack
-LogoText.TextScaled = true
-LogoText.ZIndex = 101
-LogoText.Visible = false
 
 -- Label "ZIP HUB"
 local LogoLabel = Instance.new("TextLabel")
@@ -90,19 +86,9 @@ LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
 LogoLabel.TextSize = 11
 LogoLabel.Font = Enum.Font.GothamBold
-LogoLabel.TextTransparency = 0
-
--- Cek gambar
-Logo.ImageLoaded:Connect(function()
-    LogoText.Visible = false
-end)
-
-Logo.ImageFailed:Connect(function()
-    LogoText.Visible = true
-end)
 
 -- ========================================
--- MENU UTAMA (PASTI MUNCUL!)
+-- MENU UTAMA
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
@@ -165,7 +151,6 @@ CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.TextSize = 18
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
-CloseBtn.BackgroundTransparency = 0
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.Parent = CloseBtn
@@ -190,7 +175,6 @@ ScrollingFrame.BorderSizePixel = 0
 -- ========================================
 -- FUNGSI UI
 -- ========================================
-
 local function CreateDivider(yPos)
     local div = Instance.new("Frame")
     div.Parent = ScrollingFrame
@@ -216,7 +200,7 @@ local function CreateCategory(text, yPos)
     return cat
 end
 
-local function CreateToggle(text, yPos, callback)
+local function CreateToggle(text, yPos, key)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
     frame.Size = UDim2.new(1, -10, 0, 36)
@@ -251,31 +235,24 @@ local function CreateToggle(text, yPos, callback)
     toggleBtn.TextSize = 12
     toggleBtn.Font = Enum.Font.GothamBold
     toggleBtn.BorderSizePixel = 0
-    toggleBtn.BackgroundTransparency = 0
 
     local toggleCorner = Instance.new("UICorner")
     toggleCorner.Parent = toggleBtn
     toggleCorner.CornerRadius = UDim.new(0, 6)
 
     local state = false
-    local connection
 
     toggleBtn.MouseButton1Click:Connect(function()
         state = not state
         toggleBtn.Text = state and "ON" or "OFF"
         toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
-
+        
+        -- Jalankan fungsi toggle
+        toggles[key] = state
         if state then
-            local result = callback(state)
-            if type(result) == "RBXScriptConnection" then
-                connection = result
-            end
+            EnableFeature(key)
         else
-            if connection then
-                connection:Disconnect()
-                connection = nil
-            end
-            callback(state)
+            DisableFeature(key)
         end
     end)
 
@@ -305,9 +282,139 @@ local function CreateButton(text, yPos, callback, color)
 end
 
 -- ========================================
--- 🎯 AIM BOT
+-- 🎯 FITUR-FITUR (FUNGSI UTAMA)
 -- ========================================
-local function GetClosestPlayer()
+
+-- ENABLE FEATURE
+function EnableFeature(key)
+    if key == "autoParry" then
+        connections.autoParry = RunService.RenderStepped:Connect(function()
+            if toggles.autoParry and LocalPlayer.Character then
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                end)
+            end
+        end)
+    elseif key == "godMode" then
+        connections.godMode = RunService.RenderStepped:Connect(function()
+            if toggles.godMode and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+            end
+        end)
+    elseif key == "autoHeal" then
+        connections.autoHeal = RunService.RenderStepped:Connect(function()
+            if toggles.autoHeal and LocalPlayer.Character then
+                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+                if humanoid and humanoid.Health < humanoid.MaxHealth then
+                    pcall(function()
+                        VirtualUser:CaptureController()
+                        VirtualUser:ClickButton2(Vector2.new())
+                    end)
+                end
+            end
+        end)
+    elseif key == "autoShoot" then
+        connections.autoShoot = RunService.RenderStepped:Connect(function()
+            if toggles.autoShoot then
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        if dist < 30 then
+                            pcall(function()
+                                VirtualUser:CaptureController()
+                                VirtualUser:ClickButton2(Vector2.new())
+                            end)
+                        end
+                    end
+                end
+            end
+        end)
+    elseif key == "fly" then
+        StartFly()
+    elseif key == "noClip" then
+        StartNoClip()
+    elseif key == "moonWalk" then
+        StartMoonWalk()
+    elseif key == "aimBot" then
+        connections.aimBot = RunService.RenderStepped:Connect(function()
+            if toggles.aimBot then
+                local target = GetClosestPlayer()
+                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+                end
+            end
+        end)
+    elseif key == "silentAim" then
+        connections.silentAim = RunService.RenderStepped:Connect(function()
+            if toggles.silentAim then
+                local target = GetClosestPlayer()
+                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetPos = target.Character.HumanoidRootPart.Position
+                    local direction = (targetPos - Camera.CFrame.Position).Unit
+                    Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction * 100)
+                end
+            end
+        end)
+    elseif key == "autoKiller" then
+        connections.autoKiller = RunService.RenderStepped:Connect(function()
+            if toggles.autoKiller then
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, player.Character.HumanoidRootPart.Position)
+                        pcall(function()
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.new())
+                        end)
+                        break
+                    end
+                end
+            end
+        end)
+    elseif key == "autoGenerator" then
+        connections.autoGenerator = RunService.RenderStepped:Connect(function()
+            if toggles.autoGenerator then
+                AutoGenerator()
+            end
+        end)
+    elseif key == "escapeGate" then
+        connections.escapeGate = RunService.RenderStepped:Connect(function()
+            if toggles.escapeGate then
+                EscapeGate()
+            end
+        end)
+    elseif key == "antiAFK" then
+        connections.antiAFK = RunService.RenderStepped:Connect(function()
+            if toggles.antiAFK then
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+                wait(60)
+            end
+        end)
+    end
+end
+
+-- DISABLE FEATURE
+function DisableFeature(key)
+    if connections[key] then
+        connections[key]:Disconnect()
+        connections[key] = nil
+    end
+    
+    if key == "fly" then
+        StopFly()
+    elseif key == "noClip" then
+        StopNoClip()
+    elseif key == "moonWalk" then
+        StopMoonWalk()
+    end
+end
+
+-- ========================================
+-- FUNGSI-FUNGSI
+-- ========================================
+
+function GetClosestPlayer()
     local closest = nil
     local shortest = math.huge
     local char = LocalPlayer.Character
@@ -327,167 +434,10 @@ local function GetClosestPlayer()
     return closest
 end
 
-local function AimBot()
-    local target = GetClosestPlayer()
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local targetPos = target.Character.HumanoidRootPart.Position
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-    end
-end
-
--- ========================================
--- 🤫 SILENT AIM
--- ========================================
-local function SilentAim()
-    local target = GetClosestPlayer()
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local targetPos = target.Character.HumanoidRootPart.Position
-        local direction = (targetPos - Camera.CFrame.Position).Unit
-        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + direction * 100)
-    end
-end
-
--- ========================================
--- 🏃 MOON WALK (FIX)
--- ========================================
-local function StartMoonWalk()
-    if moonWalkConnection then 
-        moonWalkConnection:Disconnect()
-        moonWalkConnection = nil
-    end
-    moonWalkActive = true
-    
-    moonWalkConnection = RunService.RenderStepped:Connect(function()
-        if moonWalkActive and LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 50
-                humanoid.JumpPower = 0
-                humanoid.Sit = false
-                humanoid.AutoRotate = false
-            end
-        end
-    end)
-end
-
-local function StopMoonWalk()
-    moonWalkActive = false
-    if moonWalkConnection then
-        moonWalkConnection:Disconnect()
-        moonWalkConnection = nil
-    end
-    if LocalPlayer.Character then
-        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = 16
-            humanoid.JumpPower = 50
-            humanoid.AutoRotate = true
-        end
-    end
-end
-
--- ========================================
--- 🔄 AUTO GENERATOR + TELEPORT
--- ========================================
-local function AutoGenerator()
-    if not LocalPlayer.Character then return end
-    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-            local killerNear = false
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (obj.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                    if dist < 20 then
-                        killerNear = true
-                        break
-                    end
-                end
-            end
-
-            if killerNear and autoTeleportToGenActive then
-                hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 3, 0))
-            end
-
-            local dist = (hrp.Position - obj.Position).Magnitude
-            if dist < 10 then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.5)
-                end)
-            else
-                pcall(function()
-                    hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                end)
-            end
-            break
-        end
-    end
-end
-
--- ========================================
--- 🚪 ESCAPE GATE (AUTO WIN)
--- ========================================
-local function EscapeGate()
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                wait(0.5)
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-                return
-            end
-        end
-    end
-end
-
--- ========================================
--- 🚫 ANTI AFK
--- ========================================
-local function AntiAFK()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-    wait(60)
-end
-
--- ========================================
--- 🎯 AUTO AIM KILLER
--- ========================================
-local function AutoAimKiller()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = player.Character.HumanoidRootPart.Position
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-            break
-        end
-    end
-end
-
--- ========================================
--- 🕊️ FLY SEIMBANG (FIX)
--- ========================================
-local function StartFlyBalanced()
-    if flyActive then 
-        StopFlyBalanced()
-        wait(0.1)
-    end
-    flyActive = true
-
+function StartFly()
+    if flyLoopConn then return end
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then 
-        flyActive = false
-        return 
-    end
+    if not hrp then return end
 
     if LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.PlatformStand = true
@@ -498,13 +448,8 @@ local function StartFlyBalanced()
     flyBV.Velocity = Vector3.new(0, 0, 0)
     flyBV.Parent = hrp
 
-    if flyLoopConnection then 
-        flyLoopConnection:Disconnect() 
-        flyLoopConnection = nil
-    end
-
-    flyLoopConnection = RunService.RenderStepped:Connect(function()
-        if not flyActive or not flyBV then return end
+    flyLoopConn = RunService.RenderStepped:Connect(function()
+        if not toggles.fly or not flyBV then return end
         if not LocalPlayer.Character then return end
 
         local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -544,28 +489,22 @@ local function StartFlyBalanced()
     end)
 end
 
-local function StopFlyBalanced()
-    flyActive = false
+function StopFly()
+    if flyLoopConn then
+        flyLoopConn:Disconnect()
+        flyLoopConn = nil
+    end
     if flyBV then
         flyBV:Destroy()
         flyBV = nil
-    end
-    if flyLoopConnection then
-        flyLoopConnection:Disconnect()
-        flyLoopConnection = nil
     end
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.PlatformStand = false
     end
 end
 
--- ========================================
--- FUNGSI NO CLIP
--- ========================================
-local function StartNoClip()
-    if noClipActive then return end
-    noClipActive = true
-
+function StartNoClip()
+    if noClipConn then return end
     if LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
@@ -574,8 +513,8 @@ local function StartNoClip()
         end
     end
 
-    noClipConnection = RunService.RenderStepped:Connect(function()
-        if noClipActive and LocalPlayer.Character then
+    noClipConn = RunService.RenderStepped:Connect(function()
+        if toggles.noClip and LocalPlayer.Character then
             for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.CanCollide = false
@@ -585,11 +524,10 @@ local function StartNoClip()
     end)
 end
 
-local function StopNoClip()
-    noClipActive = false
-    if noClipConnection then
-        noClipConnection:Disconnect()
-        noClipConnection = nil
+function StopNoClip()
+    if noClipConn then
+        noClipConn:Disconnect()
+        noClipConn = nil
     end
     if LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -600,8 +538,93 @@ local function StopNoClip()
     end
 end
 
+function StartMoonWalk()
+    if moonWalkConn then return end
+    moonWalkConn = RunService.RenderStepped:Connect(function()
+        if toggles.moonWalk and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 50
+                humanoid.JumpPower = 0
+                humanoid.AutoRotate = false
+            end
+        end
+    end)
+end
+
+function StopMoonWalk()
+    if moonWalkConn then
+        moonWalkConn:Disconnect()
+        moonWalkConn = nil
+    end
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+            humanoid.AutoRotate = true
+        end
+    end
+end
+
+function AutoGenerator()
+    if not LocalPlayer.Character then return end
+    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
+            -- Cek killer di dekat generator
+            local killerNear = false
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (obj.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < 20 then
+                        killerNear = true
+                        break
+                    end
+                end
+            end
+
+            if killerNear and toggles.teleportGen then
+                hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 3, 0))
+            end
+
+            local dist = (hrp.Position - obj.Position).Magnitude
+            if dist < 10 then
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                    wait(0.5)
+                end)
+            else
+                pcall(function()
+                    hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
+                end)
+            end
+            break
+        end
+    end
+end
+
+function EscapeGate()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
+                wait(0.5)
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                end)
+                return
+            end
+        end
+    end
+end
+
 -- ========================================
--- FITUR-FITUR
+-- 🔥 FITUR-FITUR MENU
 -- ========================================
 local yPos = 2
 
@@ -609,69 +632,16 @@ local yPos = 2
 CreateCategory("⚔️ COMBAT", yPos)
 yPos = yPos + 32
 
-CreateToggle("🛡️ Auto Parry", yPos, function(state)
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-            end
-        end)
-    end
-end)
+CreateToggle("🛡️ Auto Parry", yPos, "autoParry")
 yPos = yPos + 40
 
-CreateToggle("💀 God Mode", yPos, function(state)
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
-            end
-        end)
-    end
-end)
+CreateToggle("💀 God Mode", yPos, "godMode")
 yPos = yPos + 40
 
-CreateToggle("💚 Auto Heal", yPos, function(state)
-    autoHealActive = state
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if autoHealActive and LocalPlayer.Character then
-                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health < humanoid.MaxHealth then
-                    pcall(function()
-                        VirtualUser:CaptureController()
-                        VirtualUser:ClickButton2(Vector2.new())
-                    end)
-                end
-            end
-        end)
-    end
-end)
+CreateToggle("💚 Auto Heal", yPos, "autoHeal")
 yPos = yPos + 40
 
-CreateToggle("🔫 Auto Shoot", yPos, function(state)
-    autoShootActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if autoShootActive then
-                for _, player in pairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                        if dist < 30 then
-                            pcall(function()
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.new())
-                            end)
-                        end
-                    end
-                end
-            end
-        end)
-    end
-end)
+CreateToggle("🔫 Auto Shoot", yPos, "autoShoot")
 yPos = yPos + 40
 
 CreateButton("💥 One Hit Kill", yPos, function()
@@ -690,40 +660,13 @@ yPos = yPos + 12
 CreateCategory("🎯 AIM", yPos)
 yPos = yPos + 32
 
-CreateToggle("🎯 Aim Bot", yPos, function(state)
-    aimBotActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if aimBotActive then
-                AimBot()
-            end
-        end)
-    end
-end)
+CreateToggle("🎯 Aim Bot", yPos, "aimBot")
 yPos = yPos + 40
 
-CreateToggle("🤫 Silent Aim", yPos, function(state)
-    silentAimActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if silentAimActive then
-                SilentAim()
-            end
-        end)
-    end
-end)
+CreateToggle("🤫 Silent Aim", yPos, "silentAim")
 yPos = yPos + 40
 
-CreateToggle("🔪 Auto Aim Killer", yPos, function(state)
-    autoKillerActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if autoKillerActive then
-                AutoAimKiller()
-            end
-        end)
-    end
-end)
+CreateToggle("🔪 Auto Aim Killer", yPos, "autoKiller")
 yPos = yPos + 40
 
 CreateDivider(yPos)
@@ -733,21 +676,10 @@ yPos = yPos + 12
 CreateCategory("⚡ GENERATOR", yPos)
 yPos = yPos + 32
 
-CreateToggle("🔄 Auto Generator", yPos, function(state)
-    autoGeneratorActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if autoGeneratorActive then
-                AutoGenerator()
-            end
-        end)
-    end
-end)
+CreateToggle("🔄 Auto Generator", yPos, "autoGenerator")
 yPos = yPos + 40
 
-CreateToggle("🚀 Teleport ke Gen (Auto)", yPos, function(state)
-    autoTeleportToGenActive = state
-end)
+CreateToggle("🚀 Teleport ke Gen (Auto)", yPos, "teleportGen")
 yPos = yPos + 40
 
 CreateButton("📦 Drop All Palette", yPos, function()
@@ -771,16 +703,7 @@ yPos = yPos + 12
 CreateCategory("🚪 ESCAPE", yPos)
 yPos = yPos + 32
 
-CreateToggle("🚪 Escape Gate (Auto Win)", yPos, function(state)
-    escapeGateActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if escapeGateActive then
-                EscapeGate()
-            end
-        end)
-    end
-end)
+CreateToggle("🚪 Escape Gate (Auto Win)", yPos, "escapeGate")
 yPos = yPos + 40
 
 CreateDivider(yPos)
@@ -792,12 +715,16 @@ yPos = yPos + 32
 
 CreateToggle("⚡ Speed Hack", yPos, function(state)
     if state then
-        return RunService.RenderStepped:Connect(function()
+        connections.speedHack = RunService.RenderStepped:Connect(function()
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                 LocalPlayer.Character.Humanoid.WalkSpeed = 50
             end
         end)
     else
+        if connections.speedHack then
+            connections.speedHack:Disconnect()
+            connections.speedHack = nil
+        end
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.WalkSpeed = 16
         end
@@ -805,31 +732,13 @@ CreateToggle("⚡ Speed Hack", yPos, function(state)
 end)
 yPos = yPos + 40
 
-CreateToggle("🕊️ Fly Mode (Seimbang)", yPos, function(state)
-    if state then
-        StartFlyBalanced()
-    else
-        StopFlyBalanced()
-    end
-end)
+CreateToggle("🕊️ Fly Mode (Seimbang)", yPos, "fly")
 yPos = yPos + 40
 
-CreateToggle("🧱 No Clip", yPos, function(state)
-    if state then
-        StartNoClip()
-    else
-        StopNoClip()
-    end
-end)
+CreateToggle("🧱 No Clip", yPos, "noClip")
 yPos = yPos + 40
 
-CreateToggle("🌙 Moon Walk (FIX)", yPos, function(state)
-    if state then
-        StartMoonWalk()
-    else
-        StopMoonWalk()
-    end
-end)
+CreateToggle("🌙 Moon Walk", yPos, "moonWalk")
 yPos = yPos + 40
 
 CreateButton("🚀 Speed +10", yPos, function()
@@ -851,7 +760,7 @@ yPos = yPos + 32
 
 CreateToggle("🤖 Auto Farm", yPos, function(state)
     if state then
-        return RunService.RenderStepped:Connect(function()
+        connections.autoFarm = RunService.RenderStepped:Connect(function()
             local nearest = nil
             local shortDist = math.huge
             for _, player in pairs(Players:GetPlayers()) do
@@ -872,6 +781,11 @@ CreateToggle("🤖 Auto Farm", yPos, function(state)
                 end)
             end
         end)
+    else
+        if connections.autoFarm then
+            connections.autoFarm:Disconnect()
+            connections.autoFarm = nil
+        end
     end
 end)
 yPos = yPos + 40
@@ -883,23 +797,21 @@ yPos = yPos + 12
 CreateCategory("🔧 UTILITY", yPos)
 yPos = yPos + 32
 
-CreateToggle("🚫 Anti AFK", yPos, function(state)
-    antiAFKActive = state
-    if state then
-        return RunService.RenderStepped:Connect(function()
-            if antiAFKActive then
-                AntiAFK()
-            end
-        end)
-    end
-end)
+CreateToggle("🚫 Anti AFK", yPos, "antiAFK")
 yPos = yPos + 40
 
 CreateButton("🔄 Reset Karakter", yPos, function()
-    if noClipActive then StopNoClip() end
-    if moonWalkActive then StopMoonWalk() end
-    if flyActive then StopFlyBalanced() end
-    LocalPlayer.Character:BreakJoints()
+    -- Matikan semua fitur
+    for key, _ in pairs(toggles) do
+        if toggles[key] then
+            toggles[key] = false
+            DisableFeature(key)
+        end
+    end
+    -- Reset karakter
+    if LocalPlayer.Character then
+        LocalPlayer.Character:BreakJoints()
+    end
 end, Color3.fromRGB(100, 0, 0))
 yPos = yPos + 40
 
@@ -907,14 +819,13 @@ yPos = yPos + 40
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
 
 -- ========================================
--- 🔥 LOGO KLIK → MENU MUNCUL (PASTI JALAN)
+-- 🔥 LOGO KLIK → MENU MUNCUL
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
     print("Logo diklik! Menu Visible:", menuVisible)
     
-    -- Animasi logo
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 70, 0, 70)}):Play()
     task.wait(0.15)
     TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 65, 0, 65)}):Play()
@@ -934,6 +845,5 @@ Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0
 
-print("✅ ZIP HUB - FIX 100% Loaded!")
-print("✅ Logo muncul! Menu muncul pas diklik!")
-print("✅ Moon Walk & Fly berfungsi!")
+print("✅ ZIP HUB - FINAL FIX Loaded!")
+print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
