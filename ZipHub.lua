@@ -1,6 +1,6 @@
 -- ========================================
 -- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 3.0 (FIX LAYAR)
+-- VERSION 4.0 (FIX TOTAL)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -34,23 +34,24 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
 ScreenGui.Name = "ZipHub"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- LOGO (TextButton biar gampang diklik)
+-- LOGO (TextButton)
 -- ========================================
 local Logo = Instance.new("TextButton")
 Logo.Parent = ScreenGui
-Logo.Size = UDim2.new(0, 55, 0, 55)
+Logo.Size = UDim2.new(0, 60, 0, 60)
 Logo.Position = UDim2.new(0, 10, 0, 10)
-Logo.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+Logo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Logo.BackgroundTransparency = 0
-Logo.BorderSizePixel = 2
+Logo.BorderSizePixel = 3
 Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
 Logo.Visible = true
 Logo.ZIndex = 100
 Logo.Text = "ZH"
 Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
-Logo.TextSize = 22
+Logo.TextSize = 25
 Logo.Font = Enum.Font.GothamBlack
 Logo.TextScaled = true
 Logo.Active = true
@@ -60,28 +61,29 @@ local LogoCorner = Instance.new("UICorner")
 LogoCorner.Parent = Logo
 LogoCorner.CornerRadius = UDim.new(1, 0)
 
+-- Label "ZIP HUB"
 local LogoLabel = Instance.new("TextLabel")
 LogoLabel.Parent = ScreenGui
-LogoLabel.Size = UDim2.new(0, 60, 0, 16)
-LogoLabel.Position = UDim2.new(0, 3, 0, 67)
+LogoLabel.Size = UDim2.new(0, 70, 0, 18)
+LogoLabel.Position = UDim2.new(0, 5, 0, 72)
 LogoLabel.BackgroundTransparency = 1
 LogoLabel.Text = "ZIP HUB"
-LogoLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-LogoLabel.TextSize = 10
+LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+LogoLabel.TextSize = 11
 LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextTransparency = 0
 
 -- ========================================
--- MENU UTAMA (TERANG & JELAS)
+-- 🟢 MENU UTAMA (TERANG BANGET)
 -- ========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 380, 0, 520)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+MainFrame.Size = UDim2.new(0, 400, 0, 550)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -275)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
 MainFrame.BackgroundTransparency = 0
-MainFrame.BorderSizePixel = 2
-MainFrame.BorderColor3 = Color3.fromRGB(255, 50, 50)
+MainFrame.BorderSizePixel = 3
+MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 MainFrame.ClipsDescendants = true
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -90,20 +92,22 @@ MainFrame.ZIndex = 50
 
 local UICorner = Instance.new("UICorner")
 UICorner.Parent = MainFrame
-UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.CornerRadius = UDim.new(0, 12)
 
--- Header Merah
+-- ========================================
+-- HEADER MERAH TERANG
+-- ========================================
 local HeaderFrame = Instance.new("Frame")
 HeaderFrame.Parent = MainFrame
-HeaderFrame.Size = UDim2.new(1, 0, 0, 50)
+HeaderFrame.Size = UDim2.new(1, 0, 0, 55)
 HeaderFrame.Position = UDim2.new(0, 0, 0, 0)
-HeaderFrame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-HeaderFrame.BackgroundTransparency = 0.8
+HeaderFrame.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+HeaderFrame.BackgroundTransparency = 0
 HeaderFrame.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.Parent = HeaderFrame
-HeaderCorner.CornerRadius = UDim.new(0, 8)
+HeaderCorner.CornerRadius = UDim.new(0, 12)
 
 local Title = Instance.new("TextLabel")
 Title.Parent = HeaderFrame
@@ -111,7 +115,7 @@ Title.Size = UDim2.new(1, 0, 1, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "⚡ ZIP HUB ⚡"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 20
+Title.TextSize = 22
 Title.Font = Enum.Font.GothamBold
 
 local SubTitle = Instance.new("TextLabel")
@@ -121,20 +125,23 @@ SubTitle.Position = UDim2.new(0, 0, 1, -20)
 SubTitle.BackgroundTransparency = 1
 SubTitle.Text = "VIOLENCE DISTRICT"
 SubTitle.TextColor3 = Color3.fromRGB(255, 200, 200)
-SubTitle.TextSize = 11
+SubTitle.TextSize = 12
 SubTitle.Font = Enum.Font.GothamMedium
 
--- Tombol Close (X)
+-- ========================================
+-- TOMBOL CLOSE (X) - BISA DIKLIK
+-- ========================================
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = HeaderFrame
-CloseBtn.Size = UDim2.new(0, 32, 0, 32)
-CloseBtn.Position = UDim2.new(1, -38, 0, 9)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -42, 0, 10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 16
+CloseBtn.TextSize = 18
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
+CloseBtn.BackgroundTransparency = 0
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.Parent = CloseBtn
@@ -145,19 +152,21 @@ CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
 end)
 
--- Scrolling Frame
+-- ========================================
+-- SCROLLING FRAME
+-- ========================================
 local ScrollingFrame = Instance.new("ScrollingFrame")
 ScrollingFrame.Parent = MainFrame
-ScrollingFrame.Size = UDim2.new(1, -16, 1, -60)
-ScrollingFrame.Position = UDim2.new(0, 8, 0, 55)
+ScrollingFrame.Size = UDim2.new(1, -16, 1, -65)
+ScrollingFrame.Position = UDim2.new(0, 8, 0, 60)
 ScrollingFrame.BackgroundTransparency = 1
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.ScrollBarThickness = 4
-ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
+ScrollingFrame.ScrollBarThickness = 5
+ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
 ScrollingFrame.BorderSizePixel = 0
 
 -- ========================================
--- FUNGSI UI (TERANG & JELAS)
+-- 🟢 FUNGSI UI (TERANG & GAK REDUP)
 -- ========================================
 
 local function CreateDivider(yPos)
@@ -165,7 +174,7 @@ local function CreateDivider(yPos)
     div.Parent = ScrollingFrame
     div.Size = UDim2.new(0.9, 0, 0, 2)
     div.Position = UDim2.new(0.05, 0, 0, yPos)
-    div.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    div.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
     div.BackgroundTransparency = 0
     div.BorderSizePixel = 0
     return div
@@ -174,26 +183,29 @@ end
 local function CreateCategory(text, yPos)
     local cat = Instance.new("TextLabel")
     cat.Parent = ScrollingFrame
-    cat.Size = UDim2.new(1, -10, 0, 28)
+    cat.Size = UDim2.new(1, -10, 0, 30)
     cat.Position = UDim2.new(0, 0, 0, yPos)
     cat.BackgroundTransparency = 1
     cat.Text = "▸ " .. text
-    cat.TextColor3 = Color3.fromRGB(255, 80, 80)
-    cat.TextSize = 14
+    cat.TextColor3 = Color3.fromRGB(255, 100, 100)
+    cat.TextSize = 15
     cat.Font = Enum.Font.GothamBold
     cat.TextXAlignment = Enum.TextXAlignment.Left
     return cat
 end
 
+-- ========================================
+-- 🟢 TOGGLE (PASTI BISA DIKLIK)
+-- ========================================
 local function CreateToggle(text, yPos, callback)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 34)
+    frame.Size = UDim2.new(1, -10, 0, 36)
     frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     frame.BackgroundTransparency = 0
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(255, 50, 50)
+    frame.BorderSizePixel = 2
+    frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 
     local corner = Instance.new("UICorner")
     corner.Parent = frame
@@ -205,21 +217,22 @@ local function CreateToggle(text, yPos, callback)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 12
+    label.TextSize = 13
     label.Font = Enum.Font.GothamMedium
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Position = UDim2.new(0, 10, 0, 0)
 
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Parent = frame
-    toggleBtn.Size = UDim2.new(0, 55, 0, 26)
-    toggleBtn.Position = UDim2.new(1, -62, 0, 4)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    toggleBtn.Size = UDim2.new(0, 60, 0, 28)
+    toggleBtn.Position = UDim2.new(1, -68, 0, 4)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     toggleBtn.Text = "OFF"
     toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 11
+    toggleBtn.TextSize = 12
     toggleBtn.Font = Enum.Font.GothamBold
     toggleBtn.BorderSizePixel = 0
+    toggleBtn.BackgroundTransparency = 0
 
     local toggleCorner = Instance.new("UICorner")
     toggleCorner.Parent = toggleBtn
@@ -231,7 +244,7 @@ local function CreateToggle(text, yPos, callback)
     toggleBtn.MouseButton1Click:Connect(function()
         state = not state
         toggleBtn.Text = state and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(180, 40, 40)
+        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
 
         if state then
             local result = callback(state)
@@ -250,19 +263,22 @@ local function CreateToggle(text, yPos, callback)
     return toggleBtn
 end
 
+-- ========================================
+-- 🟢 BUTTON (PASTI BISA DIKLIK)
+-- ========================================
 local function CreateButton(text, yPos, callback, color)
     local btn = Instance.new("TextButton")
     btn.Parent = ScrollingFrame
-    btn.Size = UDim2.new(1, -10, 0, 34)
+    btn.Size = UDim2.new(1, -10, 0, 36)
     btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 75)
+    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 80)
     btn.BackgroundTransparency = 0
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 12
+    btn.TextSize = 13
     btn.Font = Enum.Font.GothamMedium
-    btn.BorderSizePixel = 1
-    btn.BorderColor3 = Color3.fromRGB(255, 50, 50)
+    btn.BorderSizePixel = 2
+    btn.BorderColor3 = Color3.fromRGB(255, 0, 0)
 
     local corner = Instance.new("UICorner")
     corner.Parent = btn
@@ -401,13 +417,13 @@ local function StopNoClip()
 end
 
 -- ========================================
--- FITUR-FITUR
+-- 🟢 FITUR-FITUR (SEMUA BISA DIKLIK)
 -- ========================================
 local yPos = 2
 
 -- COMBAT
 CreateCategory("⚔️ COMBAT", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateToggle("🛡️ Auto Parry", yPos, function(state)
     if state then
@@ -421,7 +437,7 @@ CreateToggle("🛡️ Auto Parry", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateToggle("💀 God Mode", yPos, function(state)
     if state then
@@ -432,7 +448,7 @@ CreateToggle("💀 God Mode", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateToggle("💚 Auto Heal", yPos, function(state)
     autoHealActive = state
@@ -450,7 +466,7 @@ CreateToggle("💚 Auto Heal", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateToggle("🔫 Auto Shoot", yPos, function(state)
     autoShootActive = state
@@ -472,7 +488,7 @@ CreateToggle("🔫 Auto Shoot", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateButton("💥 One Hit Kill", yPos, function()
     for _, player in pairs(Players:GetPlayers()) do
@@ -480,15 +496,15 @@ CreateButton("💥 One Hit Kill", yPos, function()
             player.Character.Humanoid.Health = 0
         end
     end
-end, Color3.fromRGB(80, 30, 30))
-yPos = yPos + 38
+end, Color3.fromRGB(100, 0, 0))
+yPos = yPos + 40
 
 CreateDivider(yPos)
 yPos = yPos + 12
 
 -- TELEPORT
 CreateCategory("📦 TELEPORT", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateButton("🎯 Ke Player Terdekat", yPos, function()
     local nearest = nil
@@ -505,8 +521,8 @@ CreateButton("🎯 Ke Player Terdekat", yPos, function()
     if nearest and nearest.Character then
         LocalPlayer.Character.HumanoidRootPart.CFrame = nearest.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, -3)
     end
-end, Color3.fromRGB(30, 50, 90))
-yPos = yPos + 38
+end, Color3.fromRGB(0, 50, 150))
+yPos = yPos + 40
 
 CreateButton("⚡ Ke Generator", yPos, function()
     for _, obj in pairs(Workspace:GetDescendants()) do
@@ -515,23 +531,23 @@ CreateButton("⚡ Ke Generator", yPos, function()
             return
         end
     end
-end, Color3.fromRGB(30, 70, 50))
-yPos = yPos + 38
+end, Color3.fromRGB(0, 100, 50))
+yPos = yPos + 40
 
 CreateButton("🏠 Ke Spawn", yPos, function()
     local spawn = Workspace:FindFirstChild("SpawnLocation")
     if spawn then
         LocalPlayer.Character.HumanoidRootPart.CFrame = spawn.CFrame * CFrame.new(0, 3, 0)
     end
-end, Color3.fromRGB(50, 50, 90))
-yPos = yPos + 38
+end, Color3.fromRGB(50, 50, 150))
+yPos = yPos + 40
 
 CreateDivider(yPos)
 yPos = yPos + 12
 
 -- ESP
 CreateCategory("👁️ ESP", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateToggle("🔴 ESP Player", yPos, function(state)
     if state then
@@ -547,7 +563,7 @@ CreateToggle("🔴 ESP Player", yPos, function(state)
         espObjects = {}
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateToggle("🔴 ESP Killer", yPos, function(state)
     if state then
@@ -563,7 +579,7 @@ CreateToggle("🔴 ESP Killer", yPos, function(state)
         espObjects = {}
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateToggle("🟢 ESP Generator", yPos, function(state)
     if state then
@@ -584,14 +600,14 @@ CreateToggle("🟢 ESP Generator", yPos, function(state)
         espObjects = {}
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateDivider(yPos)
 yPos = yPos + 12
 
 -- GENERATOR
 CreateCategory("⚡ GENERATOR", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateToggle("🔄 Auto Generator", yPos, function(state)
     autoGeneratorActive = state
@@ -620,7 +636,7 @@ CreateToggle("🔄 Auto Generator", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateButton("📦 Drop All Palette", yPos, function()
     local inventory = LocalPlayer:FindFirstChild("Inventory")
@@ -633,15 +649,15 @@ CreateButton("📦 Drop All Palette", yPos, function()
             end
         end
     end
-end, Color3.fromRGB(90, 50, 30))
-yPos = yPos + 38
+end, Color3.fromRGB(120, 60, 0))
+yPos = yPos + 40
 
 CreateDivider(yPos)
 yPos = yPos + 12
 
 -- MOVEMENT
 CreateCategory("🏃 MOVEMENT", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateToggle("⚡ Speed Hack", yPos, function(state)
     if state then
@@ -656,16 +672,16 @@ CreateToggle("⚡ Speed Hack", yPos, function(state)
         end
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
-CreateToggle("🕊️ Fly Mode (WASD+Spasi/Shift)", yPos, function(state)
+CreateToggle("🕊️ Fly Mode", yPos, function(state)
     if state then
         StartFly()
     else
         StopFly()
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateToggle("🧱 No Clip", yPos, function(state)
     if state then
@@ -674,24 +690,24 @@ CreateToggle("🧱 No Clip", yPos, function(state)
         StopNoClip()
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateButton("🚀 Speed +10", yPos, function()
     flySpeed = math.min(flySpeed + 10, 150)
-end, Color3.fromRGB(30, 70, 90))
-yPos = yPos + 38
+end, Color3.fromRGB(0, 80, 120))
+yPos = yPos + 40
 
 CreateButton("🐢 Speed -10", yPos, function()
     flySpeed = math.max(flySpeed - 10, 10)
-end, Color3.fromRGB(90, 50, 30))
-yPos = yPos + 38
+end, Color3.fromRGB(120, 60, 0))
+yPos = yPos + 40
 
 CreateDivider(yPos)
 yPos = yPos + 12
 
 -- FARM
 CreateCategory("🌾 FARM", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateToggle("🤖 Auto Farm", yPos, function(state)
     if state then
@@ -718,37 +734,37 @@ CreateToggle("🤖 Auto Farm", yPos, function(state)
         end)
     end
 end)
-yPos = yPos + 38
+yPos = yPos + 40
 
 CreateDivider(yPos)
 yPos = yPos + 12
 
 -- UTILITY
 CreateCategory("🔧 UTILITY", yPos)
-yPos = yPos + 30
+yPos = yPos + 32
 
 CreateButton("🔄 Reset Karakter", yPos, function()
     if noClipActive then
         StopNoClip()
     end
     LocalPlayer.Character:BreakJoints()
-end, Color3.fromRGB(80, 40, 40))
-yPos = yPos + 38
+end, Color3.fromRGB(100, 0, 0))
+yPos = yPos + 40
 
 -- Update Canvas
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
 
 -- ========================================
--- 🔥 LOGO KLIK → MENU MUNCUL
+-- 🟢 LOGO KLIK → MENU MUNCUL
 -- ========================================
 Logo.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     MainFrame.Visible = menuVisible
     print("Logo ZH diklik! Menu:", menuVisible)
 
-    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 60, 0, 60)}):Play()
+    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 65, 0, 65)}):Play()
     task.wait(0.15)
-    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 55, 0, 55)}):Play()
+    TweenService:Create(Logo, TweenInfo.new(0.15), {Size = UDim2.new(0, 60, 0, 60)}):Play()
 end)
 
 -- ========================================
@@ -756,14 +772,15 @@ end)
 -- ========================================
 local Watermark = Instance.new("TextLabel")
 Watermark.Parent = ScreenGui
-Watermark.Size = UDim2.new(0, 180, 0, 18)
-Watermark.Position = UDim2.new(0, 8, 1, -25)
+Watermark.Size = UDim2.new(0, 180, 0, 20)
+Watermark.Position = UDim2.new(0, 8, 1, -28)
 Watermark.BackgroundTransparency = 1
 Watermark.Text = "⚡ ZIP HUB"
-Watermark.TextColor3 = Color3.fromRGB(255, 50, 50)
-Watermark.TextSize = 11
+Watermark.TextColor3 = Color3.fromRGB(255, 0, 0)
+Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0
 
-print("✅ ZIP HUB FIX Loaded!")
+print("✅ ZIP HUB FIX TOTAL Loaded!")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
+print("✅ SEMUA TOMBOL BISA DIKLIK!")
