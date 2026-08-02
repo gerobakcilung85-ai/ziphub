@@ -1,6 +1,6 @@
 -- ========================================
 -- ZIP HUB - VIOLENCE DISTRICT
--- VERSION 6.0 (DENGAN LOGO KAMU)
+-- VERSION 7.0 (FIX TOTAL)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -33,6 +33,7 @@ local escapeGateActive = false
 local moonWalkActive = false
 local antiAFKActive = false
 local autoTeleportToGenActive = false
+local moonWalkConnection = nil
 
 -- ========================================
 -- CREATE GUI
@@ -44,30 +45,62 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ========================================
--- 🔥 LOGO KAMU (GAMBAR DARI IMGUR)
+-- 🔥 LOGO (GAMBAR + FALLBACK TEKS)
 -- ========================================
 local Logo = Instance.new("ImageButton")
 Logo.Parent = ScreenGui
 Logo.Size = UDim2.new(0, 65, 0, 65)
 Logo.Position = UDim2.new(0, 10, 0, 10)
 Logo.Image = "https://i.imgur.com/BSsEh2j.jpeg"
-Logo.BackgroundTransparency = 1
+Logo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+Logo.BackgroundTransparency = 0
+Logo.BorderSizePixel = 2
+Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
 Logo.Visible = true
 Logo.ZIndex = 100
 Logo.Active = true
 Logo.Draggable = true
+Logo.ClipsDescendants = true
+
+-- Biar gambar tetap keliatan
+local LogoCorner = Instance.new("UICorner")
+LogoCorner.Parent = Logo
+LogoCorner.CornerRadius = UDim.new(1, 0)
+
+-- Teks fallback kalo gambar gagal load
+local LogoText = Instance.new("TextLabel")
+LogoText.Parent = Logo
+LogoText.Size = UDim2.new(1, 0, 1, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Text = "ZH"
+LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+LogoText.TextSize = 25
+LogoText.Font = Enum.Font.GothamBlack
+LogoText.TextScaled = true
+LogoText.ZIndex = 101
+LogoText.Visible = false -- Sembunyiin dulu
 
 -- Label "ZIP HUB"
 local LogoLabel = Instance.new("TextLabel")
 LogoLabel.Parent = ScreenGui
-LogoLabel.Size = UDim2.new(0, 70, 0, 18)
-LogoLabel.Position = UDim2.new(0, 8, 0, 77)
+LogoLabel.Size = UDim2.new(0, 80, 0, 18)
+LogoLabel.Position = UDim2.new(0, 5, 0, 77)
 LogoLabel.BackgroundTransparency = 1
 LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
 LogoLabel.TextSize = 11
 LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.TextTransparency = 0
+
+-- Cek kalo gambar gagal load, tampilin teks
+Logo.ImageLoaded:Connect(function()
+    LogoText.Visible = false
+end)
+
+Logo.ImageFailed:Connect(function()
+    LogoText.Visible = true
+    Logo.BackgroundTransparency = 0
+end)
 
 -- ========================================
 -- MENU UTAMA
@@ -316,14 +349,39 @@ local function SilentAim()
 end
 
 -- ========================================
--- 🏃 MOON WALK
+-- 🏃 MOON WALK (FIX)
 -- ========================================
-local function MoonWalk()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        local humanoid = LocalPlayer.Character.Humanoid
-        humanoid.WalkSpeed = 50
-        humanoid.JumpPower = 0
-        humanoid.Sit = false
+local function StartMoonWalk()
+    if moonWalkConnection then return end
+    moonWalkActive = true
+    
+    moonWalkConnection = RunService.RenderStepped:Connect(function()
+        if moonWalkActive and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 50
+                humanoid.JumpPower = 0
+                humanoid.Sit = false
+                -- Buat efek moonwalk (gerak mundur style)
+                humanoid.AutoRotate = false
+            end
+        end
+    end)
+end
+
+local function StopMoonWalk()
+    moonWalkActive = false
+    if moonWalkConnection then
+        moonWalkConnection:Disconnect()
+        moonWalkConnection = nil
+    end
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 16
+            humanoid.JumpPower = 50
+            humanoid.AutoRotate = true
+        end
     end
 end
 
@@ -415,20 +473,29 @@ local function AutoAimKiller()
 end
 
 -- ========================================
--- 🕊️ FLY SEIMBANG + GRAVITASI
+-- 🕊️ FLY SEIMBANG (FIX)
 -- ========================================
 local function StartFlyBalanced()
     if flyActive then return end
     flyActive = true
 
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+    if not hrp then 
+        flyActive = false
+        return 
+    end
+
+    -- Matikan gravitasi dulu
+    if LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.PlatformStand = true
+    end
 
     flyBV = Instance.new("BodyVelocity")
     flyBV.MaxForce = Vector3.new(10000, 10000, 10000)
     flyBV.Velocity = Vector3.new(0, 0, 0)
     flyBV.Parent = hrp
 
+    -- Loop terbang
     RunService.RenderStepped:Connect(function()
         if not flyActive or not flyBV then return end
         if not LocalPlayer.Character then return end
@@ -463,7 +530,8 @@ local function StartFlyBalanced()
         if moveDir.Magnitude > 0 then
             moveDir = moveDir.Unit * flySpeed
         else
-            moveDir = Vector3.new(0, 0.1, 0)
+            -- Hover seimbang
+            moveDir = Vector3.new(0, 0.5, 0)
         end
 
         flyBV.Velocity = moveDir
@@ -475,6 +543,9 @@ local function StopFlyBalanced()
     if flyBV then
         flyBV:Destroy()
         flyBV = nil
+    end
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.PlatformStand = false
     end
 end
 
@@ -742,14 +813,11 @@ CreateToggle("🧱 No Clip", yPos, function(state)
 end)
 yPos = yPos + 40
 
-CreateToggle("🌙 Moon Walk", yPos, function(state)
-    moonWalkActive = state
+CreateToggle("🌙 Moon Walk (FIX)", yPos, function(state)
     if state then
-        return RunService.RenderStepped:Connect(function()
-            if moonWalkActive then
-                MoonWalk()
-            end
-        end)
+        StartMoonWalk()
+    else
+        StopMoonWalk()
     end
 end)
 yPos = yPos + 40
@@ -821,6 +889,12 @@ CreateButton("🔄 Reset Karakter", yPos, function()
     if noClipActive then
         StopNoClip()
     end
+    if moonWalkActive then
+        StopMoonWalk()
+    end
+    if flyActive then
+        StopFlyBalanced()
+    end
     LocalPlayer.Character:BreakJoints()
 end, Color3.fromRGB(100, 0, 0))
 yPos = yPos + 40
@@ -855,5 +929,6 @@ Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0
 
-print("✅ ZIP HUB - DENGAN LOGO KAMU Loaded!")
+print("✅ ZIP HUB - FIX TOTAL Loaded!")
+print("✅ Logo muncul! Moon Walk & Fly FIX!")
 print("✅ Klik LOGO di pojok kiri atas untuk buka menu!")
