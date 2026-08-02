@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - FULL FEATURES + FIX FLY
--- VERSION 11.0
+-- ZIP HUB - FIX TOGGLE (BISA DIMATIKAN!)
+-- VERSION 12.0
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -14,15 +14,26 @@ local Camera = Workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
 
 -- ========================================
--- VARIABEL
+-- VARIABEL UNTUK CONNECTIONS
 -- ========================================
+local connections = {
+    autoParry = nil,
+    godMode = nil,
+    autoHeal = nil,
+    autoShoot = nil,
+    speedHack = nil,
+    autoGenerator = nil,
+    autoEscape = nil,
+}
+
+-- Variabel fitur lain
+local flyActive = false
 local flyBV = nil
 local flyLoop = nil
-local flyActive = false
-local noClipConn = nil
 local noClipActive = false
-local moonWalkConn = nil
+local noClipConn = nil
 local moonWalkActive = false
+local moonWalkConn = nil
 local invisibleActive = false
 local invisibleConn = nil
 
@@ -72,8 +83,8 @@ LogoLabel.Font = Enum.Font.GothamBold
 -- ========================================
 local MenuFrame = Instance.new("Frame")
 MenuFrame.Parent = ScreenGui
-MenuFrame.Size = UDim2.new(0, 380, 0, 520)
-MenuFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
+MenuFrame.Size = UDim2.new(0, 380, 0, 550)
+MenuFrame.Position = UDim2.new(0.5, -190, 0.5, -275)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
 MenuFrame.BackgroundTransparency = 0
 MenuFrame.BorderSizePixel = 3
@@ -188,7 +199,10 @@ local function CreateButton(text, yPos, callback, color)
     return btn
 end
 
-local function CreateToggle(text, yPos, callback)
+-- ========================================
+-- 🔥 TOGGLE DENGAN CONNECTION
+-- ========================================
+local function CreateToggle(text, yPos, key, callback)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
     frame.Size = UDim2.new(1, -10, 0, 32)
@@ -233,12 +247,150 @@ local function CreateToggle(text, yPos, callback)
         state = not state
         toggleBtn.Text = state and "ON" or "OFF"
         toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+        
+        -- MATIKAN CONNECTION LAMA
+        if connections[key] then
+            connections[key]:Disconnect()
+            connections[key] = nil
+        end
+        
+        -- JALANKAN CALLBACK
         callback(state)
     end)
 end
 
 -- ========================================
--- 🔥 FUNGSI FLY (FIX)
+-- 🔥 FUNGSI-FUNGSI FITUR (DENGAN CONNECTION)
+-- ========================================
+
+-- AUTO PARRY
+local function AutoParry(state)
+    if state then
+        connections.autoParry = RunService.RenderStepped:Connect(function()
+            if LocalPlayer.Character then
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                end)
+            end
+        end)
+    end
+end
+
+-- GOD MODE
+local function GodMode(state)
+    if state then
+        connections.godMode = RunService.RenderStepped:Connect(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+            end
+        end)
+    end
+end
+
+-- AUTO HEAL
+local function AutoHeal(state)
+    if state then
+        connections.autoHeal = RunService.RenderStepped:Connect(function()
+            if LocalPlayer.Character then
+                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+                if humanoid and humanoid.Health < humanoid.MaxHealth then
+                    pcall(function()
+                        VirtualUser:CaptureController()
+                        VirtualUser:ClickButton2(Vector2.new())
+                    end)
+                end
+            end
+        end)
+    end
+end
+
+-- AUTO SHOOT
+local function AutoShoot(state)
+    if state then
+        connections.autoShoot = RunService.RenderStepped:Connect(function()
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < 30 then
+                        pcall(function()
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.new())
+                        end)
+                    end
+                end
+            end
+        end)
+    end
+end
+
+-- SPEED HACK
+local function SpeedHack(state)
+    if state then
+        connections.speedHack = RunService.RenderStepped:Connect(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.WalkSpeed = 50
+            end
+        end)
+    else
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+end
+
+-- AUTO GENERATOR
+local function AutoGenerator(state)
+    if state then
+        connections.autoGenerator = RunService.RenderStepped:Connect(function()
+            if not LocalPlayer.Character then return end
+            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
+                    local dist = (hrp.Position - obj.Position).Magnitude
+                    if dist < 15 then
+                        pcall(function()
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.new())
+                            wait(0.5)
+                        end)
+                    else
+                        pcall(function()
+                            hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
+                        end)
+                    end
+                    break
+                end
+            end
+        end)
+    end
+end
+
+-- AUTO ESCAPE
+local function AutoEscape(state)
+    if state then
+        connections.autoEscape = RunService.RenderStepped:Connect(function()
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
+                        wait(0.5)
+                        pcall(function()
+                            VirtualUser:CaptureController()
+                            VirtualUser:ClickButton2(Vector2.new())
+                        end)
+                        return
+                    end
+                end
+            end
+        end)
+    end
+end
+
+-- ========================================
+-- 🔥 FLY (BISA DIMATIKAN)
 -- ========================================
 function StartFly()
     if flyActive then return end
@@ -250,18 +402,15 @@ function StartFly()
         return 
     end
     
-    -- Matikan gravitasi
     if LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.PlatformStand = true
     end
     
-    -- Buat BodyVelocity
     flyBV = Instance.new("BodyVelocity")
     flyBV.MaxForce = Vector3.new(10000, 10000, 10000)
     flyBV.Velocity = Vector3.new(0, 0, 0)
     flyBV.Parent = hrp
     
-    -- Loop terbang
     flyLoop = RunService.RenderStepped:Connect(function()
         if not flyActive or not flyBV then return end
         if not LocalPlayer.Character then return end
@@ -272,7 +421,6 @@ function StartFly()
         local moveDir = Vector3.new()
         local cam = Camera.CFrame
         
-        -- Kontrol WASD
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then
             moveDir = moveDir + cam.LookVector * Vector3.new(1, 0, 1)
         end
@@ -292,11 +440,10 @@ function StartFly()
             moveDir = moveDir + Vector3.new(0, -1, 0)
         end
         
-        -- Set kecepatan
         if moveDir.Magnitude > 0 then
             flyBV.Velocity = moveDir.Unit * 50
         else
-            flyBV.Velocity = Vector3.new(0, 0.5, 0) -- Hover
+            flyBV.Velocity = Vector3.new(0, 0.5, 0)
         end
     end)
 end
@@ -317,7 +464,7 @@ function StopFly()
 end
 
 -- ========================================
--- 🔥 FUNGSI NO CLIP
+-- 🔥 NO CLIP (BISA DIMATIKAN)
 -- ========================================
 function StartNoClip()
     if noClipActive then return end
@@ -349,7 +496,7 @@ function StopNoClip()
 end
 
 -- ========================================
--- 🔥 FUNGSI MOON WALK
+-- 🔥 MOON WALK (BISA DIMATIKAN)
 -- ========================================
 function StartMoonWalk()
     if moonWalkActive then return end
@@ -383,13 +530,11 @@ function StopMoonWalk()
 end
 
 -- ========================================
--- 👻 FUNGSI INVISIBLE (BARU!)
+-- 👻 INVISIBLE (BISA DIMATIKAN)
 -- ========================================
 function StartInvisible()
     if invisibleActive then return end
     invisibleActive = true
-    
-    -- Bikin karakter transparan
     invisibleConn = RunService.RenderStepped:Connect(function()
         if invisibleActive and LocalPlayer.Character then
             for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -400,7 +545,6 @@ function StartInvisible()
                     part.Handle.Transparency = 1
                 end
             end
-            -- Sembunyiin nametag
             if LocalPlayer.Character:FindFirstChild("Humanoid") then
                 LocalPlayer.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
             end
@@ -414,7 +558,6 @@ function StopInvisible()
         invisibleConn:Disconnect()
         invisibleConn = nil
     end
-    -- Balikin transparansi
     if LocalPlayer.Character then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
@@ -426,52 +569,6 @@ function StopInvisible()
         end
         if LocalPlayer.Character:FindFirstChild("Humanoid") then
             LocalPlayer.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-        end
-    end
-end
-
--- ========================================
--- 🔄 AUTO GENERATOR
--- ========================================
-function AutoGenerator()
-    if not LocalPlayer.Character then return end
-    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-            local dist = (hrp.Position - obj.Position).Magnitude
-            if dist < 15 then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.5)
-                end)
-            else
-                pcall(function()
-                    hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                end)
-            end
-            break
-        end
-    end
-end
-
--- ========================================
--- 🚪 AUTO ESCAPE
--- ========================================
-function AutoEscape()
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                wait(0.5)
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-                return
-            end
         end
     end
 end
@@ -500,65 +597,16 @@ local yPos = 5
 CreateCategory("⚔️ COMBAT", yPos)
 yPos = yPos + 28
 
-CreateToggle("🛡️ Auto Parry", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-            end
-        end)
-    end
-end)
+CreateToggle("🛡️ Auto Parry", yPos, "autoParry", AutoParry)
 yPos = yPos + 36
 
-CreateToggle("💀 God Mode", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
-            end
-        end)
-    end
-end)
+CreateToggle("💀 God Mode", yPos, "godMode", GodMode)
 yPos = yPos + 36
 
-CreateToggle("💚 Auto Heal", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character then
-                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health < humanoid.MaxHealth then
-                    pcall(function()
-                        VirtualUser:CaptureController()
-                        VirtualUser:ClickButton2(Vector2.new())
-                    end)
-                end
-            end
-        end)
-    end
-end)
+CreateToggle("💚 Auto Heal", yPos, "autoHeal", AutoHeal)
 yPos = yPos + 36
 
-CreateToggle("🔫 Auto Shoot", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                    if dist < 30 then
-                        pcall(function()
-                            VirtualUser:CaptureController()
-                            VirtualUser:ClickButton2(Vector2.new())
-                        end)
-                    end
-                end
-            end
-        end)
-    end
-end)
+CreateToggle("🔫 Auto Shoot", yPos, "autoShoot", AutoShoot)
 yPos = yPos + 36
 
 CreateButton("💥 One Hit Kill", yPos, function()
@@ -577,15 +625,7 @@ yPos = yPos + 12
 CreateCategory("⚡ GENERATOR", yPos)
 yPos = yPos + 28
 
-CreateToggle("🔄 Auto Generator", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if state then
-                AutoGenerator()
-            end
-        end)
-    end
-end)
+CreateToggle("🔄 Auto Generator", yPos, "autoGenerator", AutoGenerator)
 yPos = yPos + 36
 
 CreateDivider(yPos)
@@ -595,15 +635,7 @@ yPos = yPos + 12
 CreateCategory("🚪 ESCAPE", yPos)
 yPos = yPos + 28
 
-CreateToggle("🚪 Auto Escape", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if state then
-                AutoEscape()
-            end
-        end)
-    end
-end)
+CreateToggle("🚪 Auto Escape", yPos, "autoEscape", AutoEscape)
 yPos = yPos + 36
 
 CreateDivider(yPos)
@@ -613,22 +645,10 @@ yPos = yPos + 12
 CreateCategory("🏃 MOVEMENT", yPos)
 yPos = yPos + 28
 
-CreateToggle("⚡ Speed Hack", yPos, function(state)
-    if state then
-        RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.WalkSpeed = 50
-            end
-        end)
-    else
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        end
-    end
-end)
+CreateToggle("⚡ Speed Hack", yPos, "speedHack", SpeedHack)
 yPos = yPos + 36
 
-CreateToggle("🕊️ Fly Mode (FIX)", yPos, function(state)
+CreateToggle("🕊️ Fly Mode", yPos, "fly", function(state)
     if state then
         StartFly()
     else
@@ -637,7 +657,7 @@ CreateToggle("🕊️ Fly Mode (FIX)", yPos, function(state)
 end)
 yPos = yPos + 36
 
-CreateToggle("🧱 No Clip", yPos, function(state)
+CreateToggle("🧱 No Clip", yPos, "noClip", function(state)
     if state then
         StartNoClip()
     else
@@ -646,7 +666,7 @@ CreateToggle("🧱 No Clip", yPos, function(state)
 end)
 yPos = yPos + 36
 
-CreateToggle("🌙 Moon Walk", yPos, function(state)
+CreateToggle("🌙 Moon Walk", yPos, "moonWalk", function(state)
     if state then
         StartMoonWalk()
     else
@@ -662,7 +682,7 @@ yPos = yPos + 12
 CreateCategory("👻 STEALTH", yPos)
 yPos = yPos + 28
 
-CreateToggle("👻 Invisible", yPos, function(state)
+CreateToggle("👻 Invisible", yPos, "invisible", function(state)
     if state then
         StartInvisible()
     else
@@ -695,6 +715,15 @@ CreateButton("🔄 Reset Karakter", yPos, function()
     if noClipActive then StopNoClip() end
     if moonWalkActive then StopMoonWalk() end
     if invisibleActive then StopInvisible() end
+    
+    -- Matikan semua connections
+    for key, conn in pairs(connections) do
+        if conn then
+            conn:Disconnect()
+            connections[key] = nil
+        end
+    end
+    
     if LocalPlayer.Character then
         LocalPlayer.Character:BreakJoints()
     end
@@ -712,6 +741,6 @@ Logo.MouseButton1Click:Connect(function()
     print("Logo ZH diklik! Menu Visible:", MenuFrame.Visible)
 end)
 
-print("✅ ZIP HUB - FULL FEATURES + FIX FLY Loaded!")
-print("✅ Fitur: Auto Generator, Auto Escape, Invisible, Fly FIX!")
+print("✅ ZIP HUB - FIX TOGGLE Loaded!")
+print("✅ Semua fitur bisa dimatikan!")
 print("✅ Klik LOGO ZH di pojok kiri atas untuk buka menu!")
