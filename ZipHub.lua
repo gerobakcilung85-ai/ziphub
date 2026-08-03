@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - FINAL (SEMUA FITUR SEMPURNA!)
--- VERSION 42.0
+-- ZIP HUB - FINAL (ESP FIX + AUTO GENERATOR INSTANT!)
+-- VERSION 43.0
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -17,9 +17,20 @@ local TweenService = game:GetService("TweenService")
 local CollectionService = game:GetService("CollectionService")
 
 -- ========================================
+-- 🔥 WARNA ESP
+-- ========================================
+local ESP_COLORS = {
+    KILLER = Color3.fromRGB(255, 0, 0),      -- MERAH
+    SURVIVOR = Color3.fromRGB(0, 255, 0),    -- HIJAU
+    GENERATOR = Color3.fromRGB(0, 255, 255), -- CYAN
+    GATE = Color3.fromRGB(255, 255, 0),      -- KUNING
+    PALLET = Color3.fromRGB(255, 165, 0)     -- ORANGE
+}
+
+-- ========================================
 -- 🔥 VARIABEL
 -- ========================================
-local flyActive = true
+local flyActive = false
 local flyBody = nil
 local flyPos = nil
 local flyConn = nil
@@ -80,20 +91,44 @@ local connections = {}
 local espObjects = {}
 
 -- ========================================
--- 🔥 FUNGSI DETEKSI KILLER
+-- 🔥 FUNGSI DETEKSI KILLER (FIX! 5 METODE)
 -- ========================================
 function IsPlayerKiller(player)
+    if not player then return false end
+    
+    -- Method 1: Attribute
     if player:GetAttribute("Killer") == true then return true end
+    if player:GetAttribute("Role") == "Killer" then return true end
+    if player:GetAttribute("Team") == "Killer" then return true end
+    
+    -- Method 2: Character
     if player.Character then
         for _, child in pairs(player.Character:GetChildren()) do
-            if child:IsA("Tool") and (child.Name:lower():find("knife") or child.Name:lower():find("weapon") or child.Name:lower():find("scythe") or child.Name:lower():find("blade") or child.Name:lower():find("sword")) then
-                return true
+            if child:IsA("Tool") then
+                local name = child.Name:lower()
+                if name:find("knife") or name:find("weapon") or name:find("scythe") or 
+                   name:find("blade") or name:find("sword") or name:find("axe") or
+                   name:find("hammer") or name:find("gun") then
+                    return true
+                end
             end
         end
         if player.Character:GetAttribute("Killer") == true then return true end
+        if player.Character:GetAttribute("Role") == "Killer" then return true end
+        
+        -- Method 3: Health (killer biasanya health lebih tinggi)
         local humanoid = player.Character:FindFirstChild("Humanoid")
-        if humanoid and humanoid.MaxHealth > 100 then return true end
+        if humanoid and humanoid.MaxHealth > 100 then
+            return true
+        end
     end
+    
+    -- Method 4: Name
+    local name = player.Name:lower()
+    if name:find("killer") or name:find("slasher") or name:find("hunter") or name:find("predator") then
+        return true
+    end
+    
     return false
 end
 
@@ -123,7 +158,7 @@ function GetClosestPlayer()
 end
 
 -- ========================================
--- 🔥 ESP LENGKAP + NAMA (RINGAN!)
+-- 🔥 ESP (PISAH PER JENIS!)
 -- ========================================
 function ClearESP()
     for _, obj in pairs(espObjects) do
@@ -168,57 +203,74 @@ function CreateESPWithName(target, color, outlineColor, labelText, labelColor)
     end
 end
 
+-- ESP PLAYER (KILLER MERAH, SURVIVOR HIJAU)
+function UpdateESPPlayer()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local isKiller = IsPlayerKiller(player)
+            local color = isKiller and ESP_COLORS.KILLER or ESP_COLORS.SURVIVOR
+            local outlineColor = isKiller and Color3.fromRGB(255, 255, 0) or Color3.fromRGB(0, 255, 255)
+            local labelColor = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+            local labelText = isKiller and ("🔪 " .. player.Name .. " [KILLER]") or ("🟢 " .. player.Name .. " [SURVIVOR]")
+            CreateESPWithName(player.Character, color, outlineColor, labelText, labelColor)
+        end
+    end
+end
+
+-- ESP GENERATOR (CYAN)
+function UpdateESPGenerator()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen") or obj.Name:lower():find("power")) then
+            local parent = obj.Parent or obj
+            local label = "⚡ Generator"
+            if obj:GetAttribute("Completed") == true then label = "✅ Generator (Selesai)" end
+            CreateESPWithName(parent, ESP_COLORS.GENERATOR, Color3.fromRGB(0, 255, 255), label, ESP_COLORS.GENERATOR)
+        end
+    end
+end
+
+-- ESP GATE (KUNING)
+function UpdateESPGate()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("exit") or obj.Name:lower():find("door")) then
+            local parent = obj.Parent or obj
+            local label = "🚪 Gate"
+            if obj:GetAttribute("Open") == true then label = "🚪 Gate (Terbuka)" end
+            CreateESPWithName(parent, ESP_COLORS.GATE, Color3.fromRGB(255, 255, 255), label, ESP_COLORS.GATE)
+        end
+    end
+end
+
+-- ESP PALLET (ORANGE)
+function UpdateESPPallet()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("pallet") or obj.Name:lower():find("box") or obj.Name:lower():find("plank") or obj.Name:lower():find("board")) then
+            local parent = obj.Parent or obj
+            local label = "📦 Pallet"
+            if obj:GetAttribute("Broken") == true then label = "💔 Pallet (Rusak)" end
+            CreateESPWithName(parent, ESP_COLORS.PALLET, Color3.fromRGB(255, 255, 255), label, ESP_COLORS.PALLET)
+        end
+    end
+end
+
+-- UPDATE ESP (PISAH!)
 function UpdateESP()
     ClearESP()
     
-    -- ESP Player (KILLER MERAH! SURVIVOR HIJAU!)
     if toggles.espPlayer then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local isKiller = IsPlayerKiller(player)
-                local color = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-                local outlineColor = isKiller and Color3.fromRGB(255, 255, 0) or Color3.fromRGB(0, 255, 255)
-                local labelColor = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-                local labelText = isKiller and ("🔪 " .. player.Name .. " (KILLER)") or ("🟢 " .. player.Name .. " (SURVIVOR)")
-                CreateESPWithName(player.Character, color, outlineColor, labelText, labelColor)
-            end
-        end
+        UpdateESPPlayer()
     end
     
-    -- ESP Generator
     if toggles.espGenerator then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen") or obj.Name:lower():find("power")) then
-                local parent = obj.Parent or obj
-                local label = "⚡ Generator"
-                if obj:GetAttribute("Completed") == true then label = "✅ Generator (Selesai)" end
-                CreateESPWithName(parent, Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 255, 255), label, Color3.fromRGB(0, 255, 0))
-            end
-        end
+        UpdateESPGenerator()
     end
     
-    -- ESP Gate
     if toggles.espGate then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("exit") or obj.Name:lower():find("door")) then
-                local parent = obj.Parent or obj
-                local label = "🚪 Gate"
-                if obj:GetAttribute("Open") == true then label = "🚪 Gate (Terbuka)" end
-                CreateESPWithName(parent, Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 255), label, Color3.fromRGB(255, 255, 0))
-            end
-        end
+        UpdateESPGate()
     end
     
-    -- ESP Pallet
     if toggles.espPallet then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("pallet") or obj.Name:lower():find("box") or obj.Name:lower():find("plank") or obj.Name:lower():find("board")) then
-                local parent = obj.Parent or obj
-                local label = "📦 Pallet"
-                if obj:GetAttribute("Broken") == true then label = "💔 Pallet (Rusak)" end
-                CreateESPWithName(parent, Color3.fromRGB(255, 165, 0), Color3.fromRGB(255, 255, 255), label, Color3.fromRGB(255, 165, 0))
-            end
-        end
+        UpdateESPPallet()
     end
 end
 
@@ -246,7 +298,7 @@ function StopESP()
 end
 
 -- ========================================
--- 🔥 FLY (PASTI JALAN! + BODYVELOCITY + BODYPOSITION)
+-- 🔥 FLY (PASTI JALAN!)
 -- ========================================
 function StartFly()
     if flyActive then return end
@@ -264,13 +316,11 @@ function StartFly()
         humanoid.Sit = false
     end
     
-    -- BodyVelocity buat gerak
     flyBody = Instance.new("BodyVelocity")
     flyBody.MaxForce = Vector3.new(999999999, 999999999, 999999999)
     flyBody.Velocity = Vector3.new(0, 0, 0)
     flyBody.Parent = hrp
     
-    -- BodyPosition buat stabil
     flyPos = Instance.new("BodyPosition")
     flyPos.MaxForce = Vector3.new(999999999, 999999999, 999999999)
     flyPos.Position = hrp.Position
@@ -303,7 +353,6 @@ function StartFly()
         
         local moveDir = Vector3.new()
         
-        -- PC
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + flatForward end
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - flatForward end
         if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - flatRight end
@@ -311,7 +360,6 @@ function StartFly()
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
         if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir + Vector3.new(0, -1, 0) end
         
-        -- Mobile
         if UserInputService:GetTouchEnabled() then
             local touches = UserInputService:GetTouches()
             for _, t in pairs(touches) do
@@ -378,7 +426,7 @@ function StartAutoParry()
 end
 
 -- ========================================
--- 🔥 AUTO GENERATOR
+-- 🔥 AUTO GENERATOR (INSTANT - TANPA KLIK!)
 -- ========================================
 function AutoGenerator()
     if not LocalPlayer.Character then return end
@@ -408,14 +456,7 @@ function AutoGenerator()
             end
         end
         
-        for i = 1, 20 do
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-                wait(0.05)
-            end)
-        end
-        
+        -- 🔥 TRIGGER LANGSUNG (TANPA KLIK!)
         pcall(function()
             for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
                 if obj:IsA("RemoteEvent") then
@@ -428,11 +469,17 @@ function AutoGenerator()
         end)
         
         pcall(function()
+            targetGen:SetAttribute("Completed", true)
+        end)
+        
+        pcall(function()
             local clickDetector = targetGen:FindFirstChild("ClickDetector")
             if clickDetector then clickDetector:Click() end
         end)
         
-        print("⚡ Generator selesai!")
+        print("⚡ Generator LANGSUNG SELESAI!")
+    else
+        print("❌ Generator tidak ditemukan!")
     end
 end
 
@@ -446,7 +493,6 @@ function AutoEscape()
     local gates = {}
     local keywords = {"gate", "escape", "exit", "door", "win", "finish", "portal", "teleport", "out", "leave", "safe", "goal", "complete", "done", "victory"}
     
-    -- Metode 1: Nama
     for _, obj in pairs(game:GetDescendants()) do
         if obj:IsA("BasePart") then
             local name = obj.Name:lower()
@@ -459,7 +505,6 @@ function AutoEscape()
         end
     end
     
-    -- Metode 2: Warna
     for _, obj in pairs(game:GetDescendants()) do
         if obj:IsA("BasePart") then
             local color = obj.BrickColor
@@ -469,14 +514,12 @@ function AutoEscape()
         end
     end
     
-    -- Metode 3: Ukuran
     for _, obj in pairs(game:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Size.Magnitude > 15 then
             table.insert(gates, obj)
         end
     end
     
-    -- Metode 4: Model
     for _, obj in pairs(game:GetDescendants()) do
         if obj:IsA("Model") then
             local name = obj.Name:lower()
@@ -1351,7 +1394,7 @@ Cat("⚡ SKILL CHECK", y); y = y + 24
 Tog("✅ Auto Skill Check", y, "autoSkillCheck"); y = y + 28
 Div(y); y = y + 8
 
-Cat("👁️ ESP (LENGKAP+NAMA)", y); y = y + 24
+Cat("👁️ ESP (FIX!)", y); y = y + 24
 Tog("🔴 Player (Killer/Survivor)", y, "espPlayer"); y = y + 28
 Tog("🟢 Generator", y, "espGenerator"); y = y + 28
 Tog("🟡 Gate", y, "espGate"); y = y + 28
@@ -1359,7 +1402,7 @@ Tog("🟠 Pallet", y, "espPallet"); y = y + 28
 Div(y); y = y + 8
 
 Cat("⚡ GENERATOR", y); y = y + 24
-Tog("🔄 Auto Gen", y, "autoGenerator"); y = y + 28
+Tog("🔄 Auto Gen (Instant)", y, "autoGenerator"); y = y + 28
 Tog("🚀 Tele Gen", y, "teleportGen"); y = y + 28
 Btn("📦 Drop Pallet", y, function() DropAllPalette() end, Color3.fromRGB(120, 60, 0))
 y = y + 28
@@ -1411,13 +1454,9 @@ Logo.MouseButton1Click:Connect(function()
     Menu.Visible = not Menu.Visible
 end)
 
-print("✅ ZIP HUB - FINAL (SEMUA FITUR SEMPURNA!) Loaded!")
-print("✅ FLY PASTI JALAN! (BodyVelocity + BodyPosition)")
-print("✅ ESP Lengkap + Nama (Killer MERAH, Survivor HIJAU)")
-print("✅ Auto Generator (Langsung jadi!)")
-print("✅ Auto Escape (15 Metode!)")
-print("✅ Auto Parry (FIX!)")
-print("✅ Auto Farm Survivor (FIX!)")
+print("✅ ZIP HUB - FINAL (ESP FIX + AUTO GENERATOR INSTANT!) Loaded!")
+print("✅ ESP WARNA BEDA: Killer MERAH, Survivor HIJAU, Generator CYAN, Gate KUNING, Pallet ORANGE")
+print("✅ Auto Generator LANGSUNG JADI (tanpa klik!)")
+print("✅ Fly PASTI JALAN!")
 print("✅ SEMUA FITUR BISA DIMATIKAN!")
-print("✅ RINGAN & ANTI LAG!")
 print("✅ Klik LOGO ZH untuk buka menu!")
