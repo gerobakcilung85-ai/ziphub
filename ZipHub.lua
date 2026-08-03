@@ -1,6 +1,6 @@
 -- ========================================
 -- ZIP HUB + LYNX (35+ FITUR!)
--- VERSION 34.0 (FINAL - GUI MINIMALIS)
+-- VERSION 35.0 (FINAL - GABUNGAN ALL FIX)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -29,7 +29,6 @@ local autoSaveActive = false
 local savedFriends = {}
 
 local toggles = {
-    -- COMBAT
     autoParry = false,
     godMode = false,
     autoHeal = false,
@@ -38,7 +37,6 @@ local toggles = {
     autoStun = false,
     autoBlock = false,
     autoDodge = false,
-    -- VD NEW
     autoVault = false,
     autoFlashlight = false,
     autoPerk = false,
@@ -49,21 +47,16 @@ local toggles = {
     autoCrouchWalk = false,
     autoSlowWalk = false,
     autoSpin = false,
-    -- ULTIMATE
     autoKillAura = false,
     autoGrabLoot = false,
     autoRespawn = false,
     autoUseItem = false,
-    -- SAVE
     autoSave = false,
-    -- MOVEMENT
     speedHack = false,
     fly = false,
     noClip = false,
     moonWalk = false,
-    -- STEALTH
     invisible = false,
-    -- LYNX
     autoGrab = false,
     autoDrop = false,
     autoPickup = false,
@@ -71,17 +64,14 @@ local toggles = {
     autoSprint = false,
     autoCrouch = false,
     autoJump = false,
-    -- ESP
     espPlayer = false,
     espKiller = false,
     espGenerator = false,
     espGate = false,
     espPallet = false,
-    -- GENERATOR
     autoGenerator = false,
     teleportGen = false,
     autoEscape = false,
-    -- UTILITY
     antiAFK = false
 }
 
@@ -1193,7 +1183,7 @@ function ToggleFeature(key, state)
 end
 
 -- ========================================
--- 🎨 GUI MINIMALIS KEREN
+-- 🎨 GUI FIX (TERANG & BISA DI KLIK!)
 -- ========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
@@ -1215,6 +1205,7 @@ Logo.TextSize = 22
 Logo.Font = Enum.Font.GothamBlack
 Logo.TextScaled = true
 Logo.Draggable = true
+Logo.ZIndex = 999
 
 local LogoCorner = Instance.new("UICorner")
 LogoCorner.Parent = Logo
@@ -1229,44 +1220,38 @@ LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
 LogoLabel.TextSize = 9
 LogoLabel.Font = Enum.Font.GothamBold
+LogoLabel.ZIndex = 999
 
 -- ========================================
--- MENU (MINIMALIS - 370x520)
+-- MENU (TERANG & BISA DIKLIK!)
 -- ========================================
 local Menu = Instance.new("Frame")
 Menu.Parent = ScreenGui
 Menu.Size = UDim2.new(0, 370, 0, 520)
 Menu.Position = UDim2.new(0.5, -185, 0.5, -260)
-Menu.BackgroundColor3 = Color3.fromRGB(10, 10, 25)
-Menu.BackgroundTransparency = 0.1
+Menu.BackgroundColor3 = Color3.fromRGB(20, 20, 40)  -- TERANG!
+Menu.BackgroundTransparency = 0  -- GA KEREDUP!
 Menu.BorderSizePixel = 2
 Menu.BorderColor3 = Color3.fromRGB(255, 50, 50)
 Menu.ClipsDescendants = true
 Menu.Active = true
 Menu.Draggable = true
 Menu.Visible = false
-Menu.ZIndex = 50
-
--- Glassmorphism
-local GlassBg = Instance.new("Frame")
-GlassBg.Parent = Menu
-GlassBg.Size = UDim2.new(1, 0, 1, 0)
-GlassBg.BackgroundColor3 = Color3.fromRGB(20, 20, 45)
-GlassBg.BackgroundTransparency = 0.8
-GlassBg.BorderSizePixel = 0
+Menu.ZIndex = 999
 
 local MenuCorner = Instance.new("UICorner")
 MenuCorner.Parent = Menu
 MenuCorner.CornerRadius = UDim.new(0, 12)
 
--- HEADER (35px)
+-- HEADER
 local Header = Instance.new("Frame")
 Header.Parent = Menu
 Header.Size = UDim2.new(1, 0, 0, 35)
 Header.Position = UDim2.new(0, 0, 0, 0)
 Header.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-Header.BackgroundTransparency = 0.85
+Header.BackgroundTransparency = 0
 Header.BorderSizePixel = 0
+Header.ZIndex = 1000
 
 local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.Parent = Header
@@ -1280,19 +1265,21 @@ Title.Text = "⚡ ZIP HUB"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
+Title.ZIndex = 1001
 
--- CLOSE (bulat kecil)
+-- CLOSE
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = Header
-CloseBtn.Size = UDim2.new(0, 22, 0, 22)
-CloseBtn.Position = UDim2.new(1, -28, 0, 6)
+CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+CloseBtn.Position = UDim2.new(1, -30, 0, 5)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseBtn.BackgroundTransparency = 0
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 12
+CloseBtn.TextSize = 14
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
-CloseBtn.BackgroundTransparency = 0
+CloseBtn.ZIndex = 1002
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.Parent = CloseBtn
@@ -1309,12 +1296,13 @@ Scroll.Size = UDim2.new(1, -12, 1, -45)
 Scroll.Position = UDim2.new(0, 6, 0, 40)
 Scroll.BackgroundTransparency = 1
 Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.ScrollBarThickness = 3
+Scroll.ScrollBarThickness = 4
 Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
 Scroll.BorderSizePixel = 0
+Scroll.ZIndex = 999
 
 -- ========================================
--- UI FUNGSI (MINIMALIS)
+-- UI FUNGSI (TERANG!)
 -- ========================================
 local function Cat(text, y)
     local c = Instance.new("TextLabel")
@@ -1327,6 +1315,7 @@ local function Cat(text, y)
     c.TextSize = 12
     c.Font = Enum.Font.GothamBold
     c.TextXAlignment = Enum.TextXAlignment.Left
+    c.ZIndex = 999
 end
 
 local function Div(y)
@@ -1335,8 +1324,9 @@ local function Div(y)
     d.Size = UDim2.new(0.9, 0, 0, 1)
     d.Position = UDim2.new(0.05, 0, 0, y)
     d.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    d.BackgroundTransparency = 0.5
+    d.BackgroundTransparency = 0.3
     d.BorderSizePixel = 0
+    d.ZIndex = 999
 end
 
 local function Btn(text, y, cb, color)
@@ -1344,14 +1334,15 @@ local function Btn(text, y, cb, color)
     b.Parent = Scroll
     b.Size = UDim2.new(1, -10, 0, 26)
     b.Position = UDim2.new(0, 0, 0, y)
-    b.BackgroundColor3 = color or Color3.fromRGB(50, 50, 80)
-    b.BackgroundTransparency = 0.2
+    b.BackgroundColor3 = color or Color3.fromRGB(60, 60, 90)
+    b.BackgroundTransparency = 0
     b.Text = text
     b.TextColor3 = Color3.fromRGB(255, 255, 255)
     b.TextSize = 11
     b.Font = Enum.Font.GothamMedium
     b.BorderSizePixel = 1
     b.BorderColor3 = Color3.fromRGB(255, 50, 50)
+    b.ZIndex = 999
     local c = Instance.new("UICorner")
     c.Parent = b
     c.CornerRadius = UDim.new(0, 6)
@@ -1363,10 +1354,11 @@ local function Tog(text, y, key)
     frame.Parent = Scroll
     frame.Size = UDim2.new(1, -10, 0, 26)
     frame.Position = UDim2.new(0, 0, 0, y)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    frame.BackgroundTransparency = 0.3
+    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+    frame.BackgroundTransparency = 0
     frame.BorderSizePixel = 1
     frame.BorderColor3 = Color3.fromRGB(255, 50, 50)
+    frame.ZIndex = 999
     local c = Instance.new("UICorner")
     c.Parent = frame
     c.CornerRadius = UDim.new(0, 6)
@@ -1377,21 +1369,24 @@ local function Tog(text, y, key)
     label.Position = UDim2.new(0, 6, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
-    label.TextColor3 = Color3.fromRGB(220, 220, 255)
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.TextSize = 10
     label.Font = Enum.Font.GothamMedium
     label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 999
 
     local btn = Instance.new("TextButton")
     btn.Parent = frame
-    btn.Size = UDim2.new(0, 40, 0, 18)
-    btn.Position = UDim2.new(1, -46, 0, 4)
+    btn.Size = UDim2.new(0, 42, 0, 20)
+    btn.Position = UDim2.new(1, -48, 0, 3)
     btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    btn.BackgroundTransparency = 0
     btn.Text = "OFF"
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 9
+    btn.TextSize = 10
     btn.Font = Enum.Font.GothamBold
     btn.BorderSizePixel = 0
+    btn.ZIndex = 1000
     local tc = Instance.new("UICorner")
     tc.Parent = btn
     tc.CornerRadius = UDim.new(0, 4)
@@ -1405,11 +1400,10 @@ local function Tog(text, y, key)
 end
 
 -- ========================================
--- 📋 MENU (MINIMALIS)
+-- 📋 MENU
 -- ========================================
 local y = 2
 
--- COMBAT
 Cat("⚔️ COMBAT", y); y = y + 24
 Tog("🛡️ Parry", y, "autoParry"); y = y + 28
 Tog("💀 God", y, "godMode"); y = y + 28
@@ -1423,7 +1417,6 @@ Btn("💥 OHK", y, function() KillAll() end, Color3.fromRGB(100, 0, 0))
 y = y + 28
 Div(y); y = y + 8
 
--- ESP
 Cat("👁️ ESP", y); y = y + 24
 Tog("🔴 Player", y, "espPlayer"); y = y + 28
 Tog("🔴 Killer", y, "espKiller"); y = y + 28
@@ -1432,7 +1425,6 @@ Tog("🟡 Gate", y, "espGate"); y = y + 28
 Tog("🟠 Pallet", y, "espPallet"); y = y + 28
 Div(y); y = y + 8
 
--- GENERATOR
 Cat("⚡ GENERATOR", y); y = y + 24
 Tog("🔄 Auto Gen", y, "autoGenerator"); y = y + 28
 Tog("🚀 Tele Gen", y, "teleportGen"); y = y + 28
@@ -1449,12 +1441,10 @@ end, Color3.fromRGB(120, 60, 0))
 y = y + 28
 Div(y); y = y + 8
 
--- ESCAPE
 Cat("🚪 ESCAPE", y); y = y + 24
 Tog("🚪 Auto Escape", y, "autoEscape"); y = y + 28
 Div(y); y = y + 8
 
--- VD NEW
 Cat("🔥 VD", y); y = y + 24
 Tog("🧱 Vault", y, "autoVault"); y = y + 28
 Tog("🔦 Flash", y, "autoFlashlight"); y = y + 28
@@ -1468,7 +1458,6 @@ Tog("🐢 Slow", y, "autoSlowWalk"); y = y + 28
 Tog("🔄 Spin", y, "autoSpin"); y = y + 28
 Div(y); y = y + 8
 
--- ULTIMATE
 Cat("💎 ULTIMATE", y); y = y + 24
 Tog("💀 Kill Aura", y, "autoKillAura"); y = y + 28
 Tog("📦 Loot", y, "autoGrabLoot"); y = y + 28
@@ -1478,14 +1467,12 @@ Tog("🔄 Respawn", y, "autoRespawn"); y = y + 28
 Tog("💊 Use Item", y, "autoUseItem"); y = y + 28
 Div(y); y = y + 8
 
--- SAVE TEMEN
 Cat("🆘 SAVE", y); y = y + 24
 Tog("🆘 Auto Save", y, "autoSave"); y = y + 28
 Btn("🆘 Save Now", y, function() ManualSaveNearest() end, Color3.fromRGB(0, 150, 100))
 y = y + 28
 Div(y); y = y + 8
 
--- MOVEMENT
 Cat("🏃 MOVEMENT", y); y = y + 24
 Tog("⚡ Speed", y, "speedHack"); y = y + 28
 Tog("🕊️ Fly", y, "fly"); y = y + 28
@@ -1493,12 +1480,10 @@ Tog("🧱 NoClip", y, "noClip"); y = y + 28
 Tog("🌙 Moon", y, "moonWalk"); y = y + 28
 Div(y); y = y + 8
 
--- STEALTH
 Cat("👻 STEALTH", y); y = y + 24
 Tog("👻 Invisible", y, "invisible"); y = y + 28
 Div(y); y = y + 8
 
--- LYNX
 Cat("🔥 LYNX", y); y = y + 24
 Tog("🤲 Grab", y, "autoGrab"); y = y + 28
 Tog("📤 Drop", y, "autoDrop"); y = y + 28
@@ -1509,7 +1494,6 @@ Tog("🪑 Crouch", y, "autoCrouch"); y = y + 28
 Tog("🦘 Jump", y, "autoJump"); y = y + 28
 Div(y); y = y + 8
 
--- UTILITY
 Cat("🔧 UTILITY", y); y = y + 24
 Tog("🚫 Anti AFK", y, "antiAFK"); y = y + 28
 Btn("🔄 Reset", y, function()
@@ -1531,9 +1515,9 @@ Logo.MouseButton1Click:Connect(function()
     Menu.Visible = not Menu.Visible
 end)
 
-print("✅ ZIP HUB (FINAL) Loaded!")
+print("✅ ZIP HUB (FINAL - GABUNGAN ALL FIX) Loaded!")
 print("✅ 35+ Fitur siap pakai!")
+print("✅ Menu TERANG & BISA DIKLIK!")
 print("✅ Fly Speed 300 + Support Mobile/PC!")
 print("✅ Auto Generator langsung jadi!")
-print("✅ GUI Minimalis Keren (370x520)!")
 print("✅ Klik LOGO ZH untuk buka menu!")
