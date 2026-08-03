@@ -19,7 +19,7 @@ local CollectionService = game:GetService("CollectionService")
 -- ========================================
 -- 🔥 VARIABEL
 -- ========================================
-local flyActive = false
+local flyActive = true
 local flyBody = nil
 local flyPos = nil
 local flyConn = nil
