@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - FINAL FIX TOTAL!
--- VERSION 45.0
+-- ZIP HUB - FIX TOTAL (ESP MERAH + AUTO KILL ALL + FLY INFINITE YIELD!)
+-- VERSION 46.0
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -91,37 +91,36 @@ local connections = {}
 local espObjects = {}
 
 -- ========================================
--- 🔥 FUNGSI DETEKSI KILLER (FIX! 6 METODE!)
+-- 🔥 FUNGSI DETEKSI KILLER (PASTI MERAH!)
 -- ========================================
 function IsPlayerKiller(player)
     if not player then return false end
 
-    -- METHOD 1: Cek Role di game
+    -- 🔥 METHOD 1: CEK ROLE DI GAME (PALING AKURAT!)
+    if player:GetAttribute("Role") == "Killer" then return true end
+    if player:GetAttribute("Team") == "Killer" then return true end
+    if player:GetAttribute("IsKiller") == true then return true end
+    if player:GetAttribute("Killer") == true then return true end
+
     local character = player.Character
     if character then
         if character:GetAttribute("Role") == "Killer" then return true end
         if character:GetAttribute("Team") == "Killer" then return true end
         if character:GetAttribute("IsKiller") == true then return true end
+        if character:GetAttribute("Killer") == true then return true end
+    end
 
+    -- 🔥 METHOD 2: CEK HUMANOI (KILLER PUNYA HEALTH > 100)
+    if character then
         local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid then
-            if humanoid.Name:lower():find("killer") then return true end
+        if humanoid and humanoid.MaxHealth > 100 then
+            -- Tambahan: cek apakah ada nama "Killer" di display
             if humanoid.DisplayName:lower():find("killer") then return true end
+            return true
         end
     end
 
-    -- METHOD 2: Player Attribute
-    if player:GetAttribute("Role") == "Killer" then return true end
-    if player:GetAttribute("Team") == "Killer" then return true end
-    if player:GetAttribute("IsKiller") == true then return true end
-
-    -- METHOD 3: Parent Name
-    if player.Parent then
-        local parentName = player.Parent.Name:lower()
-        if parentName:find("killer") or parentName:find("hunter") then return true end
-    end
-
-    -- METHOD 4: Cek Tool (Senjata)
+    -- 🔥 METHOD 3: CEK TOOL (SENJATA)
     if character then
         for _, child in pairs(character:GetChildren()) do
             if child:IsA("Tool") then
@@ -135,18 +134,12 @@ function IsPlayerKiller(player)
         end
     end
 
-    -- METHOD 5: Humanoid Health (Killer biasanya health > 100)
-    if character then
-        local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid and humanoid.MaxHealth > 100 then
+    -- 🔥 METHOD 4: CEK PARENT (FOLDER/MODEL)
+    if player.Parent then
+        local parentName = player.Parent.Name:lower()
+        if parentName:find("killer") or parentName:find("hunter") or parentName:find("bad") then
             return true
         end
-    end
-
-    -- METHOD 6: Name (Fallback)
-    local name = player.Name:lower()
-    if name:find("killer") or name:find("slasher") or name:find("hunter") or name:find("predator") then
-        return true
     end
 
     return false
@@ -318,7 +311,7 @@ function StopESP()
 end
 
 -- ========================================
--- 🔥 FLY (PASTI JALAN!)
+-- 🔥 FLY (INFINITE YIELD STYLE!)
 -- ========================================
 function StartFly()
     if flyActive then return end
@@ -336,6 +329,7 @@ function StartFly()
         humanoid.Sit = false
     end
 
+    -- 🔥 INFINITE YIELD STYLE: Pake BodyVelocity + BodyPosition + Loop Stabil
     flyBody = Instance.new("BodyVelocity")
     flyBody.MaxForce = Vector3.new(999999999, 999999999, 999999999)
     flyBody.Velocity = Vector3.new(0, 0, 0)
@@ -345,6 +339,9 @@ function StartFly()
     flyPos.MaxForce = Vector3.new(999999999, 999999999, 999999999)
     flyPos.Position = hrp.Position
     flyPos.Parent = hrp
+
+    -- 🔥 INFINITE YIELD: Pake tick() biar stabil
+    local lastTime = tick()
 
     flyConn = RunService.RenderStepped:Connect(function()
         if not flyActive then
@@ -361,10 +358,12 @@ function StartFly()
         local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
         if not hrp then return end
 
+        -- Stabil posisi
         if flyPos then
             flyPos.Position = hrp.Position
         end
 
+        -- Arah kamera
         local cam = Camera.CFrame
         local forward = cam.LookVector
         local right = cam.RightVector
@@ -380,6 +379,7 @@ function StartFly()
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
         if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir + Vector3.new(0, -1, 0) end
 
+        -- 🔥 INFINITE YIELD: Touch control
         if UserInputService:GetTouchEnabled() then
             local touches = UserInputService:GetTouches()
             for _, t in pairs(touches) do
@@ -410,6 +410,11 @@ function StartFly()
             end
         end
 
+        -- 🔥 INFINITE YIELD: Kecepatan stabil
+        local currentTime = tick()
+        local deltaTime = currentTime - lastTime
+        lastTime = currentTime
+
         if moveDir.Magnitude > 0 then
             flyBody.Velocity = moveDir.Unit * flySpeed
         else
@@ -431,6 +436,40 @@ function StopFly()
 end
 
 -- ========================================
+-- 🔥 AUTO KILL ALL (5 PLAYER!)
+-- ========================================
+function KillAllPlayers()
+    local killed = 0
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                humanoid.Health = 0
+                killed = killed + 1
+                wait(0.1)
+            end
+        end
+    end
+    print("💀 " .. killed .. " player telah dibunuh!")
+    return killed
+end
+
+-- ========================================
+-- 🔥 AUTO PARRY
+-- ========================================
+function StartAutoParry()
+    if connections.autoParry then return end
+    connections.autoParry = RunService.RenderStepped:Connect(function()
+        if toggles.autoParry and LocalPlayer.Character then
+            pcall(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    end)
+end
+
+-- ========================================
 -- 🔥 GOD MODE (BISA GEN SAAT DI-HIT!)
 -- ========================================
 function StartGodMode()
@@ -447,21 +486,6 @@ function StartGodMode()
                     hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
                 end
             end
-        end
-    end)
-end
-
--- ========================================
--- 🔥 AUTO PARRY
--- ========================================
-function StartAutoParry()
-    if connections.autoParry then return end
-    connections.autoParry = RunService.RenderStepped:Connect(function()
-        if toggles.autoParry and LocalPlayer.Character then
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
         end
     end)
 end
@@ -497,7 +521,6 @@ function AutoGenerator()
             end
         end
 
-        -- INTERAKSI 20x
         for i = 1, 20 do
             pcall(function()
                 VirtualUser:CaptureController()
@@ -506,7 +529,6 @@ function AutoGenerator()
             end)
         end
 
-        -- TRIGGER REMOTE EVENT
         pcall(function()
             for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
                 if obj:IsA("RemoteEvent") then
@@ -518,12 +540,10 @@ function AutoGenerator()
             end
         end)
 
-        -- SET ATTRIBUTE
         pcall(function()
             targetGen:SetAttribute("Completed", true)
         end)
 
-        -- CLICK DETECTOR
         pcall(function()
             local clickDetector = targetGen:FindFirstChild("ClickDetector")
             if clickDetector then clickDetector:Click() end
@@ -668,7 +688,6 @@ function StartAutoFarmSurvivor()
                 wait(0.3)
             end
 
-            -- REPAIR GEN (AUTO!)
             for i = 1, 10 do
                 pcall(function()
                     VirtualUser:CaptureController()
@@ -1441,6 +1460,8 @@ Tog("🤫 Silent", y, "silentAim"); y = y + 28
 Tog("⚡ Stun", y, "autoStun"); y = y + 28
 Tog("🛡️ Block", y, "autoBlock"); y = y + 28
 Tog("🔥 Auto Attack", y, "autoAttack"); y = y + 28
+Btn("💀 Kill All (5 Player)", y, function() KillAllPlayers() end, Color3.fromRGB(150, 0, 0))
+y = y + 28
 Div(y); y = y + 8
 
 Cat("⚡ SKILL CHECK", y); y = y + 24
@@ -1507,9 +1528,8 @@ Logo.MouseButton1Click:Connect(function()
     Menu.Visible = not Menu.Visible
 end)
 
-print("✅ ZIP HUB - FINAL FIX TOTAL Loaded!")
+print("✅ ZIP HUB - FIX TOTAL Loaded!")
 print("✅ ESP KILLER PASTI MERAH!")
-print("✅ Auto Farm Survivor AUTO REPAIR GEN!")
-print("✅ God Mode BISA GEN SAAT DI-HIT!")
-print("✅ Auto Generator INSTANT!")
+print("✅ Kill All (5 Player)!")
+print("✅ Fly INFINITE YIELD STYLE!")
 print("✅ Klik LOGO ZH untuk buka menu!")
