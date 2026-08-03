@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB + LYNX (NO VISUAL!)
--- VERSION 32.0
+-- ZIP HUB + LYNX (35+ FITUR!)
+-- VERSION 34.0 (FINAL - GUI MINIMALIS)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -20,7 +20,7 @@ local Lighting = game:GetService("Lighting")
 local flyActive = false
 local flyBody = nil
 local flyConn = nil
-local flySpeed = 200
+local flySpeed = 300
 local silentAimActive = false
 local silentAimConn = nil
 local antiAFKConn = nil
@@ -126,40 +126,104 @@ function KillAll()
 end
 
 -- ========================================
--- 🔥 FLY (NO VISUAL)
+-- 🔥 FLY (MOBILE + PC SUPPORT!)
 -- ========================================
 function StartFly()
     if flyActive then return end
     flyActive = true
+    
     local char = LocalPlayer.Character
     if not char then flyActive = false; return end
+    
     local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
     if not hrp then flyActive = false; return end
+    
     local humanoid = char:FindFirstChild("Humanoid")
-    if humanoid then humanoid.PlatformStand = true end
+    if humanoid then
+        humanoid.PlatformStand = true
+        humanoid.Sit = false
+    end
+    
     flyBody = Instance.new("BodyVelocity")
-    flyBody.MaxForce = Vector3.new(999999, 999999, 999999)
+    flyBody.MaxForce = Vector3.new(999999999, 999999999, 999999999)
     flyBody.Velocity = Vector3.new(0, 0, 0)
     flyBody.Parent = hrp
+    
     flyConn = RunService.RenderStepped:Connect(function()
         if not flyActive or not flyBody then return end
         if not LocalPlayer.Character then return end
+        
         local char = LocalPlayer.Character
         local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
         if not hrp then return end
+        
         local cam = Camera.CFrame
-        local forward = cam.LookVector * Vector3.new(1, 0, 1)
-        local right = cam.RightVector * Vector3.new(1, 0, 1)
-        if forward.Magnitude > 0 then forward = forward.Unit end
-        if right.Magnitude > 0 then right = right.Unit end
-        local move = Vector3.new()
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + forward end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - forward end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - right end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + right end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then move = move + Vector3.new(0, -1, 0) end
-        if move.Magnitude > 0 then flyBody.Velocity = move.Unit * flySpeed else flyBody.Velocity = Vector3.new(0, 0.5, 0) end
+        local forward = cam.LookVector
+        local right = cam.RightVector
+        
+        local flatForward = Vector3.new(forward.X, 0, forward.Z).Unit
+        local flatRight = Vector3.new(right.X, 0, right.Z).Unit
+        
+        local moveDir = Vector3.new()
+        
+        -- PC CONTROL
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDir = moveDir + flatForward
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDir = moveDir - flatForward
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDir = moveDir - flatRight
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir = moveDir + flatRight
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDir = moveDir + Vector3.new(0, 1, 0)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            moveDir = moveDir + Vector3.new(0, -1, 0)
+        end
+        
+        -- MOBILE CONTROL
+        if UserInputService:GetTouchEnabled() then
+            local touches = UserInputService:GetTouches()
+            for _, t in pairs(touches) do
+                local pos = t.Position
+                local screenSize = Camera.ViewportSize
+                local centerX = screenSize.X / 2
+                local centerY = screenSize.Y / 2
+                
+                if pos.X < centerX and pos.Y > centerY then
+                    local dx = (pos.X - centerX) / centerX
+                    local dy = (pos.Y - centerY) / centerY
+                    dx = math.clamp(dx, -1, 1)
+                    dy = math.clamp(dy, -1, 1)
+                    
+                    if math.abs(dx) > 0.2 or math.abs(dy) > 0.2 then
+                        moveDir = moveDir + flatForward * -dy + flatRight * dx
+                    end
+                end
+                
+                if pos.X > centerX and pos.Y > centerY then
+                    local dy = (pos.Y - centerY) / centerY
+                    dy = math.clamp(dy, -1, 1)
+                    
+                    if dy < -0.3 then
+                        moveDir = moveDir + Vector3.new(0, 1, 0)
+                    elseif dy > 0.3 then
+                        moveDir = moveDir + Vector3.new(0, -1, 0)
+                    end
+                end
+            end
+        end
+        
+        if moveDir.Magnitude > 0 then
+            flyBody.Velocity = moveDir.Unit * flySpeed
+        else
+            flyBody.Velocity = Vector3.new(0, 0.5, 0)
+        end
     end)
 end
 
@@ -304,41 +368,64 @@ function ESPPallet(state)
 end
 
 -- ========================================
--- 🔥 AUTO GENERATOR
+-- 🔥 AUTO GENERATOR (FIX - LANGSUNG JADI!)
 -- ========================================
 function AutoGenerator()
     if not LocalPlayer.Character then return end
     local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso")
     if not hrp then return end
     
-    if toggles.teleportGen then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-                if (hrp.Position - obj.Position).Magnitude > 20 then
-                    hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                    wait(0.3)
-                end
-                break
+    local targetGen = nil
+    local targetPos = nil
+    local nearestDist = math.huge
+    
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (
+            obj.Name:lower():find("generator") or 
+            obj.Name:lower():find("gen") or
+            obj.Name:lower():find("power") or
+            obj.Name:lower():find("engine")
+        ) then
+            local dist = (hrp.Position - obj.Position).Magnitude
+            if dist < nearestDist then
+                nearestDist = dist
+                targetGen = obj
+                targetPos = obj.Position
             end
         end
     end
     
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-            local dist = (hrp.Position - obj.Position).Magnitude
-            if dist < 15 then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.5)
-                end)
-            else
-                pcall(function()
-                    hrp.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                end)
+    if targetGen and targetPos then
+        if nearestDist > 5 then
+            if toggles.teleportGen then
+                hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
+                wait(0.3)
             end
-            break
         end
+        
+        for i = 1, 10 do
+            pcall(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+                wait(0.05)
+            end)
+        end
+        
+        pcall(function()
+            for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+                if obj:IsA("RemoteEvent") then
+                    local name = obj.Name:lower()
+                    if name:find("generator") or name:find("gen") or name:find("power") or name:find("complete") or name:find("finish") then
+                        pcall(function() obj:FireServer(targetGen) end)
+                    end
+                end
+            end
+        end)
+        
+        pcall(function()
+            local clickDetector = targetGen:FindFirstChild("ClickDetector")
+            if clickDetector then clickDetector:Click() end
+        end)
     end
 end
 
@@ -1106,24 +1193,25 @@ function ToggleFeature(key, state)
 end
 
 -- ========================================
--- 🎨 GUI (NO VISUAL!)
+-- 🎨 GUI MINIMALIS KEREN
 -- ========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
 ScreenGui.Name = "ZipHub"
 ScreenGui.ResetOnSpawn = false
 
+-- LOGO
 local Logo = Instance.new("TextButton")
 Logo.Parent = ScreenGui
-Logo.Size = UDim2.new(0, 60, 0, 60)
+Logo.Size = UDim2.new(0, 55, 0, 55)
 Logo.Position = UDim2.new(0, 10, 0, 10)
 Logo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Logo.BackgroundTransparency = 0
-Logo.BorderSizePixel = 3
+Logo.BorderSizePixel = 2
 Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
 Logo.Text = "ZH"
 Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
-Logo.TextSize = 25
+Logo.TextSize = 22
 Logo.Font = Enum.Font.GothamBlack
 Logo.TextScaled = true
 Logo.Draggable = true
@@ -1134,35 +1222,50 @@ LogoCorner.CornerRadius = UDim.new(1, 0)
 
 local LogoLabel = Instance.new("TextLabel")
 LogoLabel.Parent = ScreenGui
-LogoLabel.Size = UDim2.new(0, 60, 0, 16)
-LogoLabel.Position = UDim2.new(0, 10, 0, 72)
+LogoLabel.Size = UDim2.new(0, 60, 0, 14)
+LogoLabel.Position = UDim2.new(0, 10, 0, 67)
 LogoLabel.BackgroundTransparency = 1
 LogoLabel.Text = "ZIP HUB"
 LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-LogoLabel.TextSize = 10
+LogoLabel.TextSize = 9
 LogoLabel.Font = Enum.Font.GothamBold
 
+-- ========================================
+-- MENU (MINIMALIS - 370x520)
+-- ========================================
 local Menu = Instance.new("Frame")
 Menu.Parent = ScreenGui
-Menu.Size = UDim2.new(0, 460, 0, 700)
-Menu.Position = UDim2.new(0.5, -230, 0.5, -350)
-Menu.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
-Menu.BackgroundTransparency = 0
-Menu.BorderSizePixel = 3
-Menu.BorderColor3 = Color3.fromRGB(255, 0, 0)
-Menu.Visible = false
+Menu.Size = UDim2.new(0, 370, 0, 520)
+Menu.Position = UDim2.new(0.5, -185, 0.5, -260)
+Menu.BackgroundColor3 = Color3.fromRGB(10, 10, 25)
+Menu.BackgroundTransparency = 0.1
+Menu.BorderSizePixel = 2
+Menu.BorderColor3 = Color3.fromRGB(255, 50, 50)
+Menu.ClipsDescendants = true
 Menu.Active = true
 Menu.Draggable = true
+Menu.Visible = false
+Menu.ZIndex = 50
+
+-- Glassmorphism
+local GlassBg = Instance.new("Frame")
+GlassBg.Parent = Menu
+GlassBg.Size = UDim2.new(1, 0, 1, 0)
+GlassBg.BackgroundColor3 = Color3.fromRGB(20, 20, 45)
+GlassBg.BackgroundTransparency = 0.8
+GlassBg.BorderSizePixel = 0
 
 local MenuCorner = Instance.new("UICorner")
 MenuCorner.Parent = Menu
 MenuCorner.CornerRadius = UDim.new(0, 12)
 
+-- HEADER (35px)
 local Header = Instance.new("Frame")
 Header.Parent = Menu
-Header.Size = UDim2.new(1, 0, 0, 40)
+Header.Size = UDim2.new(1, 0, 0, 35)
+Header.Position = UDim2.new(0, 0, 0, 0)
 Header.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-Header.BackgroundTransparency = 0
+Header.BackgroundTransparency = 0.85
 Header.BorderSizePixel = 0
 
 local HeaderCorner = Instance.new("UICorner")
@@ -1173,21 +1276,23 @@ local Title = Instance.new("TextLabel")
 Title.Parent = Header
 Title.Size = UDim2.new(1, 0, 1, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ ZIP HUB ⚡"
+Title.Text = "⚡ ZIP HUB"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 18
+Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
 
+-- CLOSE (bulat kecil)
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = Header
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Size = UDim2.new(0, 22, 0, 22)
+CloseBtn.Position = UDim2.new(1, -28, 0, 6)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 16
+CloseBtn.TextSize = 12
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
+CloseBtn.BackgroundTransparency = 0
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.Parent = CloseBtn
@@ -1197,26 +1302,29 @@ CloseBtn.MouseButton1Click:Connect(function()
     Menu.Visible = false
 end)
 
+-- SCROLL
 local Scroll = Instance.new("ScrollingFrame")
 Scroll.Parent = Menu
-Scroll.Size = UDim2.new(1, -10, 1, -50)
-Scroll.Position = UDim2.new(0, 5, 0, 45)
+Scroll.Size = UDim2.new(1, -12, 1, -45)
+Scroll.Position = UDim2.new(0, 6, 0, 40)
 Scroll.BackgroundTransparency = 1
 Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.ScrollBarThickness = 4
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
+Scroll.ScrollBarThickness = 3
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
 Scroll.BorderSizePixel = 0
 
--- UI FUNGSI (NO VISUAL)
+-- ========================================
+-- UI FUNGSI (MINIMALIS)
+-- ========================================
 local function Cat(text, y)
     local c = Instance.new("TextLabel")
     c.Parent = Scroll
-    c.Size = UDim2.new(1, -10, 0, 25)
+    c.Size = UDim2.new(1, -10, 0, 22)
     c.Position = UDim2.new(0, 0, 0, y)
     c.BackgroundTransparency = 1
     c.Text = "▸ " .. text
     c.TextColor3 = Color3.fromRGB(255, 100, 100)
-    c.TextSize = 14
+    c.TextSize = 12
     c.Font = Enum.Font.GothamBold
     c.TextXAlignment = Enum.TextXAlignment.Left
 end
@@ -1224,26 +1332,26 @@ end
 local function Div(y)
     local d = Instance.new("Frame")
     d.Parent = Scroll
-    d.Size = UDim2.new(0.9, 0, 0, 2)
+    d.Size = UDim2.new(0.9, 0, 0, 1)
     d.Position = UDim2.new(0.05, 0, 0, y)
-    d.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    d.BackgroundTransparency = 0
+    d.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    d.BackgroundTransparency = 0.5
     d.BorderSizePixel = 0
 end
 
 local function Btn(text, y, cb, color)
     local b = Instance.new("TextButton")
     b.Parent = Scroll
-    b.Size = UDim2.new(1, -10, 0, 30)
+    b.Size = UDim2.new(1, -10, 0, 26)
     b.Position = UDim2.new(0, 0, 0, y)
     b.BackgroundColor3 = color or Color3.fromRGB(50, 50, 80)
-    b.BackgroundTransparency = 0
+    b.BackgroundTransparency = 0.2
     b.Text = text
     b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.TextSize = 12
+    b.TextSize = 11
     b.Font = Enum.Font.GothamMedium
-    b.BorderSizePixel = 2
-    b.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    b.BorderSizePixel = 1
+    b.BorderColor3 = Color3.fromRGB(255, 50, 50)
     local c = Instance.new("UICorner")
     c.Parent = b
     c.CornerRadius = UDim.new(0, 6)
@@ -1253,40 +1361,40 @@ end
 local function Tog(text, y, key)
     local frame = Instance.new("Frame")
     frame.Parent = Scroll
-    frame.Size = UDim2.new(1, -10, 0, 30)
+    frame.Size = UDim2.new(1, -10, 0, 26)
     frame.Position = UDim2.new(0, 0, 0, y)
     frame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    frame.BackgroundTransparency = 0
-    frame.BorderSizePixel = 2
-    frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+    frame.BackgroundTransparency = 0.3
+    frame.BorderSizePixel = 1
+    frame.BorderColor3 = Color3.fromRGB(255, 50, 50)
     local c = Instance.new("UICorner")
     c.Parent = frame
     c.CornerRadius = UDim.new(0, 6)
 
     local label = Instance.new("TextLabel")
     label.Parent = frame
-    label.Size = UDim2.new(0.55, 0, 1, 0)
-    label.Position = UDim2.new(0, 8, 0, 0)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Position = UDim2.new(0, 6, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 11
+    label.TextColor3 = Color3.fromRGB(220, 220, 255)
+    label.TextSize = 10
     label.Font = Enum.Font.GothamMedium
     label.TextXAlignment = Enum.TextXAlignment.Left
 
     local btn = Instance.new("TextButton")
     btn.Parent = frame
-    btn.Size = UDim2.new(0, 50, 0, 22)
-    btn.Position = UDim2.new(1, -56, 0, 4)
+    btn.Size = UDim2.new(0, 40, 0, 18)
+    btn.Position = UDim2.new(1, -46, 0, 4)
     btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     btn.Text = "OFF"
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 11
+    btn.TextSize = 9
     btn.Font = Enum.Font.GothamBold
     btn.BorderSizePixel = 0
     local tc = Instance.new("UICorner")
     tc.Parent = btn
-    tc.CornerRadius = UDim.new(0, 5)
+    tc.CornerRadius = UDim.new(0, 4)
 
     btn.MouseButton1Click:Connect(function()
         local state = not toggles[key]
@@ -1297,35 +1405,38 @@ local function Tog(text, y, key)
 end
 
 -- ========================================
--- 📋 MENU
+-- 📋 MENU (MINIMALIS)
 -- ========================================
-local y = 5
+local y = 2
 
-Cat("⚔️ COMBAT", y); y = y + 28
-Tog("🛡️ Auto Parry", y, "autoParry"); y = y + 34
-Tog("💀 God Mode", y, "godMode"); y = y + 34
-Tog("💚 Auto Heal", y, "autoHeal"); y = y + 34
-Tog("🔫 Auto Shoot", y, "autoShoot"); y = y + 34
-Tog("🤫 Silent Aim", y, "silentAim"); y = y + 34
-Tog("⚡ Auto Stun", y, "autoStun"); y = y + 34
-Tog("🛡️ Auto Block", y, "autoBlock"); y = y + 34
-Tog("💨 Auto Dodge", y, "autoDodge"); y = y + 34
-Btn("💥 One Hit Kill", y, function() KillAll() end, Color3.fromRGB(100, 0, 0))
-y = y + 34
-Div(y); y = y + 12
+-- COMBAT
+Cat("⚔️ COMBAT", y); y = y + 24
+Tog("🛡️ Parry", y, "autoParry"); y = y + 28
+Tog("💀 God", y, "godMode"); y = y + 28
+Tog("💚 Heal", y, "autoHeal"); y = y + 28
+Tog("🔫 Shoot", y, "autoShoot"); y = y + 28
+Tog("🤫 Silent", y, "silentAim"); y = y + 28
+Tog("⚡ Stun", y, "autoStun"); y = y + 28
+Tog("🛡️ Block", y, "autoBlock"); y = y + 28
+Tog("💨 Dodge", y, "autoDodge"); y = y + 28
+Btn("💥 OHK", y, function() KillAll() end, Color3.fromRGB(100, 0, 0))
+y = y + 28
+Div(y); y = y + 8
 
-Cat("👁️ ESP", y); y = y + 28
-Tog("🔴 ESP Player", y, "espPlayer"); y = y + 34
-Tog("🔴 ESP Killer", y, "espKiller"); y = y + 34
-Tog("🟢 ESP Generator", y, "espGenerator"); y = y + 34
-Tog("🟡 ESP Gate", y, "espGate"); y = y + 34
-Tog("🟠 ESP Pallet", y, "espPallet"); y = y + 34
-Div(y); y = y + 12
+-- ESP
+Cat("👁️ ESP", y); y = y + 24
+Tog("🔴 Player", y, "espPlayer"); y = y + 28
+Tog("🔴 Killer", y, "espKiller"); y = y + 28
+Tog("🟢 Gen", y, "espGenerator"); y = y + 28
+Tog("🟡 Gate", y, "espGate"); y = y + 28
+Tog("🟠 Pallet", y, "espPallet"); y = y + 28
+Div(y); y = y + 8
 
-Cat("⚡ GENERATOR", y); y = y + 28
-Tog("🔄 Auto Generator", y, "autoGenerator"); y = y + 34
-Tog("🚀 Teleport ke Gen", y, "teleportGen"); y = y + 34
-Btn("📦 Drop All Palette", y, function()
+-- GENERATOR
+Cat("⚡ GENERATOR", y); y = y + 24
+Tog("🔄 Auto Gen", y, "autoGenerator"); y = y + 28
+Tog("🚀 Tele Gen", y, "teleportGen"); y = y + 28
+Btn("📦 Drop Pallet", y, function()
     local inv = LocalPlayer:FindFirstChild("Inventory")
     if inv then
         for _, item in pairs(inv:GetChildren()) do
@@ -1335,64 +1446,72 @@ Btn("📦 Drop All Palette", y, function()
         end
     end
 end, Color3.fromRGB(120, 60, 0))
-y = y + 34
-Div(y); y = y + 12
+y = y + 28
+Div(y); y = y + 8
 
-Cat("🚪 ESCAPE", y); y = y + 28
-Tog("🚪 Auto Escape", y, "autoEscape"); y = y + 34
-Div(y); y = y + 12
+-- ESCAPE
+Cat("🚪 ESCAPE", y); y = y + 24
+Tog("🚪 Auto Escape", y, "autoEscape"); y = y + 28
+Div(y); y = y + 8
 
-Cat("🔥 VD NEW", y); y = y + 28
-Tog("🧱 Auto Vault", y, "autoVault"); y = y + 34
-Tog("🔦 Auto Flashlight", y, "autoFlashlight"); y = y + 34
-Tog("⚡ Auto Perk", y, "autoPerk"); y = y + 34
-Tog("🔧 Auto Repair", y, "autoRepair"); y = y + 34
-Tog("💣 Auto Sabotage", y, "autoSabotage"); y = y + 34
-Tog("👻 Auto Hide", y, "autoHide"); y = y + 34
-Tog("🏃 Auto Run", y, "autoRun"); y = y + 34
-Tog("🪑 Auto Crouch Walk", y, "autoCrouchWalk"); y = y + 34
-Tog("🐢 Auto Slow Walk", y, "autoSlowWalk"); y = y + 34
-Tog("🔄 Auto Spin", y, "autoSpin"); y = y + 34
-Div(y); y = y + 12
+-- VD NEW
+Cat("🔥 VD", y); y = y + 24
+Tog("🧱 Vault", y, "autoVault"); y = y + 28
+Tog("🔦 Flash", y, "autoFlashlight"); y = y + 28
+Tog("⚡ Perk", y, "autoPerk"); y = y + 28
+Tog("🔧 Repair", y, "autoRepair"); y = y + 28
+Tog("💣 Sabotage", y, "autoSabotage"); y = y + 28
+Tog("👻 Hide", y, "autoHide"); y = y + 28
+Tog("🏃 Run", y, "autoRun"); y = y + 28
+Tog("🪑 Crouch W", y, "autoCrouchWalk"); y = y + 28
+Tog("🐢 Slow", y, "autoSlowWalk"); y = y + 28
+Tog("🔄 Spin", y, "autoSpin"); y = y + 28
+Div(y); y = y + 8
 
-Cat("💎 ULTIMATE", y); y = y + 28
-Tog("💀 Auto Kill Aura", y, "autoKillAura"); y = y + 34
-Tog("📦 Auto Grab Loot", y, "autoGrabLoot"); y = y + 34
-Btn("📦 Teleport to Player", y, function() TeleportToPlayer() end, Color3.fromRGB(0, 100, 150))
-y = y + 34
-Tog("🔄 Auto Respawn", y, "autoRespawn"); y = y + 34
-Tog("💊 Auto Use Item", y, "autoUseItem"); y = y + 34
-Div(y); y = y + 12
+-- ULTIMATE
+Cat("💎 ULTIMATE", y); y = y + 24
+Tog("💀 Kill Aura", y, "autoKillAura"); y = y + 28
+Tog("📦 Loot", y, "autoGrabLoot"); y = y + 28
+Btn("📦 Teleport", y, function() TeleportToPlayer() end, Color3.fromRGB(0, 100, 150))
+y = y + 28
+Tog("🔄 Respawn", y, "autoRespawn"); y = y + 28
+Tog("💊 Use Item", y, "autoUseItem"); y = y + 28
+Div(y); y = y + 8
 
-Cat("🆘 SAVE TEMEN", y); y = y + 28
-Tog("🆘 Auto Save Temen", y, "autoSave"); y = y + 34
-Btn("🆘 Save Temen Terdekat", y, function() ManualSaveNearest() end, Color3.fromRGB(0, 150, 100))
-y = y + 34
-Div(y); y = y + 12
+-- SAVE TEMEN
+Cat("🆘 SAVE", y); y = y + 24
+Tog("🆘 Auto Save", y, "autoSave"); y = y + 28
+Btn("🆘 Save Now", y, function() ManualSaveNearest() end, Color3.fromRGB(0, 150, 100))
+y = y + 28
+Div(y); y = y + 8
 
-Cat("🏃 MOVEMENT", y); y = y + 28
-Tog("⚡ Speed Hack", y, "speedHack"); y = y + 34
-Tog("🕊️ Fly Mode", y, "fly"); y = y + 34
-Tog("🧱 No Clip", y, "noClip"); y = y + 34
-Tog("🌙 Moon Walk", y, "moonWalk"); y = y + 34
-Div(y); y = y + 12
+-- MOVEMENT
+Cat("🏃 MOVEMENT", y); y = y + 24
+Tog("⚡ Speed", y, "speedHack"); y = y + 28
+Tog("🕊️ Fly", y, "fly"); y = y + 28
+Tog("🧱 NoClip", y, "noClip"); y = y + 28
+Tog("🌙 Moon", y, "moonWalk"); y = y + 28
+Div(y); y = y + 8
 
-Cat("👻 STEALTH", y); y = y + 28
-Tog("👻 Invisible", y, "invisible"); y = y + 34
-Div(y); y = y + 12
+-- STEALTH
+Cat("👻 STEALTH", y); y = y + 24
+Tog("👻 Invisible", y, "invisible"); y = y + 28
+Div(y); y = y + 8
 
-Cat("🔥 LYNX", y); y = y + 28
-Tog("🤲 Auto Grab", y, "autoGrab"); y = y + 34
-Tog("📤 Auto Drop", y, "autoDrop"); y = y + 34
-Tog("📥 Auto Pickup", y, "autoPickup"); y = y + 34
-Tog("🔧 Auto Use", y, "autoUse"); y = y + 34
-Tog("🏃 Auto Sprint", y, "autoSprint"); y = y + 34
-Tog("🪑 Auto Crouch", y, "autoCrouch"); y = y + 34
-Tog("🦘 Auto Jump", y, "autoJump"); y = y + 34
-Div(y); y = y + 12
+-- LYNX
+Cat("🔥 LYNX", y); y = y + 24
+Tog("🤲 Grab", y, "autoGrab"); y = y + 28
+Tog("📤 Drop", y, "autoDrop"); y = y + 28
+Tog("📥 Pickup", y, "autoPickup"); y = y + 28
+Tog("🔧 Use", y, "autoUse"); y = y + 28
+Tog("🏃 Sprint", y, "autoSprint"); y = y + 28
+Tog("🪑 Crouch", y, "autoCrouch"); y = y + 28
+Tog("🦘 Jump", y, "autoJump"); y = y + 28
+Div(y); y = y + 8
 
-Cat("🔧 UTILITY", y); y = y + 28
-Tog("🚫 Anti AFK", y, "antiAFK"); y = y + 34
+-- UTILITY
+Cat("🔧 UTILITY", y); y = y + 24
+Tog("🚫 Anti AFK", y, "antiAFK"); y = y + 28
 Btn("🔄 Reset", y, function()
     for k, _ in pairs(toggles) do
         toggles[k] = false
@@ -1401,9 +1520,9 @@ Btn("🔄 Reset", y, function()
     StopFly(); StopSilentAim(); StopAntiAFK(); StopAutoSave()
     if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
 end, Color3.fromRGB(100, 0, 0))
-y = y + 34
+y = y + 28
 
-Scroll.CanvasSize = UDim2.new(0, 0, 0, y + 20)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
 
 -- ========================================
 -- LOGO KLIK
@@ -1412,5 +1531,9 @@ Logo.MouseButton1Click:Connect(function()
     Menu.Visible = not Menu.Visible
 end)
 
-print("✅ ZIP HUB (NO VISUAL!) Loaded!")
+print("✅ ZIP HUB (FINAL) Loaded!")
+print("✅ 35+ Fitur siap pakai!")
+print("✅ Fly Speed 300 + Support Mobile/PC!")
+print("✅ Auto Generator langsung jadi!")
+print("✅ GUI Minimalis Keren (370x520)!")
 print("✅ Klik LOGO ZH untuk buka menu!")
