@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB + LYNX (35+ FITUR!)
--- VERSION 35.0 (FINAL - GABUNGAN ALL FIX)
+-- ZIP HUB - RINGKAS (25 FITUR!)
+-- VERSION 37.0
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -24,9 +24,8 @@ local flySpeed = 300
 local silentAimActive = false
 local silentAimConn = nil
 local antiAFKConn = nil
-local autoSaveConn = nil
-local autoSaveActive = false
-local savedFriends = {}
+local skillCheckConn = nil
+local skillCheckActive = false
 
 local toggles = {
     autoParry = false,
@@ -36,34 +35,11 @@ local toggles = {
     silentAim = false,
     autoStun = false,
     autoBlock = false,
-    autoDodge = false,
-    autoVault = false,
-    autoFlashlight = false,
-    autoPerk = false,
-    autoRepair = false,
-    autoSabotage = false,
-    autoHide = false,
-    autoRun = false,
-    autoCrouchWalk = false,
-    autoSlowWalk = false,
-    autoSpin = false,
-    autoKillAura = false,
-    autoGrabLoot = false,
-    autoRespawn = false,
-    autoUseItem = false,
-    autoSave = false,
     speedHack = false,
     fly = false,
     noClip = false,
     moonWalk = false,
     invisible = false,
-    autoGrab = false,
-    autoDrop = false,
-    autoPickup = false,
-    autoUse = false,
-    autoSprint = false,
-    autoCrouch = false,
-    autoJump = false,
     espPlayer = false,
     espKiller = false,
     espGenerator = false,
@@ -72,46 +48,372 @@ local toggles = {
     autoGenerator = false,
     teleportGen = false,
     autoEscape = false,
-    antiAFK = false
+    antiAFK = false,
+    autoSkillCheck = false
 }
 
 local connections = {}
 local espObjects = {}
 
 -- ========================================
--- 🔥 FUNGSI DASAR
+-- 🔥 AUTO SKILL CHECK
 -- ========================================
-function GetClosestPlayer()
-    local closest, shortest = nil, math.huge
-    local char = LocalPlayer.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-    if not hrp then return nil end
+function StartAutoSkillCheck()
+    if skillCheckConn then return end
+    skillCheckActive = true
     
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local targetHrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-            if targetHrp then
-                local dist = (hrp.Position - targetHrp.Position).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    closest = player
+    skillCheckConn = RunService.RenderStepped:Connect(function()
+        if not toggles.autoSkillCheck then return end
+        if not LocalPlayer.Character then return end
+        
+        local playerGui = LocalPlayer.PlayerGui
+        if not playerGui then return end
+        
+        for _, guiObj in pairs(playerGui:GetDescendants()) do
+            if guiObj:IsA("Frame") or guiObj:IsA("ImageLabel") then
+                local name = guiObj.Name:lower()
+                if name:find("skill") or name:find("check") or name:find("gen") or name:find("repair") then
+                    for _, child in pairs(guiObj:GetDescendants()) do
+                        if child:IsA("TextButton") or child:IsA("ImageButton") then
+                            pcall(function()
+                                VirtualUser:CaptureController()
+                                VirtualUser:ClickButton2(Vector2.new())
+                                wait(0.05)
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+        
+        pcall(function()
+            for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+                if obj:IsA("RemoteEvent") and (obj.Name:lower():find("skill") or obj.Name:lower():find("check")) then
+                    pcall(function()
+                        obj:FireServer()
+                    end)
+                end
+            end
+        end)
+    end)
+end
+
+function StopAutoSkillCheck()
+    skillCheckActive = false
+    if skillCheckConn then
+        skillCheckConn:Disconnect()
+        skillCheckConn = nil
+    end
+end
+
+-- ========================================
+-- 🔥 ESP + NAMA PLAYER
+-- ========================================
+function CreateESPWithName(player, color, outlineColor)
+    if not player or not player.Character then return end
+    
+    local char = player.Character
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = char
+    highlight.FillColor = color
+    highlight.FillTransparency = 0.4
+    highlight.OutlineColor = outlineColor or Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0.2
+    table.insert(espObjects, highlight)
+    
+    local billboard = Instance.new("BillboardGui")
+    local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("Head")
+    if hrp then
+        billboard.Parent = hrp
+        billboard.Size = UDim2.new(0, 200, 0, 40)
+        billboard.Adornee = hrp
+        billboard.AlwaysOnTop = true
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Parent = billboard
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = player.Name
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLabel.TextSize = 14
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        nameLabel.TextStrokeTransparency = 0.3
+        
+        table.insert(espObjects, billboard)
+        table.insert(espObjects, nameLabel)
+    end
+end
+
+function ESPPlayerWithName(state)
+    if state then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                CreateESPWithName(player, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 255))
+            end
+        end
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function()
+                wait(0.5)
+                if toggles.espPlayer and player ~= LocalPlayer then
+                    CreateESPWithName(player, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 255))
+                end
+            end)
+        end)
+    else
+        ClearESP()
+    end
+end
+
+function CreateESP(target, color, outlineColor)
+    if not target then return end
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = target
+    highlight.FillColor = color
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = outlineColor or Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0.2
+    table.insert(espObjects, highlight)
+end
+
+function ClearESP()
+    for _, obj in pairs(espObjects) do
+        pcall(function() obj:Destroy() end)
+    end
+    espObjects = {}
+end
+
+function ESPKiller(state)
+    if state then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                CreateESP(player.Character, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 0))
+            end
+        end
+    else
+        ClearESP()
+    end
+end
+
+function ESPGenerator(state)
+    if state then
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
+                CreateESP(obj.Parent or obj, Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 255, 255))
+            end
+        end
+    else
+        ClearESP()
+    end
+end
+
+function ESPGate(state)
+    if state then
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
+                CreateESP(obj.Parent or obj, Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 255))
+            end
+        end
+    else
+        ClearESP()
+    end
+end
+
+function ESPPallet(state)
+    if state then
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and (obj.Name:lower():find("pallet") or obj.Name:lower():find("box") or obj.Name:lower():find("crate")) then
+                CreateESP(obj.Parent or obj, Color3.fromRGB(255, 165, 0), Color3.fromRGB(255, 255, 255))
+            end
+        end
+    else
+        ClearESP()
+    end
+end
+
+-- ========================================
+-- 🔥 DROP ALL PALETTE
+-- ========================================
+function DropAllPalette()
+    local inventory = LocalPlayer:FindFirstChild("Inventory")
+    if not inventory then
+        local char = LocalPlayer.Character
+        if char then
+            for _, child in pairs(char:GetChildren()) do
+                if child:IsA("Tool") and (child.Name:lower():find("palette") or child.Name:lower():find("plank") or child.Name:lower():find("board")) then
+                    pcall(function()
+                        child.Parent = Workspace
+                    end)
+                end
+            end
+        end
+        return
+    end
+    
+    for _, item in pairs(inventory:GetChildren()) do
+        if item:IsA("Tool") then
+            local name = item.Name:lower()
+            if name:find("palette") or name:find("plank") or name:find("board") or name:find("wood") then
+                pcall(function()
+                    item.Parent = Workspace
+                    wait(0.05)
+                end)
+            end
+        end
+    end
+    print("📦 Semua Palette di-drop!")
+end
+
+-- ========================================
+-- 🔥 INVISIBLE REAL
+-- ========================================
+function StartInvisible()
+    if connections.invisible then return end
+    toggles.invisible = true
+    
+    connections.invisible = RunService.RenderStepped:Connect(function()
+        if not toggles.invisible then return end
+        if not LocalPlayer.Character then return end
+        
+        local char = LocalPlayer.Character
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1
+                part.CanCollide = false
+                part.CastShadow = false
+            end
+            if part:IsA("Accessory") then
+                pcall(function()
+                    part.Handle.Transparency = 1
+                    part.Handle.CanCollide = false
+                end)
+            end
+        end
+        
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+            humanoid.NameDisplayDistance = 0
+        end
+    end)
+    
+    if LocalPlayer.Character then
+        local char = LocalPlayer.Character
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1
+                part.CanCollide = false
+                part.CastShadow = false
+            end
+            if part:IsA("Accessory") then
+                pcall(function()
+                    part.Handle.Transparency = 1
+                    part.Handle.CanCollide = false
+                end)
+            end
+        end
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+            humanoid.NameDisplayDistance = 0
+        end
+    end
+end
+
+function StopInvisible()
+    toggles.invisible = false
+    if connections.invisible then
+        connections.invisible:Disconnect()
+        connections.invisible = nil
+    end
+    if LocalPlayer.Character then
+        local char = LocalPlayer.Character
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 0
+                part.CanCollide = true
+                part.CastShadow = true
+            end
+            if part:IsA("Accessory") then
+                pcall(function()
+                    part.Handle.Transparency = 0
+                    part.Handle.CanCollide = true
+                end)
+            end
+        end
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+            humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOn
+            humanoid.NameDisplayDistance = 100
+        end
+    end
+end
+
+-- ========================================
+-- 🔥 AUTO ESCAPE (FIX!)
+-- ========================================
+function AutoEscape()
+    local gates = {}
+    local keywords = {"gate", "escape", "exit", "door", "win", "finish", "portal", "teleport"}
+    
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local name = obj.Name:lower()
+            for _, kw in pairs(keywords) do
+                if name:find(kw) then
+                    table.insert(gates, obj)
+                    break
                 end
             end
         end
     end
-    return closest
-end
-
-function KillAll()
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            local h = p.Character:FindFirstChild("Humanoid")
-            if h then
-                h.Health = 0
-                pcall(function() p.Character:BreakJoints() end)
+    
+    if #gates > 0 then
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        
+        local nearest = nil
+        local nearDist = math.huge
+        for _, gate in pairs(gates) do
+            local dist = (hrp.Position - gate.Position).Magnitude
+            if dist < nearDist then
+                nearDist = dist
+                nearest = gate
             end
         end
+        
+        if nearest then
+            hrp.CFrame = CFrame.new(nearest.Position + Vector3.new(0, 2, 0))
+            wait(0.3)
+            
+            for i = 1, 15 do
+                pcall(function()
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton2(Vector2.new())
+                    wait(0.05)
+                end)
+            end
+            
+            pcall(function()
+                for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+                    if obj:IsA("RemoteEvent") then
+                        local name = obj.Name:lower()
+                        if name:find("escape") or name:find("gate") or name:find("win") or name:find("finish") then
+                            pcall(function() obj:FireServer() end)
+                        end
+                    end
+                end
+            end)
+            
+            print("🚪 Auto Escape Berhasil!")
+        end
+    else
+        print("❌ Gate tidak ditemukan!")
     end
 end
 
@@ -231,6 +533,28 @@ end
 -- ========================================
 -- 🔥 SILENT AIM
 -- ========================================
+function GetClosestPlayer()
+    local closest, shortest = nil, math.huge
+    local char = LocalPlayer.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    if not hrp then return nil end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local targetHrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
+            if targetHrp then
+                local dist = (hrp.Position - targetHrp.Position).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
+end
+
 function StartSilentAim()
     if silentAimConn then return end
     silentAimActive = true
@@ -269,96 +593,7 @@ function StopAntiAFK()
 end
 
 -- ========================================
--- 🔥 ESP
--- ========================================
-function CreateESP(target, color, outlineColor)
-    if not target then return end
-    local highlight = Instance.new("Highlight")
-    highlight.Parent = target
-    highlight.FillColor = color
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = outlineColor or Color3.fromRGB(255, 255, 255)
-    highlight.OutlineTransparency = 0.2
-    table.insert(espObjects, highlight)
-end
-
-function ClearESP()
-    for _, obj in pairs(espObjects) do
-        pcall(function() obj:Destroy() end)
-    end
-    espObjects = {}
-end
-
-function ESPPlayer(state)
-    if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                CreateESP(player.Character, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 255))
-            end
-        end
-        Players.PlayerAdded:Connect(function(player)
-            player.CharacterAdded:Connect(function()
-                wait(0.5)
-                if toggles.espPlayer and player ~= LocalPlayer then
-                    CreateESP(player.Character, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 255))
-                end
-            end)
-        end)
-    else
-        ClearESP()
-    end
-end
-
-function ESPKiller(state)
-    if state then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                CreateESP(player.Character, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 0))
-            end
-        end
-    else
-        ClearESP()
-    end
-end
-
-function ESPGenerator(state)
-    if state then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
-                CreateESP(obj.Parent or obj, Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 255, 255))
-            end
-        end
-    else
-        ClearESP()
-    end
-end
-
-function ESPGate(state)
-    if state then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
-                CreateESP(obj.Parent or obj, Color3.fromRGB(255, 255, 0), Color3.fromRGB(255, 255, 255))
-            end
-        end
-    else
-        ClearESP()
-    end
-end
-
-function ESPPallet(state)
-    if state then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("pallet") or obj.Name:lower():find("box") or obj.Name:lower():find("crate")) then
-                CreateESP(obj.Parent or obj, Color3.fromRGB(255, 165, 0), Color3.fromRGB(255, 255, 255))
-            end
-        end
-    else
-        ClearESP()
-    end
-end
-
--- ========================================
--- 🔥 AUTO GENERATOR (FIX - LANGSUNG JADI!)
+-- 🔥 AUTO GENERATOR (LANGSUNG JADI!)
 -- ========================================
 function AutoGenerator()
     if not LocalPlayer.Character then return end
@@ -420,453 +655,7 @@ function AutoGenerator()
 end
 
 -- ========================================
--- 🔥 AUTO ESCAPE
--- ========================================
-function AutoEscape()
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("gate") or obj.Name:lower():find("escape") or obj.Name:lower():find("door")) then
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 2, 0))
-                wait(0.5)
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-                return
-            end
-        end
-    end
-end
-
--- ========================================
--- 🔥 10 FITUR VD NEW
--- ========================================
-function StartAutoVault()
-    connections.autoVault = RunService.RenderStepped:Connect(function()
-        if not toggles.autoVault then return end
-        local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-        if hrp then
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name:lower():find("vault") or obj.Name:lower():find("pallet") or obj.Name:lower():find("barrier")) then
-                    if (hrp.Position - obj.Position).Magnitude < 8 then
-                        local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                        if h then
-                            h.Jump = true
-                            wait(0.1)
-                            hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 5
-                        end
-                        break
-                    end
-                end
-            end
-        end
-    end)
-end
-
-function StartAutoFlashlight()
-    connections.autoFlashlight = RunService.RenderStepped:Connect(function()
-        if not toggles.autoFlashlight then return end
-        local light = Lighting:FindFirstChild("Flashlight") or LocalPlayer.Character:FindFirstChild("Flashlight")
-        if light then
-            if Lighting.Brightness < 1 then
-                light.Enabled = true
-            else
-                light.Enabled = false
-            end
-        end
-    end)
-end
-
-function StartAutoPerk()
-    connections.autoPerk = RunService.RenderStepped:Connect(function()
-        if not toggles.autoPerk then return end
-        local perks = LocalPlayer:FindFirstChild("Perks")
-        if perks then
-            for _, perk in pairs(perks:GetChildren()) do
-                if perk:IsA("Tool") and perk:FindFirstChild("Activate") then
-                    pcall(function()
-                        perk.Activate:FireServer()
-                        wait(0.5)
-                    end)
-                    break
-                end
-            end
-        end
-    end)
-end
-
-function StartAutoRepair()
-    connections.autoRepair = RunService.RenderStepped:Connect(function()
-        if not toggles.autoRepair then return end
-        local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-        if hrp then
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name:lower():find("repair") or obj.Name:lower():find("fix") or obj.Name:lower():find("broken")) then
-                    if (hrp.Position - obj.Position).Magnitude < 10 then
-                        pcall(function()
-                            VirtualUser:CaptureController()
-                            VirtualUser:ClickButton2(Vector2.new())
-                            wait(0.3)
-                        end)
-                        break
-                    end
-                end
-            end
-        end
-    end)
-end
-
-function StartAutoSabotage()
-    connections.autoSabotage = RunService.RenderStepped:Connect(function()
-        if not toggles.autoSabotage then return end
-        local target = GetClosestPlayer()
-        if target and target.Character then
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-            if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 15 then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.2)
-                end)
-            end
-        end
-    end)
-end
-
-function StartAutoHide()
-    connections.autoHide = RunService.RenderStepped:Connect(function()
-        if not toggles.autoHide then return end
-        local target = GetClosestPlayer()
-        if target and target.Character then
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-            if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 20 then
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and (obj.Name:lower():find("locker") or obj.Name:lower():find("closet") or obj.Name:lower():find("cabinet")) then
-                        if (hrp.Position - obj.Position).Magnitude < 10 then
-                            pcall(function()
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.new())
-                                wait(0.5)
-                            end)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end)
-end
-
-function StartAutoRun()
-    connections.autoRun = RunService.RenderStepped:Connect(function()
-        if not toggles.autoRun then return end
-        local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-        if h then
-            h.WalkSpeed = 50
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end
-    end)
-end
-
-function StartAutoCrouchWalk()
-    connections.autoCrouchWalk = RunService.RenderStepped:Connect(function()
-        if not toggles.autoCrouchWalk then return end
-        local target = GetClosestPlayer()
-        if target and target.Character then
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-            if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 25 then
-                local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if h then
-                    h.WalkSpeed = 10
-                    h.Sit = true
-                    wait(0.1)
-                    h.Sit = false
-                end
-            end
-        end
-    end)
-end
-
-function StartAutoSlowWalk()
-    connections.autoSlowWalk = RunService.RenderStepped:Connect(function()
-        if not toggles.autoSlowWalk then return end
-        local target = GetClosestPlayer()
-        if target and target.Character then
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-            if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 15 then
-                local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if h then h.WalkSpeed = 5 end
-            else
-                local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if h then h.WalkSpeed = 16 end
-            end
-        end
-    end)
-end
-
-function StartAutoSpin()
-    connections.autoSpin = RunService.RenderStepped:Connect(function()
-        if not toggles.autoSpin then return end
-        local target = GetClosestPlayer()
-        if target and target.Character then
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-            if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 10 then
-                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(10), 0)
-            end
-        end
-    end)
-end
-
--- ========================================
--- 🔥 5 FITUR ULTIMATE
--- ========================================
-function StartAutoKillAura()
-    connections.autoKillAura = RunService.RenderStepped:Connect(function()
-        if not toggles.autoKillAura then return end
-        local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-        if not hrp then return end
-        
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local targetHrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-                if targetHrp then
-                    local dist = (hrp.Position - targetHrp.Position).Magnitude
-                    if dist < 20 then
-                        pcall(function()
-                            VirtualUser:CaptureController()
-                            VirtualUser:ClickButton2(Vector2.new())
-                            wait(0.1)
-                        end)
-                        pcall(function()
-                            local humanoid = player.Character:FindFirstChild("Humanoid")
-                            if humanoid and humanoid.Health > 0 then
-                                humanoid.Health = 0
-                            end
-                        end)
-                    end
-                end
-            end
-        end
-    end)
-end
-
-function StartAutoGrabLoot()
-    connections.autoGrabLoot = RunService.RenderStepped:Connect(function()
-        if not toggles.autoGrabLoot then return end
-        local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-        if not hrp then return end
-        
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (
-                obj.Name:lower():find("loot") or 
-                obj.Name:lower():find("item") or 
-                obj.Name:lower():find("chest") or 
-                obj.Name:lower():find("box") or
-                obj.Name:lower():find("crate") or
-                obj.Name:lower():find("drop")
-            ) then
-                local dist = (hrp.Position - obj.Position).Magnitude
-                if dist < 15 then
-                    pcall(function()
-                        VirtualUser:CaptureController()
-                        VirtualUser:ClickButton2(Vector2.new())
-                        wait(0.1)
-                    end)
-                end
-            end
-        end
-    end)
-end
-
-function TeleportToPlayer()
-    local target = GetClosestPlayer()
-    if target and target.Character then
-        local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-        local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-        if hrp and targetHrp then
-            hrp.CFrame = targetHrp.CFrame + Vector3.new(0, 2, 0)
-        end
-    end
-end
-
-function StartAutoRespawn()
-    connections.autoRespawn = RunService.RenderStepped:Connect(function()
-        if not toggles.autoRespawn then return end
-        if not LocalPlayer.Character or LocalPlayer.Character:FindFirstChild("Humanoid") == nil then
-            pcall(function()
-                local respawnBtn = CoreGui:FindFirstChild("RespawnButton") or CoreGui:FindFirstChild("DeathScreen")
-                if respawnBtn then
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.5)
-                else
-                    local remote = ReplicatedStorage:FindFirstChild("Respawn") or ReplicatedStorage:FindFirstChild("RespawnPlayer")
-                    if remote then
-                        pcall(function() remote:FireServer() end)
-                    end
-                end
-            end)
-        end
-    end)
-end
-
-function StartAutoUseItem()
-    connections.autoUseItem = RunService.RenderStepped:Connect(function()
-        if not toggles.autoUseItem then return end
-        local char = LocalPlayer.Character
-        if not char then return end
-        local humanoid = char:FindFirstChild("Humanoid")
-        if not humanoid then return end
-        
-        local health = humanoid.Health
-        local maxHealth = humanoid.MaxHealth
-        local stamina = humanoid:GetAttribute("Stamina") or 100
-        
-        if health / maxHealth < 0.5 then
-            local inv = LocalPlayer:FindFirstChild("Inventory")
-            if inv then
-                for _, item in pairs(inv:GetChildren()) do
-                    if item:IsA("Tool") and (
-                        item.Name:lower():find("health") or 
-                        item.Name:lower():find("med") or 
-                        item.Name:lower():find("heal") or
-                        item.Name:lower():find("bandage")
-                    ) then
-                        pcall(function()
-                            if item:FindFirstChild("Use") then
-                                item.Use:FireServer()
-                            else
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.new())
-                            end
-                            wait(0.5)
-                        end)
-                        break
-                    end
-                end
-            end
-        end
-        
-        if stamina < 30 then
-            local inv = LocalPlayer:FindFirstChild("Inventory")
-            if inv then
-                for _, item in pairs(inv:GetChildren()) do
-                    if item:IsA("Tool") and (
-                        item.Name:lower():find("stamina") or 
-                        item.Name:lower():find("energy") or 
-                        item.Name:lower():find("drink")
-                    ) then
-                        pcall(function()
-                            if item:FindFirstChild("Use") then
-                                item.Use:FireServer()
-                            else
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.new())
-                            end
-                            wait(0.5)
-                        end)
-                        break
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- ========================================
--- 🔥 AUTO SAVE TEMEN
--- ========================================
-function GetKnockedFriends()
-    local knockedList = {}
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local humanoid = player.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                if humanoid.Health <= 0 or humanoid:GetAttribute("Knocked") == true then
-                    local hrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-                    if hrp then
-                        table.insert(knockedList, {
-                            player = player,
-                            position = hrp.Position,
-                            distance = (LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso")) and 
-                                (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso")).Position - hrp.Position).Magnitude or math.huge
-                        })
-                    end
-                end
-            end
-        end
-    end
-    table.sort(knockedList, function(a, b) return a.distance < b.distance end)
-    return knockedList
-end
-
-function StartAutoSave()
-    if autoSaveConn then return end
-    autoSaveActive = true
-    autoSaveConn = RunService.RenderStepped:Connect(function()
-        if not autoSaveActive or not LocalPlayer.Character then return end
-        local knockedFriends = GetKnockedFriends()
-        if #knockedFriends > 0 then
-            local target = knockedFriends[1]
-            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso")
-            if hrp and target.position then
-                if target.distance > 15 then
-                    hrp.CFrame = CFrame.new(target.position + Vector3.new(0, 2, 2))
-                    wait(0.2)
-                end
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.2)
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                    wait(0.2)
-                    local remote = ReplicatedStorage:FindFirstChild("SavePlayer") or 
-                                   ReplicatedStorage:FindFirstChild("RescuePlayer") or
-                                   ReplicatedStorage:FindFirstChild("HelpPlayer")
-                    if remote then
-                        pcall(function() remote:FireServer(target.player) end)
-                    end
-                end)
-                savedFriends[target.player.Name] = true
-            end
-        end
-    end)
-end
-
-function StopAutoSave()
-    autoSaveActive = false
-    if autoSaveConn then autoSaveConn:Disconnect(); autoSaveConn = nil end
-    savedFriends = {}
-end
-
-function ManualSaveNearest()
-    local knockedFriends = GetKnockedFriends()
-    if #knockedFriends > 0 then
-        local target = knockedFriends[1]
-        local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-        if hrp and target.position then
-            hrp.CFrame = CFrame.new(target.position + Vector3.new(0, 2, 2))
-            wait(0.3)
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-                wait(0.2)
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end
-    end
-end
-
--- ========================================
--- 🔥 TOGGLE FEATURE (ALL)
+-- 🔥 TOGGLE FEATURE (RINGKAS)
 -- ========================================
 function ToggleFeature(key, state)
     toggles[key] = state
@@ -880,11 +669,11 @@ function ToggleFeature(key, state)
         if key == "fly" then StopFly() end
         if key == "silentAim" then StopSilentAim() end
         if key == "antiAFK" then StopAntiAFK() end
-        if key == "autoSave" then StopAutoSave() end
+        if key == "autoSkillCheck" then StopAutoSkillCheck() end
+        if key == "invisible" then StopInvisible() end
         return
     end
     
-    -- COMBAT
     if key == "autoParry" then
         connections.autoParry = RunService.RenderStepped:Connect(function()
             if LocalPlayer.Character then
@@ -955,54 +744,6 @@ function ToggleFeature(key, state)
                 end
             end
         end)
-    elseif key == "autoDodge" then
-        connections.autoDodge = RunService.RenderStepped:Connect(function()
-            if not toggles.autoDodge then return end
-            local target = GetClosestPlayer()
-            if target and target.Character then
-                local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-                local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-                if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 10 then
-                    local dir = (hrp.Position - targetHrp.Position).Unit
-                    hrp.CFrame = hrp.CFrame + Vector3.new(-dir.Z, 0, dir.X) * 10
-                    wait(0.1)
-                end
-            end
-        end)
-    -- VD NEW
-    elseif key == "autoVault" then
-        StartAutoVault()
-    elseif key == "autoFlashlight" then
-        StartAutoFlashlight()
-    elseif key == "autoPerk" then
-        StartAutoPerk()
-    elseif key == "autoRepair" then
-        StartAutoRepair()
-    elseif key == "autoSabotage" then
-        StartAutoSabotage()
-    elseif key == "autoHide" then
-        StartAutoHide()
-    elseif key == "autoRun" then
-        StartAutoRun()
-    elseif key == "autoCrouchWalk" then
-        StartAutoCrouchWalk()
-    elseif key == "autoSlowWalk" then
-        StartAutoSlowWalk()
-    elseif key == "autoSpin" then
-        StartAutoSpin()
-    -- ULTIMATE
-    elseif key == "autoKillAura" then
-        StartAutoKillAura()
-    elseif key == "autoGrabLoot" then
-        StartAutoGrabLoot()
-    elseif key == "autoRespawn" then
-        StartAutoRespawn()
-    elseif key == "autoUseItem" then
-        StartAutoUseItem()
-    -- SAVE
-    elseif key == "autoSave" then
-        StartAutoSave()
-    -- MOVEMENT
     elseif key == "speedHack" then
         connections.speedHack = RunService.RenderStepped:Connect(function()
             if LocalPlayer.Character then
@@ -1027,27 +768,10 @@ function ToggleFeature(key, state)
                 if h then h.WalkSpeed = 50; h.JumpPower = 0; h.AutoRotate = false end
             end
         end)
-    -- STEALTH
     elseif key == "invisible" then
-        connections.invisible = RunService.RenderStepped:Connect(function()
-            if LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Transparency = 1
-                        part.CanCollide = false
-                        part.CastShadow = false
-                    end
-                end
-                local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if h then
-                    h.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-                    h.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-                end
-            end
-        end)
-    -- ESP
+        StartInvisible()
     elseif key == "espPlayer" then
-        ESPPlayer(state)
+        ESPPlayerWithName(state)
     elseif key == "espKiller" then
         ESPKiller(state)
     elseif key == "espGenerator" then
@@ -1056,7 +780,6 @@ function ToggleFeature(key, state)
         ESPGate(state)
     elseif key == "espPallet" then
         ESPPallet(state)
-    -- GENERATOR
     elseif key == "autoGenerator" then
         connections.autoGenerator = RunService.RenderStepped:Connect(function()
             if toggles.autoGenerator then AutoGenerator() end
@@ -1065,125 +788,15 @@ function ToggleFeature(key, state)
         connections.autoEscape = RunService.RenderStepped:Connect(function()
             if toggles.autoEscape then AutoEscape() end
         end)
-    -- LYNX
-    elseif key == "autoGrab" then
-        connections.autoGrab = RunService.RenderStepped:Connect(function()
-            if not toggles.autoGrab then return end
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            if hrp then
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and (obj.Name:lower():find("item") or obj.Name:lower():find("loot") or obj.Name:lower():find("body")) then
-                        if (hrp.Position - obj.Position).Magnitude < 10 then
-                            pcall(function()
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.new())
-                                wait(0.2)
-                            end)
-                            break
-                        end
-                    end
-                end
-            end
-        end)
-    elseif key == "autoDrop" then
-        connections.autoDrop = RunService.RenderStepped:Connect(function()
-            if not toggles.autoDrop then return end
-            local inv = LocalPlayer:FindFirstChild("Inventory")
-            if inv then
-                for _, item in pairs(inv:GetChildren()) do
-                    if item:IsA("Tool") or item:IsA("Palette") then
-                        pcall(function()
-                            item.Parent = Workspace
-                            wait(0.1)
-                        end)
-                        break
-                    end
-                end
-            end
-        end)
-    elseif key == "autoPickup" then
-        connections.autoPickup = RunService.RenderStepped:Connect(function()
-            if not toggles.autoPickup then return end
-            local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-            if hrp then
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") and (obj.Name:lower():find("item") or obj.Name:lower():find("loot") or obj.Name:lower():find("drop")) then
-                        if (hrp.Position - obj.Position).Magnitude < 10 then
-                            pcall(function()
-                                VirtualUser:CaptureController()
-                                VirtualUser:ClickButton2(Vector2.new())
-                                wait(0.2)
-                            end)
-                            break
-                        end
-                    end
-                end
-            end
-        end)
-    elseif key == "autoUse" then
-        connections.autoUse = RunService.RenderStepped:Connect(function()
-            if not toggles.autoUse then return end
-            local inv = LocalPlayer:FindFirstChild("Inventory")
-            if inv then
-                for _, item in pairs(inv:GetChildren()) do
-                    if item:IsA("Tool") and item:FindFirstChild("Use") then
-                        pcall(function()
-                            item.Use:FireServer()
-                            wait(0.5)
-                        end)
-                        break
-                    end
-                end
-            end
-        end)
-    elseif key == "autoSprint" then
-        connections.autoSprint = RunService.RenderStepped:Connect(function()
-            if not toggles.autoSprint then return end
-            local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-            if h then
-                h.WalkSpeed = 50
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end
-        end)
-    elseif key == "autoCrouch" then
-        connections.autoCrouch = RunService.RenderStepped:Connect(function()
-            if not toggles.autoCrouch then return end
-            local target = GetClosestPlayer()
-            if target and target.Character then
-                local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-                local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-                if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 20 then
-                    local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if h then
-                        h.Sit = true
-                        wait(0.2)
-                        h.Sit = false
-                    end
-                end
-            end
-        end)
-    elseif key == "autoJump" then
-        connections.autoJump = RunService.RenderStepped:Connect(function()
-            if not toggles.autoJump then return end
-            local target = GetClosestPlayer()
-            if target and target.Character then
-                local hrp = LocalPlayer.Character and (LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso"))
-                local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-                if hrp and targetHrp and (hrp.Position - targetHrp.Position).Magnitude < 10 then
-                    local h = LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if h then h.Jump = true; wait(0.1) end
-                end
-            end
-        end)
-    -- UTILITY
     elseif key == "antiAFK" then
         StartAntiAFK()
+    elseif key == "autoSkillCheck" then
+        StartAutoSkillCheck()
     end
 end
 
 -- ========================================
--- 🎨 GUI FIX (TERANG & BISA DI KLIK!)
+-- 🎨 GUI (TERANG & BISA DIKLIK!)
 -- ========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
@@ -1222,15 +835,13 @@ LogoLabel.TextSize = 9
 LogoLabel.Font = Enum.Font.GothamBold
 LogoLabel.ZIndex = 999
 
--- ========================================
--- MENU (TERANG & BISA DIKLIK!)
--- ========================================
+-- MENU
 local Menu = Instance.new("Frame")
 Menu.Parent = ScreenGui
-Menu.Size = UDim2.new(0, 370, 0, 520)
-Menu.Position = UDim2.new(0.5, -185, 0.5, -260)
-Menu.BackgroundColor3 = Color3.fromRGB(20, 20, 40)  -- TERANG!
-Menu.BackgroundTransparency = 0  -- GA KEREDUP!
+Menu.Size = UDim2.new(0, 380, 0, 520)
+Menu.Position = UDim2.new(0.5, -190, 0.5, -260)
+Menu.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+Menu.BackgroundTransparency = 0
 Menu.BorderSizePixel = 2
 Menu.BorderColor3 = Color3.fromRGB(255, 50, 50)
 Menu.ClipsDescendants = true
@@ -1267,7 +878,6 @@ Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
 Title.ZIndex = 1001
 
--- CLOSE
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = Header
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
@@ -1302,7 +912,7 @@ Scroll.BorderSizePixel = 0
 Scroll.ZIndex = 999
 
 -- ========================================
--- UI FUNGSI (TERANG!)
+-- UI FUNGSI
 -- ========================================
 local function Cat(text, y)
     local c = Instance.new("TextLabel")
@@ -1365,7 +975,7 @@ local function Tog(text, y, key)
 
     local label = Instance.new("TextLabel")
     label.Parent = frame
-    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Size = UDim2.new(0.55, 0, 1, 0)
     label.Position = UDim2.new(0, 6, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
@@ -1400,7 +1010,7 @@ local function Tog(text, y, key)
 end
 
 -- ========================================
--- 📋 MENU
+-- 📋 MENU (25 FITUR!)
 -- ========================================
 local y = 2
 
@@ -1412,13 +1022,14 @@ Tog("🔫 Shoot", y, "autoShoot"); y = y + 28
 Tog("🤫 Silent", y, "silentAim"); y = y + 28
 Tog("⚡ Stun", y, "autoStun"); y = y + 28
 Tog("🛡️ Block", y, "autoBlock"); y = y + 28
-Tog("💨 Dodge", y, "autoDodge"); y = y + 28
-Btn("💥 OHK", y, function() KillAll() end, Color3.fromRGB(100, 0, 0))
-y = y + 28
+Div(y); y = y + 8
+
+Cat("⚡ SKILL CHECK", y); y = y + 24
+Tog("✅ Auto Skill Check", y, "autoSkillCheck"); y = y + 28
 Div(y); y = y + 8
 
 Cat("👁️ ESP", y); y = y + 24
-Tog("🔴 Player", y, "espPlayer"); y = y + 28
+Tog("🔴 Player + Name", y, "espPlayer"); y = y + 28
 Tog("🔴 Killer", y, "espKiller"); y = y + 28
 Tog("🟢 Gen", y, "espGenerator"); y = y + 28
 Tog("🟡 Gate", y, "espGate"); y = y + 28
@@ -1428,49 +1039,12 @@ Div(y); y = y + 8
 Cat("⚡ GENERATOR", y); y = y + 24
 Tog("🔄 Auto Gen", y, "autoGenerator"); y = y + 28
 Tog("🚀 Tele Gen", y, "teleportGen"); y = y + 28
-Btn("📦 Drop Pallet", y, function()
-    local inv = LocalPlayer:FindFirstChild("Inventory")
-    if inv then
-        for _, item in pairs(inv:GetChildren()) do
-            if item:IsA("Tool") or item:IsA("Palette") then
-                pcall(function() item.Parent = Workspace end)
-            end
-        end
-    end
-end, Color3.fromRGB(120, 60, 0))
+Btn("📦 Drop Pallet", y, function() DropAllPalette() end, Color3.fromRGB(120, 60, 0))
 y = y + 28
 Div(y); y = y + 8
 
 Cat("🚪 ESCAPE", y); y = y + 24
 Tog("🚪 Auto Escape", y, "autoEscape"); y = y + 28
-Div(y); y = y + 8
-
-Cat("🔥 VD", y); y = y + 24
-Tog("🧱 Vault", y, "autoVault"); y = y + 28
-Tog("🔦 Flash", y, "autoFlashlight"); y = y + 28
-Tog("⚡ Perk", y, "autoPerk"); y = y + 28
-Tog("🔧 Repair", y, "autoRepair"); y = y + 28
-Tog("💣 Sabotage", y, "autoSabotage"); y = y + 28
-Tog("👻 Hide", y, "autoHide"); y = y + 28
-Tog("🏃 Run", y, "autoRun"); y = y + 28
-Tog("🪑 Crouch W", y, "autoCrouchWalk"); y = y + 28
-Tog("🐢 Slow", y, "autoSlowWalk"); y = y + 28
-Tog("🔄 Spin", y, "autoSpin"); y = y + 28
-Div(y); y = y + 8
-
-Cat("💎 ULTIMATE", y); y = y + 24
-Tog("💀 Kill Aura", y, "autoKillAura"); y = y + 28
-Tog("📦 Loot", y, "autoGrabLoot"); y = y + 28
-Btn("📦 Teleport", y, function() TeleportToPlayer() end, Color3.fromRGB(0, 100, 150))
-y = y + 28
-Tog("🔄 Respawn", y, "autoRespawn"); y = y + 28
-Tog("💊 Use Item", y, "autoUseItem"); y = y + 28
-Div(y); y = y + 8
-
-Cat("🆘 SAVE", y); y = y + 24
-Tog("🆘 Auto Save", y, "autoSave"); y = y + 28
-Btn("🆘 Save Now", y, function() ManualSaveNearest() end, Color3.fromRGB(0, 150, 100))
-y = y + 28
 Div(y); y = y + 8
 
 Cat("🏃 MOVEMENT", y); y = y + 24
@@ -1484,16 +1058,6 @@ Cat("👻 STEALTH", y); y = y + 24
 Tog("👻 Invisible", y, "invisible"); y = y + 28
 Div(y); y = y + 8
 
-Cat("🔥 LYNX", y); y = y + 24
-Tog("🤲 Grab", y, "autoGrab"); y = y + 28
-Tog("📤 Drop", y, "autoDrop"); y = y + 28
-Tog("📥 Pickup", y, "autoPickup"); y = y + 28
-Tog("🔧 Use", y, "autoUse"); y = y + 28
-Tog("🏃 Sprint", y, "autoSprint"); y = y + 28
-Tog("🪑 Crouch", y, "autoCrouch"); y = y + 28
-Tog("🦘 Jump", y, "autoJump"); y = y + 28
-Div(y); y = y + 8
-
 Cat("🔧 UTILITY", y); y = y + 24
 Tog("🚫 Anti AFK", y, "antiAFK"); y = y + 28
 Btn("🔄 Reset", y, function()
@@ -1501,7 +1065,7 @@ Btn("🔄 Reset", y, function()
         toggles[k] = false
         if connections[k] then connections[k]:Disconnect(); connections[k] = nil end
     end
-    StopFly(); StopSilentAim(); StopAntiAFK(); StopAutoSave()
+    StopFly(); StopSilentAim(); StopAntiAFK(); StopAutoSkillCheck()
     if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
 end, Color3.fromRGB(100, 0, 0))
 y = y + 28
@@ -1515,9 +1079,10 @@ Logo.MouseButton1Click:Connect(function()
     Menu.Visible = not Menu.Visible
 end)
 
-print("✅ ZIP HUB (FINAL - GABUNGAN ALL FIX) Loaded!")
-print("✅ 35+ Fitur siap pakai!")
-print("✅ Menu TERANG & BISA DIKLIK!")
-print("✅ Fly Speed 300 + Support Mobile/PC!")
-print("✅ Auto Generator langsung jadi!")
+print("✅ ZIP HUB (RINGKAS - 25 FITUR!) Loaded!")
+print("✅ Auto Skill Check siap!")
+print("✅ ESP + Nama Player siap!")
+print("✅ Drop All Palette FIX!")
+print("✅ Invisible REAL FIX!")
+print("✅ Escape Gate FIX!")
 print("✅ Klik LOGO ZH untuk buka menu!")
