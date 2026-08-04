@@ -1,6 +1,6 @@
 -- ========================================
--- ZIP HUB - FULL (AUTO FARM KILLER + INSTANT KILL ALL!)
--- VERSION 48.0
+-- ZIP HUB - FULL SCRIPT
+-- VERSION 52.0 (DENGAN SURVIVOR MENU)
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -17,14 +17,20 @@ local TweenService = game:GetService("TweenService")
 local CollectionService = game:GetService("CollectionService")
 
 -- ========================================
+-- 🔥 KONFIGURASI HUB
+-- ========================================
+local HUB_NAME = "ZIP HUB"
+local VERSION = "52.0"
+
+-- ========================================
 -- 🔥 WARNA ESP
 -- ========================================
 local ESP_COLORS = {
-    KILLER = Color3.fromRGB(255, 0, 0),      -- MERAH
-    SURVIVOR = Color3.fromRGB(0, 255, 0),    -- HIJAU
-    GENERATOR = Color3.fromRGB(0, 255, 255), -- CYAN
-    GATE = Color3.fromRGB(255, 255, 0),      -- KUNING
-    PALLET = Color3.fromRGB(255, 165, 0)     -- ORANGE
+    KILLER = Color3.fromRGB(255, 0, 0),
+    SURVIVOR = Color3.fromRGB(0, 255, 0),
+    GENERATOR = Color3.fromRGB(0, 255, 255),
+    GATE = Color3.fromRGB(255, 255, 0),
+    PALLET = Color3.fromRGB(255, 165, 0)
 }
 
 -- ========================================
@@ -56,6 +62,9 @@ local espUpdateRate = 0.5
 local autoKillAllActive = false
 local autoKillAllConn = nil
 local isKiller = false
+local noParryCooldownActive = false
+local noFallActive = false
+local noTurnSpeedActive = false
 
 local toggles = {
     autoParry = false,
@@ -88,18 +97,20 @@ local toggles = {
     fastVault = false,
     autoFarmSurvivor = false,
     autoWinKiller = false,
-    autoKillAll = false  -- 🔥 BARU!
+    autoKillAll = false,
+    noParryCooldown = false,
+    noFall = false,
+    noTurnSpeed = false
 }
 
 local connections = {}
 local espObjects = {}
 
 -- ========================================
--- 🔥 FUNGSI DETEKSI KILLER (PASTI MERAH!)
+-- 🔥 FUNGSI DETEKSI KILLER
 -- ========================================
 function IsPlayerKiller(player)
     if not player then return false end
-
     if player:GetAttribute("Role") == "Killer" then return true end
     if player:GetAttribute("Team") == "Killer" then return true end
     if player:GetAttribute("IsKiller") == true then return true end
@@ -144,9 +155,6 @@ function IsPlayerKiller(player)
     return false
 end
 
--- ========================================
--- 🔥 FUNGSI DETEKSI ROLE KILLER (UNTUK AUTO KILL ALL)
--- ========================================
 function DetectKillerRole()
     if LocalPlayer:GetAttribute("Role") == "Killer" then return true end
     if LocalPlayer:GetAttribute("Team") == "Killer" then return true end
@@ -185,9 +193,6 @@ function DetectKillerRole()
     return false
 end
 
--- ========================================
--- 🔥 GET ALL SURVIVOR (UNTUK AUTO KILL ALL)
--- ========================================
 function GetSurvivors()
     local survivors = {}
     for _, player in pairs(Players:GetPlayers()) do
@@ -211,9 +216,6 @@ function GetSurvivors()
     return survivors
 end
 
--- ========================================
--- 🔥 KILL ALL SURVIVOR (INSTANT!)
--- ========================================
 function KillAllSurvivor()
     local survivors = GetSurvivors()
     local killed = 0
@@ -274,9 +276,6 @@ function KillAllSurvivor()
     return killed
 end
 
--- ========================================
--- 🔥 AUTO KILL ALL (LOOP!)
--- ========================================
 function StartAutoKillAll()
     if autoKillAllConn then return end
     autoKillAllActive = true
@@ -318,6 +317,197 @@ function StopAutoKillAll()
 end
 
 -- ========================================
+-- 🔥 FITUR SURVIVOR (DARI GAMBAR)
+-- ========================================
+
+-- No Parry Cooldown
+function StartNoParryCooldown()
+    if connections.noParryCooldown then return end
+    connections.noParryCooldown = RunService.RenderStepped:Connect(function()
+        if toggles.noParryCooldown and LocalPlayer.Character then
+            -- Reset cooldown parry (jika ada sistem cooldown)
+            pcall(function()
+                local char = LocalPlayer.Character
+                for _, child in pairs(char:GetChildren()) do
+                    if child:IsA("Tool") and child.Name:lower():find("parry") then
+                        if child:FindFirstChild("Cooldown") then
+                            child.Cooldown.Value = 0
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- No Fall
+function StartNoFall()
+    if connections.noFall then return end
+    connections.noFall = RunService.RenderStepped:Connect(function()
+        if toggles.noFall and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                -- Reset fall velocity
+                if humanoid:GetState() == Enum.HumanoidStateType.Falling then
+                    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- No Turn Speed Limit
+function StartNoTurnSpeed()
+    if connections.noTurnSpeed then return end
+    connections.noTurnSpeed = RunService.RenderStepped:Connect(function()
+        if toggles.noTurnSpeed and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.AutoRotate = true
+                -- Prevent speed reduction from sharp turns
+                local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local vel = hrp.AssemblyLinearVelocity
+                    if vel.Magnitude > 10 then
+                        hrp.AssemblyLinearVelocity = vel
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ========================================
+-- 🔥 FIND GATE (UNIVERSAL)
+-- ========================================
+function FindGate()
+    local gates = {}
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return gates end
+
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local hasClickDetector = obj:FindFirstChild("ClickDetector") ~= nil
+            local size = obj.Size.Magnitude
+            local pos = obj.Position
+            local isLarge = size > 10
+            local isAtEdge = math.abs(pos.X) > 40 or math.abs(pos.Z) > 40
+            
+            if hasClickDetector and isLarge and isAtEdge then
+                table.insert(gates, obj)
+            end
+        end
+    end
+
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("Model") then
+            local hasClickDetector = false
+            local hasLargePart = false
+            local isAtEdge = false
+            
+            for _, part in pairs(obj:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    if part:FindFirstChild("ClickDetector") then
+                        hasClickDetector = true
+                    end
+                    if part.Size.Magnitude > 10 then
+                        hasLargePart = true
+                    end
+                    if math.abs(part.Position.X) > 40 or math.abs(part.Position.Z) > 40 then
+                        isAtEdge = true
+                    end
+                end
+            end
+            
+            if hasClickDetector and hasLargePart and isAtEdge then
+                for _, part in pairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        table.insert(gates, part)
+                    end
+                end
+            end
+        end
+    end
+
+    local unique = {}
+    local seen = {}
+    for _, gate in pairs(gates) do
+        local key = tostring(gate.Position.X) .. tostring(gate.Position.Y) .. tostring(gate.Position.Z)
+        if not seen[key] then
+            seen[key] = true
+            table.insert(unique, gate)
+        end
+    end
+
+    print("🔍 Ditemukan " .. #unique .. " gate potensial!")
+    return unique
+end
+
+-- ========================================
+-- 🔥 FIND GENERATOR (UNIVERSAL)
+-- ========================================
+function FindGenerator()
+    local gens = {}
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return gens end
+
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local hasClickDetector = obj:FindFirstChild("ClickDetector") ~= nil
+            local size = obj.Size.Magnitude
+            local isMedium = size > 2 and size < 10
+            
+            if hasClickDetector and isMedium then
+                table.insert(gens, obj)
+            end
+        end
+    end
+
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") then
+            local hasClickDetector = false
+            local hasMediumPart = false
+            
+            for _, part in pairs(obj:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    if part:FindFirstChild("ClickDetector") then
+                        hasClickDetector = true
+                    end
+                    local size = part.Size.Magnitude
+                    if size > 2 and size < 10 then
+                        hasMediumPart = true
+                    end
+                end
+            end
+            
+            if hasClickDetector and hasMediumPart then
+                for _, part in pairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        table.insert(gens, part)
+                    end
+                end
+            end
+        end
+    end
+
+    local unique = {}
+    local seen = {}
+    for _, gen in pairs(gens) do
+        local key = tostring(gen.Position.X) .. tostring(gen.Position.Y) .. tostring(gen.Position.Z)
+        if not seen[key] then
+            seen[key] = true
+            table.insert(unique, gen)
+        end
+    end
+
+    print("🔍 Ditemukan " .. #unique .. " generator potensial!")
+    return unique
+end
+
+-- ========================================
 -- 🔥 FUNGSI DASAR
 -- ========================================
 function GetClosestPlayer()
@@ -343,7 +533,7 @@ function GetClosestPlayer()
 end
 
 -- ========================================
--- 🔥 ESP (PISAH PER JENIS!)
+-- 🔥 ESP
 -- ========================================
 function ClearESP()
     for _, obj in pairs(espObjects) do
@@ -478,7 +668,7 @@ function StopESP()
 end
 
 -- ========================================
--- 🔥 FLY (INFINITE YIELD STYLE!)
+-- 🔥 FLY (INFINITE YIELD STYLE)
 -- ========================================
 function StartFly()
     if flyActive then return end
@@ -597,7 +787,7 @@ function StopFly()
 end
 
 -- ========================================
--- 🔥 GOD MODE (BISA GEN SAAT DI-HIT!)
+-- 🔥 GOD MODE
 -- ========================================
 function StartGodMode()
     if connections.godMode then return end
@@ -633,168 +823,128 @@ function StartAutoParry()
 end
 
 -- ========================================
--- 🔥 AUTO GENERATOR (INSTANT - TANPA KLIK!)
+-- 🔥 AUTO GENERATOR (INSTANT)
 -- ========================================
 function AutoGenerator()
     if not LocalPlayer.Character then return end
     local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChild("Torso")
     if not hrp then return end
 
-    local targetGen = nil
-    local targetPos = nil
-    local nearestDist = math.huge
-
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen") or obj.Name:lower():find("power")) then
-            local dist = (hrp.Position - obj.Position).Magnitude
-            if dist < nearestDist then
-                nearestDist = dist
-                targetGen = obj
-                targetPos = obj.Position
-            end
-        end
-    end
-
-    if targetGen and targetPos then
-        if nearestDist > 5 then
-            if toggles.teleportGen then
-                hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
-                wait(0.3)
-            end
-        end
-
-        for i = 1, 20 do
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-                wait(0.05)
-            end)
-        end
-
-        pcall(function()
-            for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
-                if obj:IsA("RemoteEvent") then
-                    local name = obj.Name:lower()
-                    if name:find("generator") or name:find("gen") or name:find("power") or name:find("complete") or name:find("finish") or name:find("repair") then
-                        pcall(function() obj:FireServer(targetGen) end)
-                    end
+    local gens = FindGenerator()
+    
+    if #gens > 0 then
+        table.sort(gens, function(a, b)
+            local distA = (hrp.Position - a.Position).Magnitude
+            local distB = (hrp.Position - b.Position).Magnitude
+            return distA < distB
+        end)
+        
+        local targetGen = gens[1]
+        if targetGen then
+            local targetPos = targetGen.Position
+            local dist = (hrp.Position - targetPos).Magnitude
+            
+            if dist > 5 then
+                if toggles.teleportGen then
+                    hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
+                    wait(0.3)
                 end
             end
-        end)
-
-        pcall(function()
-            targetGen:SetAttribute("Completed", true)
-        end)
-
-        pcall(function()
-            local clickDetector = targetGen:FindFirstChild("ClickDetector")
-            if clickDetector then clickDetector:Click() end
-        end)
-
-        print("⚡ Generator LANGSUNG SELESAI!")
-    else
-        print("❌ Generator tidak ditemukan!")
-    end
-end
-
--- ========================================
--- 🔥 AUTO ESCAPE (15 METODE!)
--- ========================================
-function AutoEscape()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local gates = {}
-    local keywords = {"gate", "escape", "exit", "door", "win", "finish", "portal", "teleport", "out", "leave", "safe", "goal", "complete", "done", "victory"}
-
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local name = obj.Name:lower()
-            for _, kw in pairs(keywords) do
-                if name:find(kw) then
-                    table.insert(gates, obj)
-                    break
-                end
-            end
-        end
-    end
-
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local color = obj.BrickColor
-            if color == BrickColor.new("Bright green") or color == BrickColor.new("Bright yellow") or color == BrickColor.new("Lime green") then
-                table.insert(gates, obj)
-            end
-        end
-    end
-
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Size.Magnitude > 15 then
-            table.insert(gates, obj)
-        end
-    end
-
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("Model") then
-            local name = obj.Name:lower()
-            for _, kw in pairs(keywords) do
-                if name:find(kw) then
-                    for _, part in pairs(obj:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            table.insert(gates, part)
-                            break
-                        end
-                    end
-                    break
-                end
-            end
-        end
-    end
-
-    if #gates > 0 then
-        local nearest = nil
-        local nearDist = math.huge
-        for _, gate in pairs(gates) do
-            local dist = (hrp.Position - gate.Position).Magnitude
-            if dist < nearDist then
-                nearDist = dist
-                nearest = gate
-            end
-        end
-
-        if nearest then
-            hrp.CFrame = CFrame.new(nearest.Position + Vector3.new(0, 3, 0))
-            wait(0.3)
-
-            for i = 1, 30 do
+            
+            for i = 1, 20 do
                 pcall(function()
                     VirtualUser:CaptureController()
                     VirtualUser:ClickButton2(Vector2.new())
                     wait(0.05)
                 end)
             end
-
+            
             pcall(function()
                 for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
                     if obj:IsA("RemoteEvent") then
                         local name = obj.Name:lower()
-                        if name:find("escape") or name:find("gate") or name:find("win") or name:find("finish") or name:find("complete") then
-                            pcall(function() obj:FireServer() end)
+                        if name:find("generator") or name:find("gen") or name:find("power") or name:find("complete") or name:find("finish") or name:find("repair") then
+                            pcall(function() obj:FireServer(targetGen) end)
                         end
                     end
                 end
             end)
-
-            print("🚪 Auto Escape Berhasil!")
+            
+            pcall(function()
+                targetGen:SetAttribute("Completed", true)
+            end)
+            
+            pcall(function()
+                local clickDetector = targetGen:FindFirstChild("ClickDetector")
+                if clickDetector then clickDetector:Click() end
+            end)
+            
+            print("⚡ Generator LANGSUNG SELESAI!")
         end
     else
-        print("❌ Gate tidak ditemukan!")
-        hrp.CFrame = CFrame.new(99999, 99999, 99999)
+        print("❌ Generator tidak ditemukan!")
     end
 end
 
 -- ========================================
--- 🔥 AUTO FARM SURVIVOR (AUTO REPAIR GEN!)
+-- 🔥 AUTO ESCAPE
+-- ========================================
+function AutoEscape()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then 
+        print("❌ Karakter tidak ditemukan!")
+        return 
+    end
+
+    local gates = FindGate()
+    
+    if #gates > 0 then
+        table.sort(gates, function(a, b)
+            local distA = (hrp.Position - a.Position).Magnitude
+            local distB = (hrp.Position - b.Position).Magnitude
+            return distA < distB
+        end)
+        
+        local maxTry = math.min(3, #gates)
+        for i = 1, maxTry do
+            local gate = gates[i]
+            if gate then
+                hrp.CFrame = CFrame.new(gate.Position + Vector3.new(0, 3, 0))
+                wait(0.3)
+                
+                for j = 1, 30 do
+                    pcall(function()
+                        VirtualUser:CaptureController()
+                        VirtualUser:ClickButton2(Vector2.new())
+                        wait(0.05)
+                    end)
+                end
+                
+                pcall(function()
+                    for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+                        if obj:IsA("RemoteEvent") then
+                            local name = obj.Name:lower()
+                            if name:find("escape") or name:find("gate") or name:find("win") or name:find("finish") or name:find("complete") then
+                                pcall(function() obj:FireServer() end)
+                            end
+                        end
+                    end
+                end)
+                
+                print("🚪 Auto Escape Berhasil!")
+                return
+            end
+        end
+        
+        print("❌ Semua gate gagal diakses!")
+    else
+        print("❌ Gate tidak ditemukan! Mencoba teleport ke lokasi aman...")
+        hrp.CFrame = CFrame.new(0, 50, 0)
+    end
+end
+
+-- ========================================
+-- 🔥 AUTO FARM SURVIVOR
 -- ========================================
 function StartAutoFarmSurvivor()
     if autoFarmSurvivorConn then return end
@@ -1242,6 +1392,24 @@ function ToggleFeature(key, state)
     if key == "autoFarmSurvivor" and not state then StopAutoFarmSurvivor() end
     if key == "autoWinKiller" and not state then StopAutoWinKiller() end
     if key == "autoKillAll" and not state then StopAutoKillAll() end
+    if key == "noParryCooldown" and not state then 
+        if connections.noParryCooldown then
+            connections.noParryCooldown:Disconnect()
+            connections.noParryCooldown = nil
+        end
+    end
+    if key == "noFall" and not state then
+        if connections.noFall then
+            connections.noFall:Disconnect()
+            connections.noFall = nil
+        end
+    end
+    if key == "noTurnSpeed" and not state then
+        if connections.noTurnSpeed then
+            connections.noTurnSpeed:Disconnect()
+            connections.noTurnSpeed = nil
+        end
+    end
 
     if key == "espPlayer" or key == "espKiller" or key == "espGenerator" or key == "espGate" or key == "espPallet" then
         if not state then
@@ -1381,311 +1549,350 @@ function ToggleFeature(key, state)
         StartAutoWinKiller()
     elseif key == "autoKillAll" then
         StartAutoKillAll()
+    elseif key == "noParryCooldown" then
+        StartNoParryCooldown()
+    elseif key == "noFall" then
+        StartNoFall()
+    elseif key == "noTurnSpeed" then
+        StartNoTurnSpeed()
     end
 end
 
 -- ========================================
--- 🎨 GUI
+-- 🎨 GUI (SURVIVOR MENU)
 -- ========================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
-ScreenGui.Name = "ZipHub"
+ScreenGui.Name = "ZipSurvivorMenu"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local Logo = Instance.new("TextButton")
-Logo.Parent = ScreenGui
-Logo.Size = UDim2.new(0, 55, 0, 55)
-Logo.Position = UDim2.new(0, 10, 0, 10)
-Logo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-Logo.BackgroundTransparency = 0
-Logo.BorderSizePixel = 2
-Logo.BorderColor3 = Color3.fromRGB(255, 255, 255)
-Logo.Text = "ZH"
-Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
-Logo.TextSize = 22
-Logo.Font = Enum.Font.GothamBlack
-Logo.TextScaled = true
-Logo.Draggable = true
-Logo.ZIndex = 999
+-- ========================================
+-- MAIN FRAME (SURVIVOR THEME)
+-- ========================================
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 300, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = true
+MainFrame.ZIndex = 999
 
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.Parent = Logo
-LogoCorner.CornerRadius = UDim.new(1, 0)
+-- Corner
+local MainCorner = Instance.new("UICorner")
+MainCorner.Parent = MainFrame
+MainCorner.CornerRadius = UDim.new(0, 12)
 
-local LogoLabel = Instance.new("TextLabel")
-LogoLabel.Parent = ScreenGui
-LogoLabel.Size = UDim2.new(0, 60, 0, 14)
-LogoLabel.Position = UDim2.new(0, 10, 0, 67)
-LogoLabel.BackgroundTransparency = 1
-LogoLabel.Text = "ZIP HUB"
-LogoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-LogoLabel.TextSize = 9
-LogoLabel.Font = Enum.Font.GothamBold
-LogoLabel.ZIndex = 999
+-- Border
+local MainBorder = Instance.new("UIStroke")
+MainBorder.Parent = MainFrame
+MainBorder.Color = Color3.fromRGB(0, 180, 255)
+MainBorder.Thickness = 1.5
+MainBorder.Transparency = 0.2
 
-local Menu = Instance.new("Frame")
-Menu.Parent = ScreenGui
-Menu.Size = UDim2.new(0, 400, 0, 650)
-Menu.Position = UDim2.new(0.5, -200, 0.5, -325)
-Menu.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
-Menu.BackgroundTransparency = 0
-Menu.BorderSizePixel = 2
-Menu.BorderColor3 = Color3.fromRGB(255, 50, 50)
-Menu.ClipsDescendants = true
-Menu.Active = true
-Menu.Draggable = true
-Menu.Visible = false
-Menu.ZIndex = 999
+-- Glass Effect
+local GlassBg = Instance.new("Frame")
+GlassBg.Parent = MainFrame
+GlassBg.Size = UDim2.new(1, 0, 1, 0)
+GlassBg.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
+GlassBg.BackgroundTransparency = 0.7
+GlassBg.BorderSizePixel = 0
 
-local MenuCorner = Instance.new("UICorner")
-MenuCorner.Parent = Menu
-MenuCorner.CornerRadius = UDim.new(0, 12)
-
+-- ========================================
+-- HEADER (SURVIVOR THEME)
+-- ========================================
 local Header = Instance.new("Frame")
-Header.Parent = Menu
-Header.Size = UDim2.new(1, 0, 0, 35)
+Header.Parent = MainFrame
+Header.Size = UDim2.new(1, 0, 0, 50)
 Header.Position = UDim2.new(0, 0, 0, 0)
-Header.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-Header.BackgroundTransparency = 0
+Header.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+Header.BackgroundTransparency = 0.2
 Header.BorderSizePixel = 0
-Header.ZIndex = 1000
 
 local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.Parent = Header
 HeaderCorner.CornerRadius = UDim.new(0, 12)
 
+-- Title "SURVIVOR"
 local Title = Instance.new("TextLabel")
 Title.Parent = Header
 Title.Size = UDim2.new(1, 0, 1, 0)
+Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ ZIP HUB"
+Title.Text = "SURVIVOR"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
+Title.TextSize = 20
 Title.Font = Enum.Font.GothamBold
-Title.ZIndex = 1001
+Title.ZIndex = 10
 
+-- Subtitle "ZIP HUB"
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Parent = Header
+SubTitle.Size = UDim2.new(1, 0, 0, 16)
+SubTitle.Position = UDim2.new(0, 0, 1, -18)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "⚡ ZIP HUB ⚡"
+SubTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
+SubTitle.TextSize = 10
+SubTitle.Font = Enum.Font.GothamMedium
+SubTitle.TextScaled = true
+SubTitle.ZIndex = 10
+
+-- ========================================
+-- CLOSE BUTTON
+-- ========================================
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = Header
-CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Position = UDim2.new(1, -30, 0, 5)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-CloseBtn.BackgroundTransparency = 0
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -34, 0, 12)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.TextSize = 14
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
-CloseBtn.ZIndex = 1002
+CloseBtn.ZIndex = 11
 
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.Parent = CloseBtn
 CloseCorner.CornerRadius = UDim.new(1, 0)
 
 CloseBtn.MouseButton1Click:Connect(function()
-    Menu.Visible = false
+    ScreenGui:Destroy()
 end)
 
-local Scroll = Instance.new("ScrollingFrame")
-Scroll.Parent = Menu
-Scroll.Size = UDim2.new(1, -12, 1, -45)
-Scroll.Position = UDim2.new(0, 6, 0, 40)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.ScrollBarThickness = 4
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 50)
-Scroll.BorderSizePixel = 0
-Scroll.ZIndex = 999
+CloseBtn.MouseEnter:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 0, 0)}):Play()
+end)
+CloseBtn.MouseLeave:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 30, 30)}):Play()
+end)
 
-local function Cat(text, y)
-    local c = Instance.new("TextLabel")
-    c.Parent = Scroll
-    c.Size = UDim2.new(1, -10, 0, 22)
-    c.Position = UDim2.new(0, 0, 0, y)
-    c.BackgroundTransparency = 1
-    c.Text = "▸ " .. text
-    c.TextColor3 = Color3.fromRGB(255, 100, 100)
-    c.TextSize = 12
-    c.Font = Enum.Font.GothamBold
-    c.TextXAlignment = Enum.TextXAlignment.Left
-    c.ZIndex = 999
-end
+-- ========================================
+-- SCROLLING FRAME
+-- ========================================
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Parent = MainFrame
+ScrollingFrame.Size = UDim2.new(1, -12, 1, -65)
+ScrollingFrame.Position = UDim2.new(0, 6, 0, 60)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollingFrame.ScrollBarThickness = 3
+ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
+ScrollingFrame.BorderSizePixel = 0
+ScrollingFrame.ZIndex = 10
 
-local function Div(y)
-    local d = Instance.new("Frame")
-    d.Parent = Scroll
-    d.Size = UDim2.new(0.9, 0, 0, 1)
-    d.Position = UDim2.new(0.05, 0, 0, y)
-    d.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    d.BackgroundTransparency = 0.3
-    d.BorderSizePixel = 0
-    d.ZIndex = 999
-end
+-- ========================================
+-- UI FUNCTIONS (SURVIVOR STYLE)
+-- ========================================
 
-local function Btn(text, y, cb, color)
-    local b = Instance.new("TextButton")
-    b.Parent = Scroll
-    b.Size = UDim2.new(1, -10, 0, 26)
-    b.Position = UDim2.new(0, 0, 0, y)
-    b.BackgroundColor3 = color or Color3.fromRGB(60, 60, 90)
-    b.BackgroundTransparency = 0
-    b.Text = text
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.TextSize = 11
-    b.Font = Enum.Font.GothamMedium
-    b.BorderSizePixel = 1
-    b.BorderColor3 = Color3.fromRGB(255, 50, 50)
-    b.ZIndex = 999
-    local c = Instance.new("UICorner")
-    c.Parent = b
-    c.CornerRadius = UDim.new(0, 6)
-    b.MouseButton1Click:Connect(cb)
-end
-
-local function Tog(text, y, key)
+-- Toggle Button (Mirip gambar)
+local function CreateSurvivorToggle(text, yPos, desc, key)
     local frame = Instance.new("Frame")
-    frame.Parent = Scroll
-    frame.Size = UDim2.new(1, -10, 0, 26)
-    frame.Position = UDim2.new(0, 0, 0, y)
-    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
-    frame.BackgroundTransparency = 0
+    frame.Parent = ScrollingFrame
+    frame.Size = UDim2.new(1, -10, 0, 50)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
+    frame.BackgroundTransparency = 0.2
     frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(255, 50, 50)
-    frame.ZIndex = 999
-    local c = Instance.new("UICorner")
-    c.Parent = frame
-    c.CornerRadius = UDim.new(0, 6)
+    frame.BorderColor3 = Color3.fromRGB(0, 180, 255)
+    frame.ZIndex = 10
 
+    local corner = Instance.new("UICorner")
+    corner.Parent = frame
+    corner.CornerRadius = UDim.new(0, 6)
+
+    -- Label (Fitur)
     local label = Instance.new("TextLabel")
     label.Parent = frame
-    label.Size = UDim2.new(0.55, 0, 1, 0)
-    label.Position = UDim2.new(0, 6, 0, 0)
+    label.Size = UDim2.new(0.7, 0, 0, 18)
+    label.Position = UDim2.new(0, 10, 0, 4)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 10
-    label.Font = Enum.Font.GothamMedium
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamBold
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 999
+    label.ZIndex = 11
 
-    local btn = Instance.new("TextButton")
-    btn.Parent = frame
-    btn.Size = UDim2.new(0, 42, 0, 20)
-    btn.Position = UDim2.new(1, -48, 0, 3)
-    btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    btn.BackgroundTransparency = 0
-    btn.Text = "OFF"
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 10
-    btn.Font = Enum.Font.GothamBold
-    btn.BorderSizePixel = 0
-    btn.ZIndex = 1000
-    local tc = Instance.new("UICorner")
-    tc.Parent = btn
-    tc.CornerRadius = UDim.new(0, 4)
+    -- Deskripsi (Mirip gambar)
+    local descLabel = Instance.new("TextLabel")
+    descLabel.Parent = frame
+    descLabel.Size = UDim2.new(0.7, 0, 0, 16)
+    descLabel.Position = UDim2.new(0, 10, 0, 24)
+    descLabel.BackgroundTransparency = 1
+    descLabel.Text = desc or ""
+    descLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
+    descLabel.TextSize = 10
+    descLabel.Font = Enum.Font.GothamMedium
+    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    descLabel.ZIndex = 11
 
-    btn.MouseButton1Click:Connect(function()
-        local state = not toggles[key]
-        btn.Text = state and "ON" or "OFF"
-        btn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+    -- Toggle Button
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Parent = frame
+    toggleBtn.Size = UDim2.new(0, 50, 0, 26)
+    toggleBtn.Position = UDim2.new(1, -60, 0, 12)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+    toggleBtn.Text = "OFF"
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.TextSize = 11
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.BorderSizePixel = 0
+    toggleBtn.ZIndex = 12
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.Parent = toggleBtn
+    toggleCorner.CornerRadius = UDim.new(0, 4)
+
+    local state = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        state = not state
+        toggleBtn.Text = state and "ON" or "OFF"
+        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(200, 40, 40)
         ToggleFeature(key, state)
     end)
+
+    return toggleBtn
 end
 
--- ========================================
--- 📋 MENU
--- ========================================
-local y = 2
+-- Action Button (Untuk Auto Escape)
+local function CreateSurvivorButton(text, yPos, desc, callback)
+    local frame = Instance.new("Frame")
+    frame.Parent = ScrollingFrame
+    frame.Size = UDim2.new(1, -10, 0, 50)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 1
+    frame.BorderColor3 = Color3.fromRGB(0, 180, 255)
+    frame.ZIndex = 10
 
-Cat("⚔️ COMBAT", y); y = y + 24
-Tog("🛡️ Parry", y, "autoParry"); y = y + 28
-Tog("💀 God Mode", y, "godMode"); y = y + 28
-Tog("💚 Heal", y, "autoHeal"); y = y + 28
-Tog("🔫 Shoot", y, "autoShoot"); y = y + 28
-Tog("🤫 Silent", y, "silentAim"); y = y + 28
-Tog("⚡ Stun", y, "autoStun"); y = y + 28
-Tog("🛡️ Block", y, "autoBlock"); y = y + 28
-Tog("🔥 Auto Attack", y, "autoAttack"); y = y + 28
-Btn("💀 Kill All (Manual)", y, function()
-    if DetectKillerRole() then
-        KillAllSurvivor()
-    else
-        print("❌ Kamu bukan Killer!")
+    local corner = Instance.new("UICorner")
+    corner.Parent = frame
+    corner.CornerRadius = UDim.new(0, 6)
+
+    -- Label
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(0.7, 0, 0, 18)
+    label.Position = UDim2.new(0, 10, 0, 4)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 11
+
+    -- Deskripsi
+    local descLabel = Instance.new("TextLabel")
+    descLabel.Parent = frame
+    descLabel.Size = UDim2.new(0.7, 0, 0, 16)
+    descLabel.Position = UDim2.new(0, 10, 0, 24)
+    descLabel.BackgroundTransparency = 1
+    descLabel.Text = desc or ""
+    descLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
+    descLabel.TextSize = 10
+    descLabel.Font = Enum.Font.GothamMedium
+    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    descLabel.ZIndex = 11
+
+    -- Action Button
+    local actionBtn = Instance.new("TextButton")
+    actionBtn.Parent = frame
+    actionBtn.Size = UDim2.new(0, 60, 0, 26)
+    actionBtn.Position = UDim2.new(1, -70, 0, 12)
+    actionBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    actionBtn.Text = "USE"
+    actionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    actionBtn.TextSize = 11
+    actionBtn.Font = Enum.Font.GothamBold
+    actionBtn.BorderSizePixel = 0
+    actionBtn.ZIndex = 12
+
+    local actionCorner = Instance.new("UICorner")
+    actionCorner.Parent = actionBtn
+    actionCorner.CornerRadius = UDim.new(0, 4)
+
+    actionBtn.MouseButton1Click:Connect(callback)
+    return actionBtn
+}
+
+-- ========================================
+-- 📋 SURVIVOR MENU (MIRIP GAMBAR)
+-- ========================================
+local yPos = 2
+
+-- No Parry Cooldown
+CreateSurvivorToggle(
+    "No Parry Cooldown",
+    yPos,
+    "Infinite parries (requires parry dagger).",
+    "noParryCooldown"
+)
+yPos = yPos + 54
+
+-- Auto Parry
+CreateSurvivorToggle(
+    "Auto Parry",
+    yPos,
+    "spams parrying when killer is close (nessy)",
+    "autoParry"
+)
+yPos = yPos + 54
+
+-- No Fall
+CreateSurvivorToggle(
+    "No Fall",
+    yPos,
+    "Gives you no fall penalty from high falls.",
+    "noFall"
+)
+yPos = yPos + 54
+
+-- No Turn Speed Limit
+CreateSurvivorToggle(
+    "No Turn Speed Limit",
+    yPos,
+    "Prevents you from being slowed down when making sharp turns while sprinting.",
+    "noTurnSpeed"
+)
+yPos = yPos + 54
+
+-- Auto Escape (Button)
+CreateSurvivorButton(
+    "Auto Escape",
+    yPos,
+    "Use this to autoform screws.",
+    function()
+        AutoEscape()
     end
-end, Color3.fromRGB(150, 0, 0))
-y = y + 28
-Div(y); y = y + 8
+)
+yPos = yPos + 54
 
-Cat("🔪 KILLER", y); y = y + 24
-Tog("🔪 Auto Kill All (Killer Only)", y, "autoKillAll"); y = y + 28
-Div(y); y = y + 8
-
-Cat("⚡ SKILL CHECK", y); y = y + 24
-Tog("✅ Auto Skill Check", y, "autoSkillCheck"); y = y + 28
-Div(y); y = y + 8
-
-Cat("👁️ ESP", y); y = y + 24
-Tog("🔴 Player (KILLER MERAH!)", y, "espPlayer"); y = y + 28
-Tog("🟢 Generator", y, "espGenerator"); y = y + 28
-Tog("🟡 Gate", y, "espGate"); y = y + 28
-Tog("🟠 Pallet", y, "espPallet"); y = y + 28
-Div(y); y = y + 8
-
-Cat("⚡ GENERATOR", y); y = y + 24
-Tog("🔄 Auto Gen (Instant)", y, "autoGenerator"); y = y + 28
-Tog("🚀 Tele Gen", y, "teleportGen"); y = y + 28
-Btn("📦 Drop Pallet", y, function() DropAllPalette() end, Color3.fromRGB(120, 60, 0))
-y = y + 28
-Div(y); y = y + 8
-
-Cat("🚪 ESCAPE", y); y = y + 24
-Tog("🚪 Auto Escape", y, "autoEscape"); y = y + 28
-Div(y); y = y + 8
-
-Cat("🌾 AUTO FARM", y); y = y + 24
-Tog("🌾 Auto Farm Survivor", y, "autoFarmSurvivor"); y = y + 28
-Tog("🔪 Auto Win Killer", y, "autoWinKiller"); y = y + 28
-Div(y); y = y + 8
-
-Cat("🏃 MOVEMENT", y); y = y + 24
-Tog("⚡ Speed", y, "speedHack"); y = y + 28
-Tog("🕊️ Terbang Bebas", y, "fly"); y = y + 28
-Tog("🧱 NoClip", y, "noClip"); y = y + 28
-Tog("🌙 Moon", y, "moonWalk"); y = y + 28
-Tog("⚡ Fast Vault", y, "fastVault"); y = y + 28
-Div(y); y = y + 8
-
-Cat("👻 STEALTH", y); y = y + 24
-Tog("👻 Invisible", y, "invisible"); y = y + 28
-Div(y); y = y + 8
-
-Cat("🔧 UTILITY", y); y = y + 24
-Tog("🚫 Anti AFK", y, "antiAFK"); y = y + 28
-Tog("⚠️ Killer Alert", y, "killerAlert"); y = y + 28
-Tog("🛡️ Anti Blind", y, "antiBlind"); y = y + 28
-Tog("💡 FullBright", y, "fullBright"); y = y + 28
-Tog("🎯 Aimbot Wall", y, "aimbotWall"); y = y + 28
-Btn("🔄 Reset", y, function()
-    for k, _ in pairs(toggles) do
-        toggles[k] = false
-        if connections[k] then connections[k]:Disconnect(); connections[k] = nil end
-    end
-    StopFly(); StopSilentAim(); StopAntiAFK(); StopAutoSkillCheck(); StopInvisible(); StopFullBright(); StopAutoAttack(); StopFastVault(); StopAutoFarmSurvivor(); StopAutoWinKiller(); StopESP(); StopAutoKillAll()
-    if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
-end, Color3.fromRGB(100, 0, 0))
-y = y + 28
-
-Scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
+-- Update Canvas
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
 
 -- ========================================
--- LOGO KLIK
+-- 🔥 WATERMARK
 -- ========================================
-Logo.MouseButton1Click:Connect(function()
-    Menu.Visible = not Menu.Visible
-end)
+local Watermark = Instance.new("TextLabel")
+Watermark.Parent = ScreenGui
+Watermark.Size = UDim2.new(0, 140, 0, 16)
+Watermark.Position = UDim2.new(0, 8, 1, -22)
+Watermark.BackgroundTransparency = 1
+Watermark.Text = "⚡ ZIP HUB"
+Watermark.TextColor3 = Color3.fromRGB(0, 180, 255)
+Watermark.TextSize = 10
+Watermark.Font = Enum.Font.GothamMedium
+Watermark.TextTransparency = 0.4
+Watermark.ZIndex = 999
 
-print("✅ ZIP HUB - FULL (AUTO FARM KILLER + INSTANT KILL ALL!) Loaded!")
-print("✅ ESP KILLER PASTI MERAH!")
-print("✅ Auto Kill All (Killer Only)!")
-print("✅ Kill All Survivor (Manual)!")
-print("✅ Fly INFINITE YIELD STYLE!")
-print("✅ Klik LOGO ZH untuk buka menu!")
+print("✅ ZIP HUB - FULL SCRIPT Loaded!")
+print("✅ SURVIVOR MENU siap pakai!")
