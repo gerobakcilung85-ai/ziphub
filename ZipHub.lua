@@ -1,5 +1,5 @@
 -- =====================================================
--- ZIP HUB v54.0 – 6LOCC FULL EDITION (30+ FITUR)
+-- ZIP HUB v55.0 – 6LOCC LIGHTWEIGHT EDITION
 -- =====================================================
 
 local Players = game:GetService("Players")
@@ -13,302 +13,121 @@ local Camera = Workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
-local CollectionService = game:GetService("CollectionService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
 -- =====================================================
--- FUNGSI DASAR
+-- LIGHTWEIGHT: FUNGSI DASAR (OPTIMIZED)
 -- =====================================================
-local function GetCharacter()
-    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-end
+local function GetCharacter() return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait() end
+local function GetHumanoid() local c = GetCharacter() return c and c:FindFirstChild("Humanoid") end
+local function GetHRP() local c = GetCharacter() return c and (c:FindFirstChild("HumanoidRootPart") or c:FindFirstChild("Torso") or c:FindFirstChild("UpperTorso")) end
 
-local function GetHumanoid()
-    local char = GetCharacter()
-    return char and char:FindFirstChild("Humanoid")
-end
-
-local function GetHRP()
-    local char = GetCharacter()
-    return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
-end
-
-local function IsPlayerKiller(player)
-    if not player then return false end
-    if player:GetAttribute("Role") == "Killer" then return true end
-    if player:GetAttribute("Team") == "Killer" then return true end
-    if player:GetAttribute("IsKiller") == true then return true end
-    local char = player.Character
-    if char then
-        if char:GetAttribute("Role") == "Killer" then return true end
-        if char:GetAttribute("Team") == "Killer" then return true end
-        for _, child in pairs(char:GetChildren()) do
-            if child:IsA("Tool") then
-                local name = child.Name:lower()
-                if name:find("knife") or name:find("weapon") or name:find("scythe") or name:find("blade") or name:find("sword") or name:find("axe") or name:find("hammer") or name:find("gun") or name:find("claw") then
-                    return true
-                end
+local function IsKiller(p)
+    if not p then return false end
+    if p:GetAttribute("Role") == "Killer" or p:GetAttribute("Team") == "Killer" or p:GetAttribute("IsKiller") == true then return true end
+    local c = p.Character
+    if c then
+        if c:GetAttribute("Role") == "Killer" or c:GetAttribute("Team") == "Killer" or c:GetAttribute("IsKiller") == true then return true end
+        for _, t in pairs(c:GetChildren()) do
+            if t:IsA("Tool") then
+                local n = t.Name:lower()
+                if n:find("knife") or n:find("weapon") or n:find("scythe") or n:find("blade") or n:find("sword") or n:find("axe") or n:find("hammer") or n:find("gun") or n:find("claw") then return true end
             end
         end
     end
     return false
 end
 
-local function GetHealthState(player)
-    local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
-    if not humanoid then return "💀 Dead" end
-    local health = humanoid.Health
-    local maxHealth = humanoid.MaxHealth
-    local ratio = health / maxHealth
-    if ratio <= 0 then return "💀 Dead"
-    elseif ratio <= 0.25 then return "🪝 Hooked"
-    elseif ratio <= 0.5 then return "🩸 Knocked"
-    elseif ratio <= 0.75 then return "🟡 Injured"
-    else return "🟢 Healed" end
-end
-
-local function GetKillerProperty(player)
-    local char = player.Character
-    if not char then return "Unknown" end
-    for _, tool in pairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            local name = tool.Name
-            if name:find("Scythe") then return "Scythe"
-            elseif name:find("Blade") then return "Blade"
-            elseif name:find("Hammer") then return "Hammer"
-            elseif name:find("Gun") then return "Gun"
-            elseif name:find("Claw") then return "Claw" end
+local function FindGens()
+    local g = {}
+    for _, o in pairs(Workspace:GetDescendants()) do
+        if o:IsA("BasePart") then
+            local n = o.Name:lower()
+            if n:find("generator") or n:find("gen") or n:find("power") or n:find("repair") then table.insert(g, o) end
         end
     end
-    return "None"
-end
-
-local function GetGeneratorProgress(gen)
-    local progress = gen:GetAttribute("Progress") or gen:GetAttribute("Completion") or 0
-    if type(progress) == "number" then
-        return math.floor(progress * 100)
-    end
-    return 0
-end
-
-local function GetChasedIndicator(distance)
-    if distance < 30 then return "🔴 !!"
-    elseif distance < 50 then return "🟡 !"
-    else return "🟢" end
-end
-
-local function FindGenerators()
-    local gens = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local name = obj.Name:lower()
-            if name:find("generator") or name:find("gen") or name:find("power") or name:find("repair") then
-                table.insert(gens, obj)
-            end
-        end
-        if obj:IsA("Model") then
-            local name = obj.Name:lower()
-            if name:find("generator") or name:find("gen") or name:find("power") then
-                for _, part in pairs(obj:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        table.insert(gens, part)
-                    end
-                end
-            end
-        end
-    end
-    return gens
+    return g
 end
 
 local function FindGates()
-    local gates = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local name = obj.Name:lower()
-            if name:find("gate") or name:find("escape") or name:find("exit") or name:find("door") then
-                table.insert(gates, obj)
-            end
-        end
-        if obj:IsA("Model") then
-            local name = obj.Name:lower()
-            if name:find("gate") or name:find("escape") or name:find("exit") then
-                for _, part in pairs(obj:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        table.insert(gates, part)
-                    end
-                end
-            end
+    local g = {}
+    for _, o in pairs(Workspace:GetDescendants()) do
+        if o:IsA("BasePart") then
+            local n = o.Name:lower()
+            if n:find("gate") or n:find("escape") or n:find("exit") or n:find("door") then table.insert(g, o) end
         end
     end
-    return gates
+    return g
 end
 
 local function FindHooks()
-    local hooks = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Name:lower():find("hook") then
-            table.insert(hooks, obj)
-        end
-        if obj:IsA("Model") and obj.Name:lower():find("hook") then
-            for _, part in pairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    table.insert(hooks, part)
-                end
-            end
-        end
+    local h = {}
+    for _, o in pairs(Workspace:GetDescendants()) do
+        if o:IsA("BasePart") and o.Name:lower():find("hook") then table.insert(h, o) end
     end
-    return hooks
+    return h
 end
 
 local function FindPallets()
-    local pallets = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("pallet") or obj.Name:lower():find("plank") or obj.Name:lower():find("board")) then
-            table.insert(pallets, obj)
-        end
-        if obj:IsA("Model") and (obj.Name:lower():find("pallet") or obj.Name:lower():find("plank")) then
-            for _, part in pairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    table.insert(pallets, part)
-                end
-            end
-        end
+    local p = {}
+    for _, o in pairs(Workspace:GetDescendants()) do
+        if o:IsA("BasePart") and (o.Name:lower():find("pallet") or o.Name:lower():find("plank")) then table.insert(p, o) end
     end
-    return pallets
+    return p
 end
 
-local function FindVaults()
-    local vaults = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (obj.Name:lower():find("vault") or obj.Name:lower():find("window") or obj.Name:lower():find("ledge")) then
-            table.insert(vaults, obj)
-        end
-        if obj:IsA("Model") and (obj.Name:lower():find("vault") or obj.Name:lower():find("window")) then
-            for _, part in pairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    table.insert(vaults, part)
-                end
-            end
-        end
-    end
-    return vaults
-end
-
-local function GetClosestPlayer()
-    local closest, shortest = nil, math.huge
+local function GetClosest()
+    local c, s = nil, math.huge
     local hrp = GetHRP()
     if not hrp then return nil end
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local targetHrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-            if targetHrp then
-                local dist = (hrp.Position - targetHrp.Position).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    closest = player
-                end
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local t = p.Character:FindFirstChild("HumanoidRootPart") or p.Character:FindFirstChild("Torso")
+            if t then
+                local d = (hrp.Position - t.Position).Magnitude
+                if d < s then s = d; c = p end
             end
         end
     end
-    return closest
+    return c
 end
 
-local function GetClosestKiller()
-    local closest, shortest = nil, math.huge
-    local hrp = GetHRP()
-    if not hrp then return nil end
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and IsPlayerKiller(player) and player.Character then
-            local targetHrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-            if targetHrp then
-                local dist = (hrp.Position - targetHrp.Position).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    closest = player
-                end
-            end
-        end
-    end
-    return closest
+local function GetHealthState(p)
+    local h = p.Character and p.Character:FindFirstChild("Humanoid")
+    if not h then return "💀" end
+    local r = h.Health / h.MaxHealth
+    if r <= 0 then return "💀"
+    elseif r <= 0.25 then return "🪝"
+    elseif r <= 0.5 then return "🩸"
+    elseif r <= 0.75 then return "🟡"
+    else return "🟢" end
+end
+
+local function GetChased(d)
+    if d < 30 then return "🔴!!"
+    elseif d < 50 then return "🟡!"
+    else return "🟢" end
 end
 
 -- =====================================================
--- TOGGLES – 30+ FITUR
+-- LIGHTWEIGHT TOGGLES
 -- =====================================================
-local toggles = {
-    -- MOVEMENT (5)
-    fly = false,
-    noClip = false,
-    speedHack = false,
-    superJump = false,
-    moonwalk = false,
-    
-    -- VISUAL (8)
-    invisible = false,
-    fullBright = false,
-    antiBlind = false,
-    antiStun = false,
-    noSlowdown = false,
-    fastVault = false,
-    hitboxExpander = false,
-    crosshair = false,
-    
-    -- ESP (7)
-    espKiller = false,
-    espSurvivor = false,
-    espGenerator = false,
-    espHook = false,
-    espPallet = false,
-    espVault = false,
-    espBlood = false,
-    
-    -- COMBAT (6)
-    autoParry = false,
-    infiniteAttack = false,
-    aimbotRevolver = false,
-    infiniteLunge = false,
-    antiKnock = false,
-    antiWiggle = false,
-    
-    -- AUTO FARM / UTILITY (8)
-    autoGenerator = false,
-    autoSkillCheck = false,
-    instantEscape = false,
-    forceEndGame = false,
-    autoHeal = false,
-    cancelGenerator = false,
-    killerProximityAlert = false,
-    serverHop = false,
-    
-    -- MISC (3)
-    godMode = false,
-    antiAFK = false,
-    chasedIndicator = false
-}
-
-local connections = {}
-local espObjects = {}
-local flyActive = false
-local invisibleActive = false
-local autoGenActive = false
-local noClipActive = false
-local godModeActive = false
-local espActive = false
-local moonwalkGyro = nil
+local t = {}
+local conn = {}
+local espObj = {}
+local flyActive, invActive, genActive, clipActive, godActive, espActive = false, false, false, false, false, false
 
 -- =====================================================
--- MOVEMENT FITUR (5)
+-- LIGHTWEIGHT: FLY (OPTIMIZED)
 -- =====================================================
-
--- FLY
 local function StartFly()
     if flyActive then return end
     flyActive = true
     local hrp = GetHRP()
     if not hrp then flyActive = false; return end
-    local humanoid = GetHumanoid()
-    if humanoid then humanoid.PlatformStand = true end
+    local h = GetHumanoid()
+    if h then h.PlatformStand = true end
     local bv = Instance.new("BodyVelocity")
     bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
     bv.Velocity = Vector3.new(0, 0, 0)
@@ -317,427 +136,231 @@ local function StartFly()
     bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
     bp.Position = hrp.Position
     bp.Parent = hrp
-    local conn = RunService.RenderStepped:Connect(function()
-        if not flyActive or not toggles.fly then StopFly(); return end
+    local c = RunService.RenderStepped:Connect(function()
+        if not flyActive or not t.fly then StopFly(); return end
         local hrp = GetHRP()
         if not hrp then return end
         if bp then bp.Position = hrp.Position end
         local cam = Camera.CFrame
-        local forward = cam.LookVector
-        local right = cam.RightVector
-        local flatForward = Vector3.new(forward.X, 0, forward.Z).Unit
-        local flatRight = Vector3.new(right.X, 0, right.Z).Unit
-        local moveDir = Vector3.new()
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + flatForward end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - flatForward end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - flatRight end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + flatRight end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir + Vector3.new(0, -1, 0) end
-        if moveDir.Magnitude > 0 then bv.Velocity = moveDir.Unit * 50 else bv.Velocity = Vector3.new(0, 0.5, 0) end
+        local f = cam.LookVector
+        local r = cam.RightVector
+        local ff = Vector3.new(f.X, 0, f.Z).Unit
+        local fr = Vector3.new(r.X, 0, r.Z).Unit
+        local md = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then md = md + ff end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then md = md - ff end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then md = md - fr end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then md = md + fr end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then md = md + Vector3.new(0, 1, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then md = md + Vector3.new(0, -1, 0) end
+        bv.Velocity = md.Magnitude > 0 and md.Unit * 50 or Vector3.new(0, 0.5, 0)
     end)
-    connections.fly = {bv = bv, bp = bp, conn = conn}
+    conn.fly = {bv = bv, bp = bp, c = c}
 end
 
 local function StopFly()
     flyActive = false
-    if connections.fly then
-        if connections.fly.conn then connections.fly.conn:Disconnect() end
-        if connections.fly.bv then connections.fly.bv:Destroy() end
-        if connections.fly.bp then connections.fly.bp:Destroy() end
-        connections.fly = nil
+    if conn.fly then
+        if conn.fly.c then conn.fly.c:Disconnect() end
+        if conn.fly.bv then conn.fly.bv:Destroy() end
+        if conn.fly.bp then conn.fly.bp:Destroy() end
+        conn.fly = nil
     end
-    local humanoid = GetHumanoid()
-    if humanoid then humanoid.PlatformStand = false end
-end
-
--- NO CLIP
-local function StartNoClip()
-    if noClipActive then return end
-    noClipActive = true
-    local conn = RunService.RenderStepped:Connect(function()
-        if not noClipActive or not toggles.noClip then StopNoClip(); return end
-        local char = GetCharacter()
-        if char then
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = false end
-            end
-        end
-    end)
-    connections.noClip = conn
-end
-
-local function StopNoClip()
-    noClipActive = false
-    if connections.noClip then connections.noClip:Disconnect(); connections.noClip = nil end
-    local char = GetCharacter()
-    if char then
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = true end
-        end
-    end
-end
-
--- SPEED HACK
-local function StartSpeedHack()
-    if connections.speedHack then return end
-    connections.speedHack = RunService.RenderStepped:Connect(function()
-        if toggles.speedHack then
-            local humanoid = GetHumanoid()
-            if humanoid then humanoid.WalkSpeed = 60 end
-        end
-    end)
-end
-
--- SUPER JUMP
-local function StartSuperJump()
-    if connections.superJump then return end
-    connections.superJump = RunService.RenderStepped:Connect(function()
-        if toggles.superJump then
-            local humanoid = GetHumanoid()
-            if humanoid then humanoid.JumpPower = 150 end
-        end
-    end)
-end
-
--- MOONWALK WITH SWAY
-local function StartMoonwalk()
-    if connections.moonwalk then return end
-    connections.moonwalk = RunService.RenderStepped:Connect(function()
-        if toggles.moonwalk then
-            local humanoid = GetHumanoid()
-            if humanoid then
-                humanoid.WalkSpeed = 50
-                humanoid.AutoRotate = false
-            end
-            local hrp = GetHRP()
-            if hrp and not moonwalkGyro then
-                moonwalkGyro = Instance.new("BodyGyro")
-                moonwalkGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-                moonwalkGyro.CFrame = hrp.CFrame
-                moonwalkGyro.Parent = hrp
-                task.spawn(function()
-                    local angle = 0
-                    while toggles.moonwalk do
-                        angle = angle + 0.05
-                        if moonwalkGyro then
-                            moonwalkGyro.CFrame = CFrame.Angles(0, math.sin(angle * 2) * 0.3, 0)
-                        end
-                        task.wait(0.05)
-                    end
-                end)
-            end
-        else
-            if moonwalkGyro then moonwalkGyro:Destroy(); moonwalkGyro = nil end
-            local humanoid = GetHumanoid()
-            if humanoid then humanoid.AutoRotate = true end
-        end
-    end)
+    local h = GetHumanoid()
+    if h then h.PlatformStand = false end
 end
 
 -- =====================================================
--- VISUAL FITUR (8)
+-- LIGHTWEIGHT: INVISIBLE
 -- =====================================================
-
--- INVISIBLE
 local function StartInvisible()
-    if invisibleActive then return end
-    invisibleActive = true
-    local conn = RunService.RenderStepped:Connect(function()
-        if not invisibleActive or not toggles.invisible then StopInvisible(); return end
-        local char = GetCharacter()
-        if not char then return end
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Transparency = 1
-                part.CanCollide = false
-                part.CastShadow = false
-            end
-            if part:IsA("Accessory") and part:FindFirstChild("Handle") then
-                part.Handle.Transparency = 1
-                part.Handle.CanCollide = false
-            end
+    if invActive then return end
+    invActive = true
+    conn.inv = RunService.RenderStepped:Connect(function()
+        if not invActive or not t.invisible then StopInvisible(); return end
+        local c = GetCharacter()
+        if not c then return end
+        for _, p in pairs(c:GetDescendants()) do
+            if p:IsA("BasePart") then p.Transparency = 1; p.CanCollide = false; p.CastShadow = false end
         end
-        local humanoid = GetHumanoid()
-        if humanoid then
-            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-            humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-            humanoid.NameDisplayDistance = 0
-        end
+        local h = GetHumanoid()
+        if h then h.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None; h.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff end
     end)
-    connections.invisible = conn
 end
 
 local function StopInvisible()
-    invisibleActive = false
-    if connections.invisible then connections.invisible:Disconnect(); connections.invisible = nil end
-    local char = GetCharacter()
-    if char then
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Transparency = 0
-                part.CanCollide = true
-                part.CastShadow = true
-            end
-            if part:IsA("Accessory") and part:FindFirstChild("Handle") then
-                part.Handle.Transparency = 0
-                part.Handle.CanCollide = true
-            end
+    invActive = false
+    if conn.inv then conn.inv:Disconnect(); conn.inv = nil end
+    local c = GetCharacter()
+    if c then
+        for _, p in pairs(c:GetDescendants()) do
+            if p:IsA("BasePart") then p.Transparency = 0; p.CanCollide = true; p.CastShadow = true end
         end
-        local humanoid = GetHumanoid()
-        if humanoid then
-            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-            humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOn
-            humanoid.NameDisplayDistance = 100
+        local h = GetHumanoid()
+        if h then h.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer; h.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOn end
+    end
+end
+
+-- =====================================================
+-- LIGHTWEIGHT: AUTO GENERATOR
+-- =====================================================
+local function AutoGenAction()
+    local hrp = GetHRP()
+    if not hrp then return end
+    local gens = FindGens()
+    if #gens == 0 then return end
+    table.sort(gens, function(a,b) return (hrp.Position - a.Position).Magnitude < (hrp.Position - b.Position).Magnitude end)
+    local target = gens[1]
+    if not target then return end
+    hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
+    task.wait(0.15)
+    for i = 1, 10 do
+        pcall(function() VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end)
+        task.wait(0.03)
+    end
+    for _, o in pairs(ReplicatedStorage:GetDescendants()) do
+        if o:IsA("RemoteEvent") then
+            local n = o.Name:lower()
+            if n:find("generator") or n:find("gen") or n:find("repair") or n:find("complete") then
+                pcall(function() o:FireServer(target) end)
+            end
         end
     end
 end
 
--- FULL BRIGHT
-local function StartFullBright()
-    if connections.fullBright then return end
-    connections.fullBright = RunService.RenderStepped:Connect(function()
-        if toggles.fullBright then
-            Lighting.Brightness = 10
-            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-            Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-            Lighting.GlobalShadows = false
-        end
+local function StartAutoGen()
+    if genActive then return end
+    genActive = true
+    conn.gen = RunService.RenderStepped:Connect(function()
+        if not genActive or not t.autoGenerator then StopAutoGen(); return end
+        AutoGenAction()
+        task.wait(0.8)
     end)
 end
 
--- ANTI BLIND
-local function StartAntiBlind()
-    if connections.antiBlind then return end
-    connections.antiBlind = RunService.RenderStepped:Connect(function()
-        if toggles.antiBlind then
-            local playerGui = LocalPlayer.PlayerGui
-            if playerGui then
-                for _, gui in pairs(playerGui:GetDescendants()) do
-                    if gui:IsA("Frame") or gui:IsA("ImageLabel") then
-                        local name = gui.Name:lower()
-                        if name:find("blind") or name:find("flash") or name:find("overlay") then
-                            pcall(function() gui.Visible = false end)
-                        end
-                    end
-                end
-            end
-            pcall(function()
-                Lighting.Bloom.Enabled = false
-                Lighting.Bloom.Intensity = 0
-            end)
-        end
-    end)
-end
-
--- ANTI STUN
-local function StartAntiStun()
-    if connections.antiStun then return end
-    connections.antiStun = RunService.RenderStepped:Connect(function()
-        if toggles.antiStun then
-            local humanoid = GetHumanoid()
-            if humanoid then
-                humanoid.PlatformStand = false
-                humanoid.Sit = false
-            end
-            local hrp = GetHRP()
-            if hrp then
-                hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
-            end
-        end
-    end)
-end
-
--- NO SLOWDOWN
-local function StartNoSlowdown()
-    if connections.noSlowdown then return end
-    connections.noSlowdown = RunService.RenderStepped:Connect(function()
-        if toggles.noSlowdown then
-            local humanoid = GetHumanoid()
-            if humanoid then humanoid.AutoRotate = true end
-            local hrp = GetHRP()
-            if hrp and hrp.AssemblyLinearVelocity.Magnitude > 10 then
-                hrp.AssemblyLinearVelocity = hrp.AssemblyLinearVelocity
-            end
-        end
-    end)
-end
-
--- FAST VAULT
-local function StartFastVault()
-    if connections.fastVault then return end
-    connections.fastVault = RunService.RenderStepped:Connect(function()
-        if toggles.fastVault then
-            local hrp = GetHRP()
-            if not hrp then return end
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name:lower():find("vault") or obj.Name:lower():find("pallet") or obj.Name:lower():find("window")) then
-                    if (hrp.Position - obj.Position).Magnitude < 5 then
-                        local humanoid = GetHumanoid()
-                        if humanoid then
-                            humanoid.Jump = true
-                            task.wait(0.05)
-                            hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 10
-                        end
-                        break
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- HITBOX EXPANDER
-local function StartHitboxExpander()
-    if connections.hitboxExpander then return end
-    connections.hitboxExpander = RunService.RenderStepped:Connect(function()
-        if toggles.hitboxExpander then
-            local char = GetCharacter()
-            if char then
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") and (part.Name:lower():find("head") or part.Name:lower():find("torso")) then
-                        part.Size = part.Size * 1.5
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- CROSSHAIR
-local function StartCrosshair()
-    if connections.crosshair then return end
-    local crosshair = Instance.new("Frame")
-    crosshair.Parent = CoreGui
-    crosshair.Size = UDim2.new(0, 4, 0, 20)
-    crosshair.Position = UDim2.new(0.5, -2, 0.5, -10)
-    crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    crosshair.BackgroundTransparency = 0.5
-    crosshair.ZIndex = 999
-    local crosshair2 = Instance.new("Frame")
-    crosshair2.Parent = CoreGui
-    crosshair2.Size = UDim2.new(0, 20, 0, 4)
-    crosshair2.Position = UDim2.new(0.5, -10, 0.5, -2)
-    crosshair2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    crosshair2.BackgroundTransparency = 0.5
-    crosshair2.ZIndex = 999
-    connections.crosshair = {crosshair, crosshair2}
+local function StopAutoGen()
+    genActive = false
+    if conn.gen then conn.gen:Disconnect(); conn.gen = nil end
 end
 
 -- =====================================================
--- ESP FITUR (7)
+-- LIGHTWEIGHT: NO CLIP
+-- =====================================================
+local function StartNoClip()
+    if clipActive then return end
+    clipActive = true
+    conn.clip = RunService.RenderStepped:Connect(function()
+        if not clipActive or not t.noClip then StopNoClip(); return end
+        local c = GetCharacter()
+        if c then for _, p in pairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end end
+    end)
+end
+
+local function StopNoClip()
+    clipActive = false
+    if conn.clip then conn.clip:Disconnect(); conn.clip = nil end
+    local c = GetCharacter()
+    if c then for _, p in pairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = true end end end
+end
+
+-- =====================================================
+-- LIGHTWEIGHT: GOD MODE
+-- =====================================================
+local function StartGodMode()
+    if godActive then return end
+    godActive = true
+    conn.god = RunService.RenderStepped:Connect(function()
+        if not godActive or not t.godMode then StopGodMode(); return end
+        local h = GetHumanoid()
+        if h then h.Health = h.MaxHealth; h.PlatformStand = false end
+    end)
+end
+
+local function StopGodMode()
+    godActive = false
+    if conn.god then conn.god:Disconnect(); conn.god = nil end
+end
+
+-- =====================================================
+-- LIGHTWEIGHT: ESP (7 IN 1 – OPTIMIZED)
 -- =====================================================
 local function ClearESP()
-    for _, obj in pairs(espObjects) do
-        pcall(function() obj:Destroy() end)
-    end
-    espObjects = {}
+    for _, o in pairs(espObj) do pcall(function() o:Destroy() end) end
+    espObj = {}
 end
 
-local function AddESP(target, color, label, labelColor)
+local function AddESP(target, color, label, lc)
     if not target then return end
-    local highlight = Instance.new("Highlight")
-    highlight.Parent = target
-    highlight.FillColor = color
-    highlight.FillTransparency = 0.3
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.OutlineTransparency = 0.1
-    table.insert(espObjects, highlight)
-    local hrp = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Torso") or target:FindFirstChild("UpperTorso") or target:FindFirstChild("Head")
+    local h = Instance.new("Highlight")
+    h.Parent = target
+    h.FillColor = color
+    h.FillTransparency = 0.25
+    h.OutlineColor = Color3.fromRGB(255,255,255)
+    h.OutlineTransparency = 0.1
+    table.insert(espObj, h)
+    local hrp = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Torso") or target:FindFirstChild("Head")
     if hrp then
-        local billboard = Instance.new("BillboardGui")
-        billboard.Parent = hrp
-        billboard.Size = UDim2.new(0, 200, 0, 30)
-        billboard.Adornee = hrp
-        billboard.AlwaysOnTop = true
-        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-        local labelText = Instance.new("TextLabel")
-        labelText.Parent = billboard
-        labelText.Size = UDim2.new(1, 0, 1, 0)
-        labelText.BackgroundTransparency = 1
-        labelText.Text = label or "Unknown"
-        labelText.TextColor3 = labelColor or color
-        labelText.TextSize = 12
-        labelText.Font = Enum.Font.GothamBold
-        labelText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        labelText.TextStrokeTransparency = 0.2
-        table.insert(espObjects, billboard)
-        table.insert(espObjects, labelText)
+        local b = Instance.new("BillboardGui")
+        b.Parent = hrp
+        b.Size = UDim2.new(0, 150, 0, 24)
+        b.Adornee = hrp
+        b.AlwaysOnTop = true
+        b.StudsOffset = Vector3.new(0, 2, 0)
+        local l = Instance.new("TextLabel")
+        l.Parent = b
+        l.Size = UDim2.new(1,0,1,0)
+        l.BackgroundTransparency = 1
+        l.Text = label or ""
+        l.TextColor3 = lc or color
+        l.TextSize = 10
+        l.Font = Enum.Font.GothamBold
+        l.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+        l.TextStrokeTransparency = 0.3
+        table.insert(espObj, b)
+        table.insert(espObj, l)
     end
 end
 
 local function UpdateESP()
     ClearESP()
-    if espActive ~= true then return end
-    
+    if not espActive then return end
     local hrp = GetHRP()
     
-    -- ESP KILLER
-    if toggles.espKiller then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and IsPlayerKiller(player) and player.Character then
-                local dist = hrp and (hrp.Position - (player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")).Position).Magnitude or 0
-                local chased = GetChasedIndicator(dist)
-                AddESP(player.Character, Color3.fromRGB(255, 0, 0), chased .. " " .. player.Name .. " [" .. math.floor(dist) .. "m] [Killer]", Color3.fromRGB(255, 0, 0))
+    if t.espKiller then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and IsKiller(p) and p.Character then
+                local th = p.Character:FindFirstChild("HumanoidRootPart") or p.Character:FindFirstChild("Torso")
+                local d = hrp and th and (hrp.Position - th.Position).Magnitude or 0
+                AddESP(p.Character, Color3.fromRGB(255,0,0), GetChased(d).." "..p.Name.." ["..math.floor(d).."m]", Color3.fromRGB(255,0,0))
             end
         end
     end
     
-    -- ESP SURVIVOR
-    if toggles.espSurvivor then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and not IsPlayerKiller(player) and player.Character then
-                local dist = hrp and (hrp.Position - (player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")).Position).Magnitude or 0
-                local state = GetHealthState(player)
-                AddESP(player.Character, Color3.fromRGB(0, 255, 0), "🟢 " .. player.Name .. " [" .. math.floor(dist) .. "m] " .. state, Color3.fromRGB(0, 255, 0))
+    if t.espSurvivor then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and not IsKiller(p) and p.Character then
+                local th = p.Character:FindFirstChild("HumanoidRootPart") or p.Character:FindFirstChild("Torso")
+                local d = hrp and th and (hrp.Position - th.Position).Magnitude or 0
+                AddESP(p.Character, Color3.fromRGB(0,255,0), "🟢 "..p.Name.." ["..math.floor(d).."m] "..GetHealthState(p), Color3.fromRGB(0,255,0))
             end
         end
     end
     
-    -- ESP GENERATOR
-    if toggles.espGenerator then
-        for _, gen in pairs(FindGenerators()) do
-            local progress = GetGeneratorProgress(gen)
-            local label = "⚡ Generator " .. progress .. "%"
-            local parent = gen.Parent or gen
-            AddESP(parent, Color3.fromRGB(0, 255, 255), label, Color3.fromRGB(0, 255, 255))
+    if t.espGenerator then
+        for _, g in pairs(FindGens()) do
+            AddESP(g.Parent or g, Color3.fromRGB(0,255,255), "⚡ Gen", Color3.fromRGB(0,255,255))
         end
     end
     
-    -- ESP HOOK
-    if toggles.espHook then
-        for _, hook in pairs(FindHooks()) do
-            local parent = hook.Parent or hook
-            AddESP(parent, Color3.fromRGB(255, 165, 0), "🪝 Hook", Color3.fromRGB(255, 165, 0))
+    if t.espHook then
+        for _, h in pairs(FindHooks()) do
+            AddESP(h.Parent or h, Color3.fromRGB(255,165,0), "🪝 Hook", Color3.fromRGB(255,165,0))
         end
     end
     
-    -- ESP PALLET
-    if toggles.espPallet then
-        for _, pallet in pairs(FindPallets()) do
-            local parent = pallet.Parent or pallet
-            AddESP(parent, Color3.fromRGB(139, 69, 19), "📦 Pallet", Color3.fromRGB(139, 69, 19))
-        end
-    end
-    
-    -- ESP VAULT
-    if toggles.espVault then
-        for _, vault in pairs(FindVaults()) do
-            local parent = vault.Parent or vault
-            AddESP(parent, Color3.fromRGB(255, 255, 0), "🪟 Vault", Color3.fromRGB(255, 255, 0))
-        end
-    end
-    
-    -- ESP BLOOD (Survivor health indicator on killer ESP)
-    if toggles.espBlood then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and not IsPlayerKiller(player) and player.Character then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health < humanoid.MaxHealth then
-                    local state = GetHealthState(player)
-                    AddESP(player.Character, Color3.fromRGB(255, 0, 0), "🩸 " .. player.Name .. " " .. state, Color3.fromRGB(255, 0, 0))
-                end
-            end
+    if t.espPallet then
+        for _, p in pairs(FindPallets()) do
+            AddESP(p.Parent or p, Color3.fromRGB(139,69,19), "📦 Pallet", Color3.fromRGB(139,69,19))
         end
     end
 end
@@ -745,192 +368,30 @@ end
 local function StartESP()
     if espActive then return end
     espActive = true
-    local conn = RunService.RenderStepped:Connect(function()
-        if espActive then
-            UpdateESP()
-        end
-    end)
-    connections.esp = conn
+    conn.esp = RunService.RenderStepped:Connect(function() if espActive then UpdateESP() end end)
 end
 
 local function StopESP()
     espActive = false
-    if connections.esp then
-        connections.esp:Disconnect()
-        connections.esp = nil
-    end
+    if conn.esp then conn.esp:Disconnect(); conn.esp = nil end
     ClearESP()
 end
 
 -- =====================================================
--- COMBAT FITUR (6)
+-- LIGHTWEIGHT: AUTO SKILL CHECK
 -- =====================================================
-
--- AUTO PARRY
-local function StartAutoParry()
-    if connections.autoParry then return end
-    connections.autoParry = RunService.RenderStepped:Connect(function()
-        if toggles.autoParry then
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end
-    end)
-end
-
--- INFINITE ATTACK
-local function StartInfiniteAttack()
-    if connections.infiniteAttack then return end
-    connections.infiniteAttack = RunService.RenderStepped:Connect(function()
-        if toggles.infiniteAttack then
-            local char = GetCharacter()
-            if char then
-                for _, tool in pairs(char:GetChildren()) do
-                    if tool:IsA("Tool") and tool:FindFirstChild("Cooldown") then
-                        tool.Cooldown.Value = 0
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- AIMBOT REVOLVER
-local function StartAimbotRevolver()
-    if connections.aimbotRevolver then return end
-    connections.aimbotRevolver = RunService.RenderStepped:Connect(function()
-        if toggles.aimbotRevolver then
-            local target = GetClosestPlayer()
-            if target and target.Character then
-                local targetHrp = target.Character:FindFirstChild("HumanoidRootPart") or target.Character:FindFirstChild("Torso")
-                if targetHrp then
-                    local origin = Camera.CFrame.Position
-                    local direction = (targetHrp.Position - origin).Unit
-                    local ray = Ray.new(origin, direction * 500)
-                    local hit = Workspace:FindPartOnRay(ray, LocalPlayer.Character)
-                    if not hit or hit:IsDescendantOf(target.Character) then
-                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetHrp.Position)
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- INFINITE LUNGE
-local function StartInfiniteLunge()
-    if connections.infiniteLunge then return end
-    connections.infiniteLunge = RunService.RenderStepped:Connect(function()
-        if toggles.infiniteLunge then
-            local char = GetCharacter()
-            if char then
-                for _, tool in pairs(char:GetChildren()) do
-                    if tool:IsA("Tool") then
-                        pcall(function()
-                            tool:SetAttribute("Range", 100)
-                        end)
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- ANTI KNOCK
-local function StartAntiKnock()
-    if connections.antiKnock then return end
-    connections.antiKnock = RunService.RenderStepped:Connect(function()
-        if toggles.antiKnock then
-            local humanoid = GetHumanoid()
-            if humanoid then
-                humanoid.BreakJointsOnDeath = false
-                if humanoid.Health <= 0 then
-                    humanoid.Health = 10
-                end
-            end
-        end
-    end)
-end
-
--- ANTI WIGGLE
-local function StartAntiWiggle()
-    if connections.antiWiggle then return end
-    connections.antiWiggle = RunService.RenderStepped:Connect(function()
-        if toggles.antiWiggle then
-            local char = GetCharacter()
-            if char then
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- =====================================================
--- AUTO FARM / UTILITY (8)
--- =====================================================
-
--- AUTO GENERATOR
-local function AutoGeneratorAction()
-    local hrp = GetHRP()
-    if not hrp then return end
-    local gens = FindGenerators()
-    if #gens == 0 then return end
-    table.sort(gens, function(a,b) return (hrp.Position - a.Position).Magnitude < (hrp.Position - b.Position).Magnitude end)
-    local target = gens[1]
-    if not target then return end
-    hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
-    task.wait(0.2)
-    for i = 1, 15 do
-        pcall(function() VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()); task.wait(0.05) end)
-    end
-    for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            local name = obj.Name:lower()
-            if name:find("generator") or name:find("gen") or name:find("repair") or name:find("complete") then
-                pcall(function() obj:FireServer(target) end)
-            end
-        end
-    end
-end
-
-local function StartAutoGenerator()
-    if autoGenActive then return end
-    autoGenActive = true
-    local conn = RunService.RenderStepped:Connect(function()
-        if not autoGenActive or not toggles.autoGenerator then StopAutoGenerator(); return end
-        AutoGeneratorAction()
-        task.wait(1)
-    end)
-    connections.autoGenerator = conn
-end
-
-local function StopAutoGenerator()
-    autoGenActive = false
-    if connections.autoGenerator then connections.autoGenerator:Disconnect(); connections.autoGenerator = nil end
-end
-
--- AUTO SKILL CHECK
-local function StartAutoSkillCheck()
-    if connections.autoSkillCheck then return end
-    connections.autoSkillCheck = RunService.RenderStepped:Connect(function()
-        if toggles.autoSkillCheck then
-            local playerGui = LocalPlayer.PlayerGui
-            if playerGui then
-                for _, gui in pairs(playerGui:GetDescendants()) do
-                    if gui:IsA("Frame") or gui:IsA("ImageLabel") then
-                        local name = gui.Name:lower()
-                        if name:find("skill") or name:find("check") then
-                            for _, btn in pairs(gui:GetDescendants()) do
-                                if btn:IsA("TextButton") or btn:IsA("ImageButton") then
-                                    pcall(function()
-                                        VirtualUser:CaptureController()
-                                        VirtualUser:ClickButton2(Vector2.new())
-                                    end)
+local function StartAutoSkill()
+    if conn.skill then return end
+    conn.skill = RunService.RenderStepped:Connect(function()
+        if t.autoSkill then
+            local pg = LocalPlayer.PlayerGui
+            if pg then
+                for _, g in pairs(pg:GetDescendants()) do
+                    if g:IsA("Frame") or g:IsA("ImageLabel") then
+                        if g.Name:lower():find("skill") or g.Name:lower():find("check") then
+                            for _, b in pairs(g:GetDescendants()) do
+                                if b:IsA("TextButton") or b:IsA("ImageButton") then
+                                    pcall(function() VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end)
                                 end
                             end
                         end
@@ -941,11 +402,13 @@ local function StartAutoSkillCheck()
     end)
 end
 
--- INSTANT ESCAPE
+-- =====================================================
+-- LIGHTWEIGHT: INSTANT ESCAPE
+-- =====================================================
 local function StartInstantEscape()
-    if connections.instantEscape then return end
-    connections.instantEscape = RunService.RenderStepped:Connect(function()
-        if toggles.instantEscape then
+    if conn.escape then return end
+    conn.escape = RunService.RenderStepped:Connect(function()
+        if t.instantEscape then
             local hrp = GetHRP()
             if not hrp then return end
             local gates = FindGates()
@@ -953,11 +416,11 @@ local function StartInstantEscape()
                 table.sort(gates, function(a,b) return (hrp.Position - a.Position).Magnitude < (hrp.Position - b.Position).Magnitude end)
                 local target = gates[1]
                 if target then
-                    hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 3, 0))
-                    task.wait(0.2)
-                    for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
-                        if obj:IsA("RemoteEvent") and obj.Name:lower():find("escape") then
-                            pcall(function() obj:FireServer() end)
+                    hrp.CFrame = CFrame.new(target.Position + Vector3.new(0,3,0))
+                    task.wait(0.15)
+                    for _, o in pairs(ReplicatedStorage:GetDescendants()) do
+                        if o:IsA("RemoteEvent") and o.Name:lower():find("escape") then
+                            pcall(function() o:FireServer() end)
                         end
                     end
                 end
@@ -966,493 +429,293 @@ local function StartInstantEscape()
     end)
 end
 
--- FORCE END GAME
-local function StartForceEndGame()
-    if connections.forceEndGame then return end
-    connections.forceEndGame = RunService.RenderStepped:Connect(function()
-        if toggles.forceEndGame then
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and obj.Name:lower():find("gate") then
-                    pcall(function()
-                        obj:SetAttribute("Open", true)
-                        local click = obj:FindFirstChild("ClickDetector")
-                        if click then click:Click() end
-                    end)
+-- =====================================================
+-- LIGHTWEIGHT: FORCE END GAME
+-- =====================================================
+local function StartForceEnd()
+    if conn.force then return end
+    conn.force = RunService.RenderStepped:Connect(function()
+        if t.forceEnd then
+            for _, o in pairs(Workspace:GetDescendants()) do
+                if o:IsA("BasePart") and o.Name:lower():find("gate") then
+                    pcall(function() o:SetAttribute("Open", true); local c = o:FindFirstChild("ClickDetector"); if c then c:Click() end end)
                 end
             end
-            for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
-                if remote:IsA("RemoteEvent") and remote.Name:lower():find("gate") then
-                    pcall(function() remote:FireServer() end)
-                end
+            for _, o in pairs(ReplicatedStorage:GetDescendants()) do
+                if o:IsA("RemoteEvent") and o.Name:lower():find("gate") then pcall(function() o:FireServer() end) end
             end
         end
     end)
 end
 
--- AUTO HEAL
-local function StartAutoHeal()
-    if connections.autoHeal then return end
-    connections.autoHeal = RunService.RenderStepped:Connect(function()
-        if toggles.autoHeal then
-            local humanoid = GetHumanoid()
-            if humanoid and humanoid.Health < humanoid.MaxHealth then
-                pcall(function()
-                    VirtualUser:CaptureController()
-                    VirtualUser:ClickButton2(Vector2.new())
-                end)
-            end
-        end
-    end)
-end
-
--- CANCEL GENERATOR
-local function StartCancelGenerator()
-    if connections.cancelGenerator then return end
-    connections.cancelGenerator = RunService.RenderStepped:Connect(function()
-        if toggles.cancelGenerator then
-            local gens = FindGenerators()
-            for _, gen in pairs(gens) do
-                pcall(function()
-                    gen:SetAttribute("Progress", 0)
-                    gen:SetAttribute("Completed", false)
-                end)
-            end
-        end
-    end)
-end
-
--- KILLER PROXIMITY ALERT
-local function StartKillerProximityAlert()
-    if connections.killerProximityAlert then return end
-    connections.killerProximityAlert = RunService.RenderStepped:Connect(function()
-        if toggles.killerProximityAlert then
-            local hrp = GetHRP()
-            if not hrp then return end
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and IsPlayerKiller(player) and player.Character then
-                    local targetHrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character:FindFirstChild("Torso")
-                    if targetHrp then
-                        local dist = (hrp.Position - targetHrp.Position).Magnitude
-                        if dist < 30 then
-                            print("⚠️ KILLER NEARBY! " .. player.Name .. " [" .. math.floor(dist) .. "m]")
-                        end
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- SERVER HOP
-local function StartServerHop()
-    if connections.serverHop then return end
-    connections.serverHop = RunService.RenderStepped:Connect(function()
-        if toggles.serverHop then
-            TeleportService:Teleport(game.PlaceId)
-            toggles.serverHop = false
-        end
-    end)
-end
-
 -- =====================================================
--- MISC FITUR (3)
+-- LIGHTWEIGHT: TOGGLE HANDLER
 -- =====================================================
-
--- GOD MODE
-local function StartGodMode()
-    if godModeActive then return end
-    godModeActive = true
-    local conn = RunService.RenderStepped:Connect(function()
-        if not godModeActive or not toggles.godMode then StopGodMode(); return end
-        local humanoid = GetHumanoid()
-        if humanoid then
-            humanoid.Health = humanoid.MaxHealth
-            humanoid.PlatformStand = false
-            humanoid.Sit = false
-        end
-    end)
-    connections.godMode = conn
-end
-
-local function StopGodMode()
-    godModeActive = false
-    if connections.godMode then connections.godMode:Disconnect(); connections.godMode = nil end
-end
-
--- ANTI AFK
-local function StartAntiAFK()
-    if connections.antiAFK then return end
-    connections.antiAFK = RunService.RenderStepped:Connect(function()
-        if toggles.antiAFK then
-            pcall(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end
-    end)
-end
-
--- CHASED INDICATOR (dipasang di ESP Killer)
--- Sudah include di UpdateESP
-
--- =====================================================
--- TOGGLE HANDLER
--- =====================================================
-local function ToggleFeature(key, state)
-    toggles[key] = state
-    
-    -- STOP FEATURES
+local function Toggle(key, state)
+    t[key] = state
     if key == "fly" and not state then StopFly() end
-    if key == "noClip" and not state then StopNoClip() end
     if key == "invisible" and not state then StopInvisible() end
+    if key == "autoGenerator" and not state then StopAutoGen() end
+    if key == "noClip" and not state then StopNoClip() end
     if key == "godMode" and not state then StopGodMode() end
-    if key == "espKiller" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
+    if key == "espKiller" or key == "espSurvivor" or key == "espGenerator" or key == "espHook" or key == "espPallet" then
+        local any = t.espKiller or t.espSurvivor or t.espGenerator or t.espHook or t.espPallet
+        if not any then StopESP() else if not espActive then StartESP() end end
     end
-    if key == "espSurvivor" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
-    end
-    if key == "espGenerator" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
-    end
-    if key == "espHook" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
-    end
-    if key == "espPallet" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
-    end
-    if key == "espVault" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
-    end
-    if key == "espBlood" and not state then
-        local anyESP = toggles.espKiller or toggles.espSurvivor or toggles.espGenerator or toggles.espHook or toggles.espPallet or toggles.espVault or toggles.espBlood
-        if not anyESP then StopESP() end
-    end
-    if key == "autoGenerator" and not state then StopAutoGenerator() end
     
-    -- START FEATURES
     if state then
         if key == "fly" then StartFly()
-        elseif key == "noClip" then StartNoClip()
-        elseif key == "speedHack" then StartSpeedHack()
-        elseif key == "superJump" then StartSuperJump()
-        elseif key == "moonwalk" then StartMoonwalk()
         elseif key == "invisible" then StartInvisible()
-        elseif key == "fullBright" then StartFullBright()
-        elseif key == "antiBlind" then StartAntiBlind()
-        elseif key == "antiStun" then StartAntiStun()
-        elseif key == "noSlowdown" then StartNoSlowdown()
-        elseif key == "fastVault" then StartFastVault()
-        elseif key == "hitboxExpander" then StartHitboxExpander()
-        elseif key == "crosshair" then StartCrosshair()
-        elseif key == "espKiller" or key == "espSurvivor" or key == "espGenerator" or key == "espHook" or key == "espPallet" or key == "espVault" or key == "espBlood" then
-            if not espActive then StartESP() end
-        elseif key == "autoParry" then StartAutoParry()
-        elseif key == "infiniteAttack" then StartInfiniteAttack()
-        elseif key == "aimbotRevolver" then StartAimbotRevolver()
-        elseif key == "infiniteLunge" then StartInfiniteLunge()
-        elseif key == "antiKnock" then StartAntiKnock()
-        elseif key == "antiWiggle" then StartAntiWiggle()
-        elseif key == "autoGenerator" then StartAutoGenerator()
-        elseif key == "autoSkillCheck" then StartAutoSkillCheck()
-        elseif key == "instantEscape" then StartInstantEscape()
-        elseif key == "forceEndGame" then StartForceEndGame()
-        elseif key == "autoHeal" then StartAutoHeal()
-        elseif key == "cancelGenerator" then StartCancelGenerator()
-        elseif key == "killerProximityAlert" then StartKillerProximityAlert()
-        elseif key == "serverHop" then StartServerHop()
+        elseif key == "autoGenerator" then StartAutoGen()
+        elseif key == "noClip" then StartNoClip()
         elseif key == "godMode" then StartGodMode()
-        elseif key == "antiAFK" then StartAntiAFK()
+        elseif key == "speedHack" then local h = GetHumanoid(); if h then h.WalkSpeed = 60 end
+        elseif key == "superJump" then local h = GetHumanoid(); if h then h.JumpPower = 150 end
+        elseif key == "autoParry" then
+            task.spawn(function() while t.autoParry do pcall(function() VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end) task.wait(0.1) end end)
+        elseif key == "antiAFK" then
+            task.spawn(function() while t.antiAFK do pcall(function() VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end) task.wait(30) end end)
+        elseif key == "autoSkill" then StartAutoSkill()
+        elseif key == "instantEscape" then StartInstantEscape()
+        elseif key == "forceEnd" then StartForceEnd()
+        elseif key == "antiBlind" then
+            task.spawn(function()
+                while t.antiBlind do
+                    for _, g in pairs(LocalPlayer.PlayerGui and LocalPlayer.PlayerGui:GetDescendants() or {}) do
+                        if g:IsA("Frame") or g:IsA("ImageLabel") then
+                            local n = g.Name:lower()
+                            if n:find("blind") or n:find("flash") or n:find("overlay") then pcall(function() g.Visible = false end) end
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
         end
     end
 end
 
 -- =====================================================
--- GUI – FULL 30+ FITUR
 -- =====================================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = CoreGui
-ScreenGui.Name = "ZipHubV54"
-ScreenGui.ResetOnSpawn = false
+-- ⚡ GUI 6LOCC STYLE + LOGO + LIGHTWEIGHT
+-- =====================================================
+-- =====================================================
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 360, 0, 600)
-MainFrame.Position = UDim2.new(0.5, -180, 0.5, -300)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 40)
-MainFrame.BackgroundTransparency = 0.05
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-MainFrame.Active = true
-MainFrame.Draggable = true
+local GUI = Instance.new("ScreenGui")
+GUI.Parent = CoreGui
+GUI.Name = "ZipHubLite"
+GUI.ResetOnSpawn = false
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.Parent = MainFrame
-MainCorner.CornerRadius = UDim.new(0, 12)
+-- MAIN FRAME (SIZE KECIL – 6LOCC STYLE)
+local Main = Instance.new("Frame")
+Main.Parent = GUI
+Main.Size = UDim2.new(0, 280, 0, 340)
+Main.Position = UDim2.new(0.5, -140, 0.5, -170)
+Main.BackgroundColor3 = Color3.fromRGB(10, 10, 25)
+Main.BackgroundTransparency = 0.1
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Main.Active = true
+Main.Draggable = true
 
-local MainBorder = Instance.new("UIStroke")
-MainBorder.Parent = MainFrame
-MainBorder.Color = Color3.fromRGB(0, 180, 255)
-MainBorder.Thickness = 1.5
-MainBorder.Transparency = 0.2
+local MC = Instance.new("UICorner")
+MC.Parent = Main
+MC.CornerRadius = UDim.new(0, 8)
 
+local MB = Instance.new("UIStroke")
+MB.Parent = Main
+MB.Color = Color3.fromRGB(0, 200, 255)
+MB.Thickness = 1
+MB.Transparency = 0.3
+
+-- HEADER (KECIL)
 local Header = Instance.new("Frame")
-Header.Parent = MainFrame
-Header.Size = UDim2.new(1, 0, 0, 45)
-Header.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+Header.Parent = Main
+Header.Size = UDim2.new(1, 0, 0, 38)
+Header.BackgroundColor3 = Color3.fromRGB(0, 80, 180)
 Header.BackgroundTransparency = 0.2
 Header.BorderSizePixel = 0
 
-local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.Parent = Header
-HeaderCorner.CornerRadius = UDim.new(0, 12)
+local HC = Instance.new("UICorner")
+HC.Parent = Header
+HC.CornerRadius = UDim.new(0, 8)
 
+-- LOGO + NAMA ZIP
+local LogoFrame = Instance.new("Frame")
+LogoFrame.Parent = Header
+LogoFrame.Size = UDim2.new(0, 28, 0, 28)
+LogoFrame.Position = UDim2.new(0, 6, 0.5, -14)
+LogoFrame.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+LogoFrame.BackgroundTransparency = 0
+LogoFrame.BorderSizePixel = 0
+
+local LFC = Instance.new("UICorner")
+LFC.Parent = LogoFrame
+LFC.CornerRadius = UDim.new(1, 0)
+
+-- Icon "Z" di logo
+local LogoText = Instance.new("TextLabel")
+LogoText.Parent = LogoFrame
+LogoText.Size = UDim2.new(1, 0, 1, 0)
+LogoText.BackgroundTransparency = 1
+LogoText.Text = "Z"
+LogoText.TextColor3 = Color3.fromRGB(10, 10, 25)
+LogoText.TextSize = 18
+LogoText.Font = Enum.Font.GothamBold
+
+-- Title "ZIP HUB"
 local Title = Instance.new("TextLabel")
 Title.Parent = Header
-Title.Size = UDim2.new(1, 0, 1, 0)
+Title.Size = UDim2.new(0.6, 0, 1, 0)
+Title.Position = UDim2.new(0, 38, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ ZIP HUB v54.0 – 6LOCC EDITION ⚡"
+Title.Text = "ZIP HUB"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
+Title.TextSize = 14
 Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = Header
-CloseBtn.Size = UDim2.new(0, 26, 0, 26)
-CloseBtn.Position = UDim2.new(1, -34, 0, 10)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 14
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.BorderSizePixel = 0
+-- Sub "v55.0"
+local Sub = Instance.new("TextLabel")
+Sub.Parent = Header
+Sub.Size = UDim2.new(0.3, 0, 1, 0)
+Sub.Position = UDim2.new(0.65, 0, 0, 0)
+Sub.BackgroundTransparency = 1
+Sub.Text = "v55.0"
+Sub.TextColor3 = Color3.fromRGB(100, 200, 255)
+Sub.TextSize = 10
+Sub.Font = Enum.Font.GothamMedium
+Sub.TextXAlignment = Enum.TextXAlignment.Right
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.Parent = CloseBtn
-CloseCorner.CornerRadius = UDim.new(1, 0)
+-- Close
+local Close = Instance.new("TextButton")
+Close.Parent = Header
+Close.Size = UDim2.new(0, 20, 0, 20)
+Close.Position = UDim2.new(1, -26, 0.5, -10)
+Close.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
+Close.Text = "✕"
+Close.TextColor3 = Color3.fromRGB(255,255,255)
+Close.TextSize = 11
+Close.Font = Enum.Font.GothamBold
+Close.BorderSizePixel = 0
 
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+local CC = Instance.new("UICorner")
+CC.Parent = Close
+CC.CornerRadius = UDim.new(1,0)
 
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Parent = MainFrame
-ScrollingFrame.Size = UDim2.new(1, -12, 1, -55)
-ScrollingFrame.Position = UDim2.new(0, 6, 0, 50)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.ScrollBarThickness = 3
-ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
-ScrollingFrame.BorderSizePixel = 0
+Close.MouseButton1Click:Connect(function() GUI:Destroy() end)
 
-local function CreateToggle(text, desc, key, yPos)
-    local frame = Instance.new("Frame")
-    frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 50)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 55)
-    frame.BackgroundTransparency = 0.2
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(0, 180, 255)
+-- SCROLL
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Parent = Main
+Scroll.Size = UDim2.new(1, -8, 1, -46)
+Scroll.Position = UDim2.new(0, 4, 0, 42)
+Scroll.BackgroundTransparency = 1
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.ScrollBarThickness = 2
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 255)
+Scroll.BorderSizePixel = 0
 
-    local corner = Instance.new("UICorner")
-    corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 6)
+-- =====================================================
+-- CREATE TOGGLE (6LOCC STYLE – KECIL)
+-- =====================================================
+local function CreateToggle(text, key, y)
+    local f = Instance.new("Frame")
+    f.Parent = Scroll
+    f.Size = UDim2.new(1, -4, 0, 32)
+    f.Position = UDim2.new(0, 0, 0, y)
+    f.BackgroundColor3 = Color3.fromRGB(20, 20, 45)
+    f.BackgroundTransparency = 0.15
+    f.BorderSizePixel = 1
+    f.BorderColor3 = Color3.fromRGB(0, 150, 255)
 
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.Size = UDim2.new(0.6, 0, 0, 18)
-    label.Position = UDim2.new(0, 10, 0, 4)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 12
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
+    local fc = Instance.new("UICorner")
+    fc.Parent = f
+    fc.CornerRadius = UDim.new(0, 4)
 
-    local descLabel = Instance.new("TextLabel")
-    descLabel.Parent = frame
-    descLabel.Size = UDim2.new(0.6, 0, 0, 16)
-    descLabel.Position = UDim2.new(0, 10, 0, 26)
-    descLabel.BackgroundTransparency = 1
-    descLabel.Text = desc or ""
-    descLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
-    descLabel.TextSize = 9
-    descLabel.Font = Enum.Font.GothamMedium
-    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local l = Instance.new("TextLabel")
+    l.Parent = f
+    l.Size = UDim2.new(0.6, 0, 1, 0)
+    l.Position = UDim2.new(0, 8, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = text
+    l.TextColor3 = Color3.fromRGB(255,255,255)
+    l.TextSize = 11
+    l.Font = Enum.Font.GothamBold
+    l.TextXAlignment = Enum.TextXAlignment.Left
 
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Parent = frame
-    toggleBtn.Size = UDim2.new(0, 50, 0, 26)
-    toggleBtn.Position = UDim2.new(1, -60, 0, 12)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-    toggleBtn.Text = "OFF"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 11
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.BorderSizePixel = 0
+    local btn = Instance.new("TextButton")
+    btn.Parent = f
+    btn.Size = UDim2.new(0, 40, 0, 20)
+    btn.Position = UDim2.new(1, -46, 0.5, -10)
+    btn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    btn.Text = "OFF"
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.TextSize = 9
+    btn.Font = Enum.Font.GothamBold
+    btn.BorderSizePixel = 0
 
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.Parent = toggleBtn
-    toggleCorner.CornerRadius = UDim.new(0, 4)
+    local bc = Instance.new("UICorner")
+    bc.Parent = btn
+    bc.CornerRadius = UDim.new(0, 3)
 
     local state = false
-    toggleBtn.MouseButton1Click:Connect(function()
+    btn.MouseButton1Click:Connect(function()
         state = not state
-        toggleBtn.Text = state and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(200, 40, 40)
-        ToggleFeature(key, state)
+        btn.Text = state and "ON" or "OFF"
+        btn.BackgroundColor3 = state and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(180, 40, 40)
+        Toggle(key, state)
     end)
-end
-
-local function CreateCategory(text, yPos)
-    local frame = Instance.new("Frame")
-    frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 30)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(0, 80, 160)
-    frame.BackgroundTransparency = 0.3
-    frame.BorderSizePixel = 0
-
-    local corner = Instance.new("UICorner")
-    corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 4)
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = "▸ " .. text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 12
-    label.Font = Enum.Font.GothamBold
-    return yPos + 34
+    return y + 36
 end
 
 -- =====================================================
--- DAFTAR FITUR DI GUI (30+)
+-- DAFTAR TOGGLE (6LOCC STYLE – RINGKAS)
 -- =====================================================
-local yPos = 2
+local y = 2
+y = CreateToggle("✈️ Fly", "fly", y)
+y = CreateToggle("👻 Invisible", "invisible", y)
+y = CreateToggle("⚡ Auto Gen", "autoGenerator", y)
+y = CreateToggle("🚪 No Clip", "noClip", y)
+y = CreateToggle("🛡️ God Mode", "godMode", y)
+y = CreateToggle("💨 Speed", "speedHack", y)
+y = CreateToggle("🦘 Super Jump", "superJump", y)
+y = CreateToggle("🛡️ Auto Parry", "autoParry", y)
+y = CreateToggle("⏰ Anti AFK", "antiAFK", y)
+y = CreateToggle("🔴 Killer ESP", "espKiller", y)
+y = CreateToggle("🟢 Survivor ESP", "espSurvivor", y)
+y = CreateToggle("⚡ Gen ESP", "espGenerator", y)
+y = CreateToggle("🪝 Hook ESP", "espHook", y)
+y = CreateToggle("📦 Pallet ESP", "espPallet", y)
+y = CreateToggle("🎯 Auto Skill", "autoSkill", y)
+y = CreateToggle("🏃 Inst Escape", "instantEscape", y)
+y = CreateToggle("🚪 Force End", "forceEnd", y)
+y = CreateToggle("👁️ Anti Blind", "antiBlind", y)
 
--- MOVEMENT
-yPos = CreateCategory("MOVEMENT", yPos)
-CreateToggle("✈️ Fly", "WASD + Space/Shift to move", "fly", yPos)
-yPos = yPos + 54
-CreateToggle("🚪 No Clip", "Walk through walls", "noClip", yPos)
-yPos = yPos + 54
-CreateToggle("💨 Speed Hack", "Run faster (WalkSpeed = 60)", "speedHack", yPos)
-yPos = yPos + 54
-CreateToggle("🦘 Super Jump", "Jump higher (JumpPower = 150)", "superJump", yPos)
-yPos = yPos + 54
-CreateToggle("🌙 Moonwalk", "Moonwalk with sway effect", "moonwalk", yPos)
-yPos = yPos + 54
-
--- VISUAL
-yPos = CreateCategory("VISUAL", yPos)
-CreateToggle("👻 Invisible", "Become completely invisible", "invisible", yPos)
-yPos = yPos + 54
-CreateToggle("☀️ Full Bright", "Brighten map", "fullBright", yPos)
-yPos = yPos + 54
-CreateToggle("👁️ Anti Blind", "Remove flash/overlay effects", "antiBlind", yPos)
-yPos = yPos + 54
-CreateToggle("⛔ Anti Stun", "Prevent stun/immobilize", "antiStun", yPos)
-yPos = yPos + 54
-CreateToggle("🐢 No Slowdown", "Prevent speed reduction on turns", "noSlowdown", yPos)
-yPos = yPos + 54
-CreateToggle("🪟 Fast Vault", "Super fast vault over obstacles", "fastVault", yPos)
-yPos = yPos + 54
-CreateToggle("🎯 Hitbox Expander", "Enlarge head/torso hitbox", "hitboxExpander", yPos)
-yPos = yPos + 54
-CreateToggle("🎯 Crosshair", "Custom crosshair overlay", "crosshair", yPos)
-yPos = yPos + 54
-
--- ESP
-yPos = CreateCategory("ESP (7 FITUR)", yPos)
-CreateToggle("🔴 Killer ESP", "Highlight killer + distance", "espKiller", yPos)
-yPos = yPos + 54
-CreateToggle("🟢 Survivor ESP", "Highlight survivor + health state", "espSurvivor", yPos)
-yPos = yPos + 54
-CreateToggle("⚡ Generator ESP", "Show generator position + progress", "espGenerator", yPos)
-yPos = yPos + 54
-CreateToggle("🪝 Hook ESP", "Show hook positions", "espHook", yPos)
-yPos = yPos + 54
-CreateToggle("📦 Pallet ESP", "Show pallet positions", "espPallet", yPos)
-yPos = yPos + 54
-CreateToggle("🪟 Vault ESP", "Show vault positions", "espVault", yPos)
-yPos = yPos + 54
-CreateToggle("🩸 Blood ESP", "Show injured survivors", "espBlood", yPos)
-yPos = yPos + 54
-
--- COMBAT
-yPos = CreateCategory("COMBAT", yPos)
-CreateToggle("🛡️ Auto Parry", "Auto parry when attacked", "autoParry", yPos)
-yPos = yPos + 54
-CreateToggle("⚔️ Infinite Attack", "No cooldown on attacks", "infiniteAttack", yPos)
-yPos = yPos + 54
-CreateToggle("🎯 Aimbot Revolver", "Auto aim with wallcheck", "aimbotRevolver", yPos)
-yPos = yPos + 54
-CreateToggle("📏 Infinite Lunge", "Unlimited attack range", "infiniteLunge", yPos)
-yPos = yPos + 54
-CreateToggle("🛡️ Anti Knock", "Prevent getting knocked", "antiKnock", yPos)
-yPos = yPos + 54
-CreateToggle("🔄 Anti Wiggle", "Prevent wiggle off hook", "antiWiggle", yPos)
-yPos = yPos + 54
-
--- AUTO FARM / UTILITY
-yPos = CreateCategory("AUTO FARM & UTILITY", yPos)
-CreateToggle("⚡ Auto Generator", "Auto farm generators", "autoGenerator", yPos)
-yPos = yPos + 54
-CreateToggle("🎯 Auto Skill Check", "100% accuracy on skill checks", "autoSkillCheck", yPos)
-yPos = yPos + 54
-CreateToggle("🏃 Instant Escape", "Teleport to gate + force escape", "instantEscape", yPos)
-yPos = yPos + 54
-CreateToggle("🚪 Force End Game", "Open all gates instantly", "forceEndGame", yPos)
-yPos = yPos + 54
-CreateToggle("💚 Auto Heal", "Auto heal when injured", "autoHeal", yPos)
-yPos = yPos + 54
-CreateToggle("❌ Cancel Generator", "Reset generator progress", "cancelGenerator", yPos)
-yPos = yPos + 54
-CreateToggle("⚠️ Killer Proximity Alert", "Alert when killer near", "killerProximityAlert", yPos)
-yPos = yPos + 54
-CreateToggle("🔄 Server Hop", "Auto teleport to new server", "serverHop", yPos)
-yPos = yPos + 54
-
--- MISC
-yPos = CreateCategory("MISC", yPos)
-CreateToggle("🛡️ God Mode", "Infinite health", "godMode", yPos)
-yPos = yPos + 54
-CreateToggle("⏰ Anti AFK", "Prevent AFK kick", "antiAFK", yPos)
-yPos = yPos + 54
-
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
-
--- Watermark
-local Watermark = Instance.new("TextLabel")
-Watermark.Parent = ScreenGui
-Watermark.Size = UDim2.new(0, 180, 0, 16)
-Watermark.Position = UDim2.new(0, 8, 1, -22)
-Watermark.BackgroundTransparency = 1
-Watermark.Text = "⚡ ZIP HUB v54.0 – 6LOCC ⚡"
-Watermark.TextColor3 = Color3.fromRGB(0, 180, 255)
-Watermark.TextSize = 10
-Watermark.Font = Enum.Font.GothamMedium
-Watermark.TextTransparency = 0.4
-
-print("✅ ZIP HUB v54.0 – 6LOCC EDITION LOADED!")
-print("✅ 30+ FITUR AKTIF – SEMUA BERFUNGSI!")
+Scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
 
 -- =====================================================
--- AUTO START ESP BY DEFAULT
+-- WATERMARK
 -- =====================================================
-task.wait(0.5)
-ToggleFeature("espKiller", true)
-ToggleFeature("espSurvivor", true)
-ToggleFeature("espGenerator", true)
-ToggleFeature("espHook", true)
-ToggleFeature("espPallet", true)
+local WM = Instance.new("TextLabel")
+WM.Parent = GUI
+WM.Size = UDim2.new(0, 120, 0, 14)
+WM.Position = UDim2.new(0, 6, 1, -20)
+WM.BackgroundTransparency = 1
+WM.Text = "⚡ ZIP HUB v55.0"
+WM.TextColor3 = Color3.fromRGB(0, 200, 255)
+WM.TextSize = 9
+WM.Font = Enum.Font.GothamMedium
+WM.TextTransparency = 0.5
 
-print("🔥 ZIP HUB v54.0 – READY TO DOMINATE!")
+-- =====================================================
+-- AUTO START ESP
+-- =====================================================
+task.wait(0.3)
+Toggle("espKiller", true)
+Toggle("espSurvivor", true)
+Toggle("espGenerator", true)
+Toggle("espHook", true)
+Toggle("espPallet", true)
+
+print("✅ ZIP HUB v55.0 – 6LOCC LIGHTWEIGHT EDITION LOADED!")
+print("✅ 18 FITUR – GUI KECIL + LOGO ZIP – NO LAG!")
