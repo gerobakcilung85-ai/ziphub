@@ -1,9 +1,9 @@
 -- ========================================
 -- ZIP HUB - UNIVERSAL LOADER
--- VERSION 2.0 (FULL MODIFIED)
+-- VERSION 3.0 (FULL THEME ZIP)
 -- ========================================
 
-local VERSION = "2.0"
+local VERSION = "3.0"
 local HUB_NAME = "ZIP HUB"
 
 -- ========================================
