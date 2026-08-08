@@ -6,6 +6,8 @@
 
 local Zip = loadstring(game:HttpGet("https://raw.githubusercontent.com/gerobakcilung85-ai/ziphub/main/Zip.lua"))()
 
+-- Animasi ZIP otomatis berjalan!
+
 local Window = Rayfield:CreateWindow({
    Name = "ZIP HUB – Violence District",
    LoadingTitle = "Loading ZIP HUB Modules...",
