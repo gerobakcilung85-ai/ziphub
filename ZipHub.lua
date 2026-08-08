@@ -4,7 +4,7 @@
 -- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
 -- =====================================================
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Zip = loadstring(game:HttpGet("https://raw.githubusercontent.com/gerobakcilung85-ai/ziphub/main/Zip.lua"))()
 
 local Window = Rayfield:CreateWindow({
    Name = "ZIP HUB – Violence District",
