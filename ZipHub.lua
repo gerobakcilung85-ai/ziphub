@@ -1,6 +1,6 @@
 -- =====================================================
 -- ZIP HUB – Violence District Edition
--- All features preserved – only branding changed
+-- All features preserved – God Mode anti-freeze
 -- UI: Rayfield (sirius.menu)
 -- =====================================================
 
@@ -462,78 +462,61 @@ Players.PlayerAdded:Connect(function(p)
 end)
 
 -- =====================================================
--- TAB 3: FUNCTIONS (GOD MODE - FIXED)
+-- TAB 3: FUNCTIONS (GOD MODE - ANTI-FREEZE)
 -- =====================================================
 local FunctionsTab = Window:CreateTab("Functions", 4483362458)
 
--- UNIFIED GOD MODE VARIABLES
+-- GOD MODE VARIABLES
 local godModeEnabled = false
-local healthConn = nil
-local takeDamageHook = nil
+local godModeLoop = nil
+local oldNamecallHook = nil
 
 local function toggleGodMode(state)
     godModeEnabled = state
-    local char = LP.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
 
     if state then
-        -- 1. HealthChanged (pemulihan cepat)
-        if hum then
-            healthConn = hum.HealthChanged:Connect(function(newHealth)
-                if godModeEnabled and char and hum and newHealth < 100 and newHealth > 0 then
-                    hum.Health = 100
-                end
-            end)
+        -- 1. MATIKAN LOOP SEBELUMNYA (jika ada)
+        if godModeLoop then
+            godModeLoop:Disconnect()
+            godModeLoop = nil
         end
 
-        -- 2. Hookmetamethod (blokir FireServer damage)
-        if hookmetamethod then
-            local oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        -- 2. LOOP PULIHKAN HEALTH (setiap frame, tapi ringan)
+        godModeLoop = RunService.Heartbeat:Connect(function()
+            if not godModeEnabled then return end
+            local char = LP.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            -- Jika health turun di bawah 100, langsung set ke 100
+            if hum.Health < 100 and hum.Health > 0 then
+                hum.Health = 100
+            end
+        end)
+
+        -- 3. HOOKMETAMETHOD (blokir FireServer damage)
+        if hookmetamethod and not oldNamecallHook then
+            oldNamecallHook = hookmetamethod(game, "__namecall", function(self, ...)
                 local method = getnamecallmethod()
                 if godModeEnabled and method == "FireServer" then
                     local name = string.lower(self.Name)
-                    if name:find("damage") or name:find("twist") or name:find("fate") or name:find("hurt") then
+                    if name:find("damage") or name:find("twist") or name:find("fate") or name:find("hurt") or name:find("kill") then
                         return nil
                     end
                 end
-                return oldNamecall(self, ...)
+                return oldNamecallHook(self, ...)
             end)
-            takeDamageHook = oldNamecall
         end
-
-        -- 3. Override TakeDamage (jika karakter berganti, tetap aktif)
-        local function setupTakeDamageOverride(newChar)
-            local hum = newChar and newChar:FindFirstChildOfClass("Humanoid")
-            if hum and not hum._godModeProtected then
-                local oldTD = hum.TakeDamage
-                hum.TakeDamage = function(self, amt)
-                    if godModeEnabled and amt <= 25 then return end
-                    return oldTD(self, amt)
-                end
-                hum._godModeProtected = true
-            end
-        end
-
-        setupTakeDamageOverride(char)
-        LP.CharacterAdded:Connect(function(newChar)
-            task.wait(0.5)
-            setupTakeDamageOverride(newChar)
-        end)
 
         Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
     else
         -- MATIKAN
-        if healthConn then
-            healthConn:Disconnect()
-            healthConn = nil
+        if godModeLoop then
+            godModeLoop:Disconnect()
+            godModeLoop = nil
         end
-        if takeDamageHook and type(takeDamageHook) == "function" then
-            godModeEnabled = false
-        end
-        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum._godModeProtected then
-            hum._godModeProtected = nil
-        end
+        -- Hook tetap terpasang, tapi kita set flag false agar tidak memblokir
+        godModeEnabled = false
         Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
     end
 end
