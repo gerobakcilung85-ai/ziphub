@@ -1,15 +1,15 @@
 -- =====================================================
--- Violence District v1 | Xeno Edition
--- by GOVNO HUB (FIXED & INTEGRATED)
+-- ZIP HUB – Violence District Edition
+-- All features preserved – only branding changed
 -- UI: Rayfield (sirius.menu)
 -- =====================================================
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Violence District v1 | Xeno Edition",
-   LoadingTitle = "Importing Movement Modules...",
-   LoadingSubtitle = "by GOVNO HUB",
+   Name = "ZIP HUB – Violence District",
+   LoadingTitle = "Loading ZIP HUB Modules...",
+   LoadingSubtitle = "by ZIP",
    ConfigurationSaving = { Enabled = false }
 })
 
@@ -520,7 +520,7 @@ local function toggleGodMode(state)
             setupTakeDamageOverride(newChar)
         end)
 
-        Rayfield:Notify({Title = "God Mode", Content = "✅ Aktif", Duration = 2})
+        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
     else
         -- MATIKAN
         if healthConn then
@@ -534,7 +534,7 @@ local function toggleGodMode(state)
         if hum and hum._godModeProtected then
             hum._godModeProtected = nil
         end
-        Rayfield:Notify({Title = "God Mode", Content = "❌ Mati", Duration = 2})
+        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
     end
 end
 
@@ -549,8 +549,8 @@ FunctionsTab:CreateToggle({
 -- NOTIFICATION AWAL
 -- =====================================================
 Rayfield:Notify({
-   Title = "✅ Script Loaded",
-   Content = "Violence District v1 | Xeno Edition Ready!",
+   Title = "✅ ZIP HUB Loaded",
+   Content = "All features ready!",
    Duration = 5,
    Image = 4483362458,
 })
