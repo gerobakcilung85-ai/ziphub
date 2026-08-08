@@ -1,16 +1,18 @@
 -- =====================================================
 -- ZIP HUB – Violence District Edition
--- UI: Rayfield (sirius.menu) – TIDAK DIUBAH
--- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
+-- UI: ZIP UI Library (dengan Animasi Intro)
+-- FITUR LENGKAP: Movement, ESP+, Protection, Auto
 -- =====================================================
 
+-- 1. LOAD LIBRARY & JALANKAN INTRO ANIMASI ZIP
 local Zip = loadstring(game:HttpGet("https://raw.githubusercontent.com/gerobakcilung85-ai/ziphub/main/Zip.lua"))()
 
-local Window = ziphub:CreateWindow({...})
-   Name = "ZIP HUB – Violence District",
-   LoadingTitle = "Loading ZIP HUB Modules...",
-   LoadingSubtitle = "by ZIP",
-   ConfigurationSaving = { Enabled = false }
+-- 2. BUAT WINDOW UTAMA
+local Window = Zip:CreateWindow({
+    Name = "ZIP HUB – Violence District",
+    LoadingTitle = "Loading ZIP HUB Modules...",
+    LoadingSubtitle = "by ZIP",
+    ConfigurationSaving = { Enabled = false }
 })
 
 local LP = game:GetService("Players").LocalPlayer
@@ -22,29 +24,21 @@ local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
 
 -- =====================================================
--- TAB 1: MOVEMENT (Speed, Jump, Fly, NoClip) – TETAP
+-- TAB 1: MOVEMENT
 -- =====================================================
-local MoveTab = Window:CreateTab("Movement", 4483362458)
+local MoveTab = Window:CreateTab("Movement")
 
--- Speed Glitch Variables
 local speedChecked = false
 local speedValue = 60
-
--- Super Jump Variables
 local jumpChecked = false
 local jumpPower = 100
-
--- Fly Variables
 local flyChecked = false
 local flySpeed = 150
 local flying = false
 local bv, bg
-
--- NoClip Variables
 local noclipChecked = false
 local noclipConnection
 
--- ===== SPEED GLITCH =====
 local function applyVelocity()
     while speedChecked and task.wait() do
         local character = LP.Character
@@ -59,7 +53,6 @@ local function applyVelocity()
     end
 end
 
--- ===== SUPER JUMP =====
 local function applySuperJump()
     while jumpChecked and task.wait() do
         local character = LP.Character
@@ -72,7 +65,6 @@ local function applySuperJump()
     end
 end
 
--- ===== FLY =====
 local function stopFly()
     flying = false
     if bv then bv:Destroy() bv = nil end
@@ -97,7 +89,6 @@ local function startFly()
     bg.Parent = root
 end
 
--- Fly Control Loop
 RunService.Heartbeat:Connect(function()
     if not flying or not bv or not bg then return end
     local character = LP.Character
@@ -120,7 +111,6 @@ RunService.Heartbeat:Connect(function()
     bg.CFrame = cam.CFrame
 end)
 
--- ===== NOCLIP =====
 local function stopNoclip()
     if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
     local char = LP.Character
@@ -144,12 +134,10 @@ local function startNoclip()
     end)
 end
 
--- ===== GUI MOVEMENT ===== (TETAP)
 MoveTab:CreateSection("Speed Settings")
 MoveTab:CreateToggle({
    Name = "Speed Glitch",
    CurrentValue = false,
-   Flag = "SpeedToggle",
    Callback = function(Value)
        speedChecked = Value
        if speedChecked then task.spawn(applyVelocity) end
@@ -158,10 +146,7 @@ MoveTab:CreateToggle({
 MoveTab:CreateSlider({
    Name = "Speed Multiplier",
    Range = {16, 300},
-   Increment = 1,
-   Suffix = "Velocity",
    CurrentValue = 60,
-   Flag = "SpeedVal",
    Callback = function(Value) speedValue = Value end,
 })
 
@@ -169,7 +154,6 @@ MoveTab:CreateSection("Jump Settings")
 MoveTab:CreateToggle({
    Name = "Super Jump",
    CurrentValue = false,
-   Flag = "JumpToggle",
    Callback = function(Value)
        jumpChecked = Value
        if jumpChecked then task.spawn(applySuperJump) end
@@ -178,10 +162,7 @@ MoveTab:CreateToggle({
 MoveTab:CreateSlider({
    Name = "Jump Power",
    Range = {50, 500},
-   Increment = 5,
-   Suffix = "Height",
    CurrentValue = 100,
-   Flag = "JumpVal",
    Callback = function(Value) jumpPower = Value end,
 })
 
@@ -189,7 +170,6 @@ MoveTab:CreateSection("Flight & NoClip")
 MoveTab:CreateToggle({
    Name = "Fly (W,A,S,D,Space,Shift)",
    CurrentValue = false,
-   Flag = "FlyToggle",
    Callback = function(Value)
        flyChecked = Value
        if Value then startFly() else stopFly() end
@@ -198,23 +178,18 @@ MoveTab:CreateToggle({
 MoveTab:CreateSlider({
    Name = "Fly Speed",
    Range = {10, 500},
-   Increment = 10,
-   Suffix = "Studs",
    CurrentValue = 150,
-   Flag = "FlySpeedVal",
    Callback = function(Value) flySpeed = Value end,
 })
 MoveTab:CreateToggle({
    Name = "NoClip",
    CurrentValue = false,
-   Flag = "NoclipToggle",
    Callback = function(Value)
        noclipChecked = Value
        if Value then startNoclip() else stopNoclip() end
    end,
 })
 
--- Character respawn handlers (Movement)
 LP.CharacterAdded:Connect(function()
     task.wait(1)
     if speedChecked then task.spawn(applyVelocity) end
@@ -228,11 +203,10 @@ LP.CharacterRemoving:Connect(function()
 end)
 
 -- =====================================================
--- TAB 2: VISUALS: ESP+ – TETAP
+-- TAB 2: VISUALS (ESP+)
 -- =====================================================
-local VisualsAdvTab = Window:CreateTab("Visuals: ESP+", 4483362458)
+local VisualsAdvTab = Window:CreateTab("Visuals: ESP+")
 
--- ESP Settings (sama seperti sebelumnya)
 local ESP_Settings = {
     SurvivorColor = Color3.fromRGB(0, 255, 0),
     KillerColor = Color3.fromRGB(255, 0, 0),
@@ -250,7 +224,6 @@ local ESP_Settings = {
 local playerTrackers = {}
 local generatorProgressBillboards = {}
 
--- ===== HIGHLIGHTS =====
 local function refreshHighlights()
     for _, player in ipairs(Players:GetPlayers()) do
         if player == LP or not player.Character then continue end
@@ -312,7 +285,6 @@ local function updatePalletESP()
     end
 end
 
--- ===== TRACERS =====
 RunService.RenderStepped:Connect(function()
     for _, player in ipairs(Players:GetPlayers()) do
         if player == LP then continue end
@@ -337,7 +309,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ===== GENERATOR PROGRESS =====
 local function getRepairValue(model)
     local val = model:GetAttribute("RepairProgress") or model:GetAttribute("Progress")
     if val ~= nil then return val end
@@ -385,27 +356,16 @@ local function updateGenProgress(state)
     end
 end
 
--- ===== GUI ESP =====
 VisualsAdvTab:CreateSection("Player ESP")
 VisualsAdvTab:CreateToggle({
    Name = "ESP Survivors",
    CurrentValue = false,
    Callback = function(v) ESP_Settings.SurvivorsActive = v refreshHighlights() end
 })
-VisualsAdvTab:CreateColorPicker({
-    Name = "Survivors Color",
-    Color = ESP_Settings.SurvivorColor,
-    Callback = function(v) ESP_Settings.SurvivorColor = v refreshHighlights() end
-})
 VisualsAdvTab:CreateToggle({
    Name = "ESP Killer",
    CurrentValue = false,
    Callback = function(v) ESP_Settings.KillerActive = v refreshHighlights() end
-})
-VisualsAdvTab:CreateColorPicker({
-    Name = "Killer Color",
-    Color = ESP_Settings.KillerColor,
-    Callback = function(v) ESP_Settings.KillerColor = v refreshHighlights() end
 })
 VisualsAdvTab:CreateToggle({
    Name = "Enable Tracers (Top Center)",
@@ -419,20 +379,10 @@ VisualsAdvTab:CreateToggle({
    CurrentValue = false,
    Callback = function(v) ESP_Settings.GenActive = v updateGenESP() end
 })
-VisualsAdvTab:CreateColorPicker({
-    Name = "Generator Color",
-    Color = ESP_Settings.GenColor,
-    Callback = function(v) ESP_Settings.GenColor = v updateGenESP() end
-})
 VisualsAdvTab:CreateToggle({
    Name = "Pallets ESP",
    CurrentValue = false,
    Callback = function(v) ESP_Settings.PalletsActive = v updatePalletESP() end
-})
-VisualsAdvTab:CreateColorPicker({
-    Name = "Pallet Color",
-    Color = ESP_Settings.PalletColor,
-    Callback = function(v) ESP_Settings.PalletColor = v updatePalletESP() end
 })
 
 VisualsAdvTab:CreateSection("Generator Progress")
@@ -441,39 +391,25 @@ VisualsAdvTab:CreateToggle({
    CurrentValue = false,
    Callback = function(v) updateGenProgress(v) end
 })
-VisualsAdvTab:CreateColorPicker({
-    Name = "Percentage Color",
-    Color = ESP_Settings.GenProgressColor,
-    Callback = function(v) ESP_Settings.GenProgressColor = v end
-})
 
--- ESP events
 Players.PlayerRemoving:Connect(function(p)
-    if playerTrackers[p] then
-        playerTrackers[p]:Remove()
-        playerTrackers[p] = nil
-    end
+    if playerTrackers[p] then playerTrackers[p]:Remove() playerTrackers[p] = nil end
 end)
 Players.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        refreshHighlights()
-    end)
+    p.CharacterAdded:Connect(function() task.wait(0.5) refreshHighlights() end)
 end)
 
 -- =====================================================
--- TAB 3: FUNCTIONS (GOD MODE – ANTI-FREEZE) – TETAP
+-- TAB 3: FUNCTIONS (GOD MODE)
 -- =====================================================
-local FunctionsTab = Window:CreateTab("Functions", 4483362458)
+local FunctionsTab = Window:CreateTab("Functions")
 
--- GOD MODE VARIABLES
 local godModeEnabled = false
 local godModeLoop = nil
 local oldNamecallHook = nil
 
 local function toggleGodMode(state)
     godModeEnabled = state
-
     if state then
         if godModeLoop then godModeLoop:Disconnect() end
         godModeLoop = RunService.Heartbeat:Connect(function()
@@ -499,12 +435,11 @@ local function toggleGodMode(state)
                 return oldNamecallHook(self, ...)
             end)
         end
-
-        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
+        Window:Notify({Title = "ZIP HUB", Content = "God Mode Aktif", Duration = 2})
     else
         if godModeLoop then godModeLoop:Disconnect() end
         godModeEnabled = false
-        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
+        Window:Notify({Title = "ZIP HUB", Content = "God Mode Nonaktif", Duration = 2})
     end
 end
 
@@ -516,18 +451,16 @@ FunctionsTab:CreateToggle({
 })
 
 -- =====================================================
--- TAB 4: AUTO (FITUR BARU) – Auto Generator, Auto Escape, Smart Gen Teleport
+-- TAB 4: AUTO (AUTO GENERATOR, AUTO ESCAPE, SMART TELEPORT)
 -- =====================================================
-local AutoTab = Window:CreateTab("Auto", 4483362458)
+local AutoTab = Window:CreateTab("Auto")
 
--- ===== VARIABLES =====
 local autoGenEnabled = false
 local autoEscapeEnabled = false
 local smartGenEnabled = false
 local completedGenerators = {}
 local isEscaping = false
 
--- ===== FIND GENERATORS =====
 local function FindGenerators()
     local gens = {}
     for _, obj in pairs(workspace:GetDescendants()) do
@@ -543,7 +476,6 @@ local function FindGenerators()
     return gens
 end
 
--- ===== FIND ESCAPE GATES =====
 local function FindEscapeGates()
     local gates = {}
     for _, obj in pairs(workspace:GetDescendants()) do
@@ -557,18 +489,14 @@ local function FindEscapeGates()
     return gates
 end
 
--- ===== FIND KILLER =====
 local function FindKiller()
     for _, player in ipairs(Players:GetPlayers()) do
         if player == LP then continue end
-        if player.Team and player.Team.Name == "Killer" then
-            return player
-        end
+        if player.Team and player.Team.Name == "Killer" then return player end
     end
     return nil
 end
 
--- ===== AUTO GENERATOR =====
 local function AutoGeneratorLoop()
     while autoGenEnabled and task.wait(1.5) do
         local char = LP.Character
@@ -592,10 +520,7 @@ local function AutoGeneratorLoop()
         elseif target.Parent and target.Parent:GetAttribute("Completed") == true then isCompleted = true
         end
 
-        if isCompleted then
-            completedGenerators[target] = true
-            continue
-        end
+        if isCompleted then completedGenerators[target] = true continue end
 
         hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
         task.wait(0.2)
@@ -618,7 +543,6 @@ local function AutoGeneratorLoop()
     end
 end
 
--- ===== AUTO ESCAPE =====
 local function TriggerAutoEscape()
     if isEscaping then return end
     isEscaping = true
@@ -628,7 +552,6 @@ local function TriggerAutoEscape()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then isEscaping = false return end
 
-    -- Force open gates
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Name:lower():find("gate") then
             pcall(function()
@@ -671,17 +594,13 @@ local function TriggerAutoEscape()
             end
         end
     end
-
     isEscaping = false
 end
 
 local function AutoEscapeLoop()
-    while autoEscapeEnabled and task.wait(2) do
-        TriggerAutoEscape()
-    end
+    while autoEscapeEnabled and task.wait(2) do TriggerAutoEscape() end
 end
 
--- ===== SMART GENERATOR TELEPORT =====
 local function GetNearestIncompleteGenerator()
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
@@ -715,9 +634,6 @@ local function TeleportToNearestIncompleteGenerator()
     local target = GetNearestIncompleteGenerator()
     if target then
         hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
-        print("📍 ZIP HUB: Teleport ke generator terdekat yang belum selesai!")
-    else
-        print("⚠️ ZIP HUB: Tidak ada generator yang belum selesai ditemukan!")
     end
 end
 
@@ -760,11 +676,9 @@ local function SmartGenLoop()
         end
 
         if killerNearby then
-            print("🔴 ZIP HUB: Killer terdeteksi! Mencari generator aman...")
             TeleportToNearestIncompleteGenerator()
             task.wait(0.5)
         elseif currentGenCompleted then
-            print("⚡ ZIP HUB: Generator selesai! Mencari generator berikutnya...")
             if currentGen then completedGenerators[currentGen] = true end
             TeleportToNearestIncompleteGenerator()
             task.wait(0.5)
@@ -772,7 +686,6 @@ local function SmartGenLoop()
     end
 end
 
--- ===== GUI AUTO =====
 AutoTab:CreateSection("Generator")
 AutoTab:CreateToggle({
     Name = "Auto Generator",
@@ -790,6 +703,7 @@ AutoTab:CreateToggle({
         if v then task.spawn(SmartGenLoop) end
     end
 })
+
 AutoTab:CreateSection("Escape")
 AutoTab:CreateToggle({
     Name = "Auto Escape (Auto Win)",
@@ -800,7 +714,6 @@ AutoTab:CreateToggle({
     end
 })
 
--- Character respawn handler untuk fitur baru
 LP.CharacterAdded:Connect(function()
     task.wait(1)
     if autoGenEnabled then task.spawn(AutoGeneratorLoop) end
@@ -808,12 +721,11 @@ LP.CharacterAdded:Connect(function()
     if smartGenEnabled then task.spawn(SmartGenLoop) end
 end)
 
--- =====================================================
--- NOTIFICATION AWAL
--- =====================================================
-Rayfield:Notify({...})
+-- NOTIFIKASI AWAL
+Window:Notify({
    Title = "✅ ZIP HUB Loaded",
-   Content = "All features ready!",
+   Content = "Semua fitur & animasi siap!",
    Duration = 5,
-   Image = 127108636160194
 })
+
+print("✅ ZIP HUB Full Features Loaded Successfully!")
