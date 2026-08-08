@@ -1,22 +1,11 @@
 -- =====================================================
--- ZIP HUB – Violence District Edition
--- UI: Rayfield (sirius.menu) – TIDAK DIUBAH
--- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
+-- ZIP UI LIBRARY v1.0 (Custom Animations)
 -- =====================================================
-
--- =====================================================
--- ZIP UI LIBRARY v1.0
--- Custom UI dengan animasi sendiri
--- API mirip Rayfield agar mudah diadaptasi
--- =====================================================
-
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
 local ZIP = {}
-
--- ===== THEME =====
 local Theme = {
     Background = Color3.fromRGB(15, 15, 35),
     Section = Color3.fromRGB(25, 25, 50),
@@ -28,7 +17,6 @@ local Theme = {
     Border = Color3.fromRGB(0, 180, 255),
 }
 
--- ===== ANIMATION HELPER =====
 local function Animate(obj, props, duration, style)
     style = style or Enum.EasingStyle.Quad
     local t = TweenService:Create(obj, TweenInfo.new(duration or 0.3, style, Enum.EasingDirection.Out), props)
@@ -36,8 +24,6 @@ local function Animate(obj, props, duration, style)
     return t
 end
 
--- ===== NOTIFICATION SYSTEM =====
-local notifications = {}
 local function Notify(title, content, duration)
     duration = duration or 3
     local gui = Instance.new("ScreenGui")
@@ -81,17 +67,13 @@ local function Notify(title, content, duration)
     contentLabel.Font = Enum.Font.GothamMedium
     contentLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Animasi masuk (slide up)
     Animate(frame, {Position = UDim2.new(0.5, -150, 0.9, 0)}, 0.4, Enum.EasingStyle.Back)
-
     task.wait(duration)
-    -- Animasi keluar (slide down)
     Animate(frame, {Position = UDim2.new(0.5, -150, 1.2, 0)}, 0.3)
     task.wait(0.3)
     gui:Destroy()
 end
 
--- ===== WINDOW =====
 function ZIP:CreateWindow(config)
     local window = {}
     local gui = Instance.new("ScreenGui")
@@ -114,7 +96,6 @@ function ZIP:CreateWindow(config)
     corner.Parent = main
     corner.CornerRadius = UDim.new(0, 12)
 
-    -- Header
     local header = Instance.new("Frame")
     header.Parent = main
     header.Size = UDim2.new(1, 0, 0, 45)
@@ -174,7 +155,6 @@ function ZIP:CreateWindow(config)
         gui:Destroy()
     end)
 
-    -- Tab container
     local tabContainer = Instance.new("Frame")
     tabContainer.Parent = main
     tabContainer.Size = UDim2.new(1, 0, 0, 30)
@@ -210,7 +190,6 @@ function ZIP:CreateWindow(config)
     window._tabButtons = {}
     window._currentTab = nil
 
-    -- ===== CREATE TAB =====
     function window:CreateTab(name)
         local tab = {}
         local btn = Instance.new("TextButton")
@@ -231,9 +210,7 @@ function ZIP:CreateWindow(config)
         contentFrame.ClipsDescendants = true
 
         local yPos = 0
-        local sections = {}
 
-        -- Animasi tab switch
         local function selectTab()
             for _, b in pairs(window._tabButtons) do
                 b.TextColor3 = Theme.TextDark
@@ -244,7 +221,6 @@ function ZIP:CreateWindow(config)
             end
             contentFrame.Visible = true
             window._currentTab = name
-            -- Update canvas size
             local totalHeight = 0
             for _, child in pairs(contentFrame:GetChildren()) do
                 if child:IsA("Frame") then
@@ -259,12 +235,10 @@ function ZIP:CreateWindow(config)
         table.insert(window._tabButtons, btn)
         table.insert(window._tabs, {_content = contentFrame, _name = name})
 
-        -- Select first tab if none
         if #window._tabButtons == 1 then
             selectTab()
         end
 
-        -- ===== CREATE SECTION =====
         function tab:CreateSection(title)
             local sectionFrame = Instance.new("Frame")
             sectionFrame.Parent = contentFrame
@@ -443,7 +417,6 @@ function ZIP:CreateWindow(config)
                     return {SetValue = function(v) val = v; callback(v); fill.Size = UDim2.new((v-min)/(max-min),0,1,0); valueLabel.Text=tostring(v); label.Text=text.." ("..v..")" end, GetValue = function() return val end}
                 end,
                 _addColorPicker = function(self, text, default, callback)
-                    -- Sederhana: hanya tombol untuk memilih warna (bisa dikembangkan)
                     local frame = Instance.new("Frame")
                     frame.Parent = contentFrame
                     frame.Size = UDim2.new(1, 0, 0, 40)
@@ -478,7 +451,6 @@ function ZIP:CreateWindow(config)
                     colorCorner.Parent = colorDisplay
                     colorCorner.CornerRadius = UDim.new(0, 4)
 
-                    -- Simple: click toggles between some colors
                     local colors = {Color3.fromRGB(255,0,0), Color3.fromRGB(0,255,0), Color3.fromRGB(0,0,255), Color3.fromRGB(255,255,0), Color3.fromRGB(255,165,0), Color3.fromRGB(255,20,147)}
                     local index = 1
                     colorDisplay.MouseButton1Click:Connect(function()
@@ -493,7 +465,6 @@ function ZIP:CreateWindow(config)
             }
         end
 
-        -- ===== ADD TOGGLE =====
         function tab:CreateToggle(config)
             local section = self:CreateSection("")
             local toggle = section._addToggle(config.Name, config.Desc or "", function(v)
@@ -503,7 +474,6 @@ function ZIP:CreateWindow(config)
             return toggle
         end
 
-        -- ===== ADD SLIDER =====
         function tab:CreateSlider(config)
             local section = self:CreateSection("")
             local slider = section._addSlider(config.Name, config.Desc or "", config.Range[1], config.Range[2], config.CurrentValue or config.Range[1], function(v)
@@ -512,7 +482,6 @@ function ZIP:CreateWindow(config)
             return slider
         end
 
-        -- ===== ADD COLOR PICKER =====
         function tab:CreateColorPicker(config)
             local section = self:CreateSection("")
             local picker = section._addColorPicker(config.Name, config.Color or Color3.fromRGB(255,255,255), function(c)
@@ -524,32 +493,23 @@ function ZIP:CreateWindow(config)
         return tab
     end
 
-    -- ===== NOTIFY =====
     function window:Notify(config)
         Notify(config.Title or "Notification", config.Content or "", config.Duration or 3)
     end
 
     return window
 end
+-- =====================================================
+-- AKHIR LIBRARY ZIP UI
+-- =====================================================
 
 -- =====================================================
--- GANTI RAYFIELD DENGAN ZIP UI
+-- ZIP HUB – Violence District Edition
+-- Menggunakan ZIP UI Library (tanpa Rayfield)
 -- =====================================================
-
--- Kode ini menggantikan loadstring Rayfield
-local ZIP = ZIP -- panggil library di atas
 
 local Window = ZIP:CreateWindow({
-    Name = "ZIP HUB – Violence District",
-})
-
--- ... (sisa script tetap sama, gunakan Window:CreateTab, dll)
-
-local Window = "ZIP HUB - Violence District",
    Name = "ZIP HUB – Violence District",
-   LoadingTitle = "Loading ZIP HUB Modules...",
-   LoadingSubtitle = "by ZIP",
-   ConfigurationSaving = { Enabled = false }
 })
 
 local LP = game:GetService("Players").LocalPlayer
@@ -561,9 +521,9 @@ local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
 
 -- =====================================================
--- TAB 1: MOVEMENT (Speed, Jump, Fly, NoClip) – TETAP
+-- TAB 1: MOVEMENT (Speed, Jump, Fly, NoClip)
 -- =====================================================
-local MoveTab = Window:CreateTab("Movement", 4483362458)
+local MoveTab = Window:CreateTab("Movement")
 
 -- Speed Glitch Variables
 local speedChecked = false
@@ -683,12 +643,11 @@ local function startNoclip()
     end)
 end
 
--- ===== GUI MOVEMENT ===== (TETAP)
+-- ===== GUI MOVEMENT =====
 MoveTab:CreateSection("Speed Settings")
 MoveTab:CreateToggle({
    Name = "Speed Glitch",
    CurrentValue = false,
-   Flag = "SpeedToggle",
    Callback = function(Value)
        speedChecked = Value
        if speedChecked then task.spawn(applyVelocity) end
@@ -700,7 +659,6 @@ MoveTab:CreateSlider({
    Increment = 1,
    Suffix = "Velocity",
    CurrentValue = 60,
-   Flag = "SpeedVal",
    Callback = function(Value) speedValue = Value end,
 })
 
@@ -708,7 +666,6 @@ MoveTab:CreateSection("Jump Settings")
 MoveTab:CreateToggle({
    Name = "Super Jump",
    CurrentValue = false,
-   Flag = "JumpToggle",
    Callback = function(Value)
        jumpChecked = Value
        if jumpChecked then task.spawn(applySuperJump) end
@@ -720,7 +677,6 @@ MoveTab:CreateSlider({
    Increment = 5,
    Suffix = "Height",
    CurrentValue = 100,
-   Flag = "JumpVal",
    Callback = function(Value) jumpPower = Value end,
 })
 
@@ -728,7 +684,6 @@ MoveTab:CreateSection("Flight & NoClip")
 MoveTab:CreateToggle({
    Name = "Fly (W,A,S,D,Space,Shift)",
    CurrentValue = false,
-   Flag = "FlyToggle",
    Callback = function(Value)
        flyChecked = Value
        if Value then startFly() else stopFly() end
@@ -740,13 +695,11 @@ MoveTab:CreateSlider({
    Increment = 10,
    Suffix = "Studs",
    CurrentValue = 150,
-   Flag = "FlySpeedVal",
    Callback = function(Value) flySpeed = Value end,
 })
 MoveTab:CreateToggle({
    Name = "NoClip",
    CurrentValue = false,
-   Flag = "NoclipToggle",
    Callback = function(Value)
        noclipChecked = Value
        if Value then startNoclip() else stopNoclip() end
@@ -767,11 +720,11 @@ LP.CharacterRemoving:Connect(function()
 end)
 
 -- =====================================================
--- TAB 2: VISUALS: ESP+ – TETAP
+-- TAB 2: VISUALS: ESP+
 -- =====================================================
-local VisualsAdvTab = Window:CreateTab("Visuals: ESP+", 4483362458)
+local VisualsAdvTab = Window:CreateTab("Visuals: ESP+")
 
--- ESP Settings (sama seperti sebelumnya)
+-- ESP Settings
 local ESP_Settings = {
     SurvivorColor = Color3.fromRGB(0, 255, 0),
     KillerColor = Color3.fromRGB(255, 0, 0),
@@ -1001,9 +954,9 @@ Players.PlayerAdded:Connect(function(p)
 end)
 
 -- =====================================================
--- TAB 3: FUNCTIONS (GOD MODE – ANTI-FREEZE) – TETAP
+-- TAB 3: FUNCTIONS (GOD MODE - ANTI-FREEZE)
 -- =====================================================
-local FunctionsTab = Window:CreateTab("Functions", 4483362458)
+local FunctionsTab = Window:CreateTab("Functions")
 
 -- GOD MODE VARIABLES
 local godModeEnabled = false
@@ -1039,11 +992,11 @@ local function toggleGodMode(state)
             end)
         end
 
-        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
+        Window:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
     else
         if godModeLoop then godModeLoop:Disconnect() end
         godModeEnabled = false
-        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
+        Window:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
     end
 end
 
@@ -1055,9 +1008,9 @@ FunctionsTab:CreateToggle({
 })
 
 -- =====================================================
--- TAB 4: AUTO (FITUR BARU) – Auto Generator, Auto Escape, Smart Gen Teleport
+-- TAB 4: AUTO (Fitur Baru)
 -- =====================================================
-local AutoTab = Window:CreateTab("Auto", 4483362458)
+local AutoTab = Window:CreateTab("Auto")
 
 -- ===== VARIABLES =====
 local autoGenEnabled = false
@@ -1167,7 +1120,6 @@ local function TriggerAutoEscape()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then isEscaping = false return end
 
-    -- Force open gates
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Name:lower():find("gate") then
             pcall(function()
@@ -1350,9 +1302,8 @@ end)
 -- =====================================================
 -- NOTIFICATION AWAL
 -- =====================================================
-Window:notify({
+Window:Notify({
    Title = "✅ ZIP HUB Loaded",
    Content = "All features ready!",
    Duration = 5,
-   Image = 4483362458,
 })
