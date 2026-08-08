@@ -1,11 +1,22 @@
 -- =====================================================
--- ZIP UI LIBRARY v1.0 (Custom Animations)
+-- ZIP HUB – Violence District Edition
+-- UI: Rayfield (sirius.menu) – TIDAK DIUBAH
+-- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
 -- =====================================================
+
+-- =====================================================
+-- ZIP UI LIBRARY v1.1
+-- Custom UI dengan animasi sendiri
+-- API mirip Rayfield agar mudah diadaptasi
+-- =====================================================
+
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
 local ZIP = {}
+
+-- ===== THEME =====
 local Theme = {
     Background = Color3.fromRGB(15, 15, 35),
     Section = Color3.fromRGB(25, 25, 50),
@@ -17,6 +28,7 @@ local Theme = {
     Border = Color3.fromRGB(0, 180, 255),
 }
 
+-- ===== ANIMATION HELPER =====
 local function Animate(obj, props, duration, style)
     style = style or Enum.EasingStyle.Quad
     local t = TweenService:Create(obj, TweenInfo.new(duration or 0.3, style, Enum.EasingDirection.Out), props)
@@ -24,492 +36,31 @@ local function Animate(obj, props, duration, style)
     return t
 end
 
-local function Notify(title, content, duration)
+-- ===== NOTIFICATION SYSTEM =====
+function ZIP:Notify(title, content, duration)
     duration = duration or 3
     local gui = Instance.new("ScreenGui")
-    gui.Parent = CoreGui
-    gui.Name = "ZIPNotify"
-    gui.ResetOnSpawn = false
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+   
 
-    local frame = Instance.new("Frame")
-    frame.Parent = gui
-    frame.Size = UDim2.new(0, 300, 0, 60)
-    frame.Position = UDim2.new(0.5, -150, 1, 20)
-    frame.BackgroundColor3 = Theme.Background
-    frame.BackgroundTransparency = 0.1
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Theme.Accent
-    frame.ClipsDescendants = true
-    local corner = Instance.new("UICorner")
-    corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 10)
-
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Parent = frame
-    titleLabel.Size = UDim2.new(1, -20, 0, 22)
-    titleLabel.Position = UDim2.new(0, 10, 0, 5)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = title
-    titleLabel.TextColor3 = Theme.Accent
-    titleLabel.TextSize = 16
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local contentLabel = Instance.new("TextLabel")
-    contentLabel.Parent = frame
-    contentLabel.Size = UDim2.new(1, -20, 0, 20)
-    contentLabel.Position = UDim2.new(0, 10, 0, 30)
-    contentLabel.BackgroundTransparency = 1
-    contentLabel.Text = content
-    contentLabel.TextColor3 = Theme.Text
-    contentLabel.TextSize = 13
-    contentLabel.Font = Enum.Font.GothamMedium
-    contentLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    Animate(frame, {Position = UDim2.new(0.5, -150, 0.9, 0)}, 0.4, Enum.EasingStyle.Back)
-    task.wait(duration)
-    Animate(frame, {Position = UDim2.new(0.5, -150, 1.2, 0)}, 0.3)
-    task.wait(0.3)
-    gui:Destroy()
-end
-
-function ZIP:CreateWindow(config)
-    local window = {}
-    local gui = Instance.new("ScreenGui")
-    gui.Parent = CoreGui
-    gui.Name = "ZIPUI"
-    gui.ResetOnSpawn = false
-
-    local main = Instance.new("Frame")
-    main.Parent = gui
-    main.Size = UDim2.new(0, 340, 0, 480)
-    main.Position = UDim2.new(0.5, -170, 0.5, -240)
-    main.BackgroundColor3 = Theme.Background
-    main.BackgroundTransparency = 0.05
-    main.BorderSizePixel = 1
-    main.BorderColor3 = Theme.Border
-    main.ClipsDescendants = true
-    main.Active = true
-    main.Draggable = true
-    local corner = Instance.new("UICorner")
-    corner.Parent = main
-    corner.CornerRadius = UDim.new(0, 12)
-
-    local header = Instance.new("Frame")
-    header.Parent = main
-    header.Size = UDim2.new(1, 0, 0, 45)
-    header.BackgroundColor3 = Theme.Accent
-    header.BackgroundTransparency = 0.2
-    header.BorderSizePixel = 0
-    local headerCorner = Instance.new("UICorner")
-    headerCorner.Parent = header
-    headerCorner.CornerRadius = UDim.new(0, 12)
-
-    local logo = Instance.new("Frame")
-    logo.Parent = header
-    logo.Size = UDim2.new(0, 30, 0, 30)
-    logo.Position = UDim2.new(0, 8, 0.5, -15)
-    logo.BackgroundColor3 = Theme.Accent
-    logo.BackgroundTransparency = 0
-    logo.BorderSizePixel = 0
-    local logoCorner = Instance.new("UICorner")
-    logoCorner.Parent = logo
-    logoCorner.CornerRadius = UDim.new(1, 0)
-    local logoText = Instance.new("TextLabel")
-    logoText.Parent = logo
-    logoText.Size = UDim2.new(1, 0, 1, 0)
-    logoText.BackgroundTransparency = 1
-    logoText.Text = "Z"
-    logoText.TextColor3 = Color3.fromRGB(10, 10, 25)
-    logoText.TextSize = 20
-    logoText.Font = Enum.Font.GothamBold
-
-    local title = Instance.new("TextLabel")
-    title.Parent = header
-    title.Size = UDim2.new(0.6, 0, 1, 0)
-    title.Position = UDim2.new(0, 44, 0, 0)
-    title.BackgroundTransparency = 1
-    title.Text = config.Name or "ZIP HUB"
-    title.TextColor3 = Theme.Text
-    title.TextSize = 16
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Parent = header
-    closeBtn.Size = UDim2.new(0, 28, 0, 28)
-    closeBtn.Position = UDim2.new(1, -34, 0.5, -14)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
-    closeBtn.Text = "✕"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextSize = 14
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.BorderSizePixel = 0
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.Parent = closeBtn
-    closeCorner.CornerRadius = UDim.new(1, 0)
-    closeBtn.MouseButton1Click:Connect(function()
-        Animate(main, {BackgroundTransparency = 1}, 0.3)
-        task.wait(0.3)
-        gui:Destroy()
-    end)
-
-    local tabContainer = Instance.new("Frame")
-    tabContainer.Parent = main
-    tabContainer.Size = UDim2.new(1, 0, 0, 30)
-    tabContainer.Position = UDim2.new(0, 0, 0, 45)
-    tabContainer.BackgroundTransparency = 1
-
-    local tabLayout = Instance.new("UIListLayout")
-    tabLayout.Parent = tabContainer
-    tabLayout.FillDirection = Enum.FillDirection.Horizontal
-    tabLayout.Padding = UDim.new(0, 5)
-    tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-    local content = Instance.new("Frame")
-    content.Parent = main
-    content.Size = UDim2.new(1, -12, 1, -85)
-    content.Position = UDim2.new(0, 6, 0, 80)
-    content.BackgroundTransparency = 1
-    content.ClipsDescendants = true
-
-    local scroll = Instance.new("ScrollingFrame")
-    scroll.Parent = content
-    scroll.Size = UDim2.new(1, 0, 1, 0)
-    scroll.BackgroundTransparency = 1
-    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scroll.ScrollBarThickness = 3
-    scroll.ScrollBarImageColor3 = Theme.Accent
-    scroll.BorderSizePixel = 0
-
-    window._gui = gui
-    window._main = main
-    window._scroll = scroll
-    window._tabs = {}
-    window._tabButtons = {}
-    window._currentTab = nil
-
-    function window:CreateTab(name)
-        local tab = {}
-        local btn = Instance.new("TextButton")
-        btn.Parent = tabContainer
-        btn.Size = UDim2.new(0, 80, 1, 0)
-        btn.BackgroundTransparency = 1
-        btn.Text = name
-        btn.TextColor3 = Theme.TextDark
-        btn.TextSize = 13
-        btn.Font = Enum.Font.GothamBold
-        btn.BorderSizePixel = 0
-
-        local contentFrame = Instance.new("Frame")
-        contentFrame.Parent = scroll
-        contentFrame.Size = UDim2.new(1, 0, 0, 0)
-        contentFrame.BackgroundTransparency = 1
-        contentFrame.Visible = false
-        contentFrame.ClipsDescendants = true
-
-        local yPos = 0
-
-        local function selectTab()
-            for _, b in pairs(window._tabButtons) do
-                b.TextColor3 = Theme.TextDark
-            end
-            btn.TextColor3 = Theme.Accent
-            for _, c in pairs(window._tabs) do
-                c._content.Visible = false
-            end
-            contentFrame.Visible = true
-            window._currentTab = name
-            local totalHeight = 0
-            for _, child in pairs(contentFrame:GetChildren()) do
-                if child:IsA("Frame") then
-                    totalHeight = totalHeight + child.Size.Y.Offset + 6
-                end
-            end
-            contentFrame.Size = UDim2.new(1, 0, 0, totalHeight)
-            scroll.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
-        end
-
-        btn.MouseButton1Click:Connect(selectTab)
-        table.insert(window._tabButtons, btn)
-        table.insert(window._tabs, {_content = contentFrame, _name = name})
-
-        if #window._tabButtons == 1 then
-            selectTab()
-        end
-
-        function tab:CreateSection(title)
-            local sectionFrame = Instance.new("Frame")
-            sectionFrame.Parent = contentFrame
-            sectionFrame.Size = UDim2.new(1, 0, 0, 30)
-            sectionFrame.Position = UDim2.new(0, 0, 0, yPos)
-            sectionFrame.BackgroundTransparency = 1
-
-            local label = Instance.new("TextLabel")
-            label.Parent = sectionFrame
-            label.Size = UDim2.new(1, 0, 1, 0)
-            label.BackgroundTransparency = 1
-            label.Text = title
-            label.TextColor3 = Theme.Accent
-            label.TextSize = 14
-            label.Font = Enum.Font.GothamBold
-            label.TextXAlignment = Enum.TextXAlignment.Left
-
-            yPos = yPos + 34
-            return {
-                _addToggle = function(self, text, desc, callback)
-                    local frame = Instance.new("Frame")
-                    frame.Parent = contentFrame
-                    frame.Size = UDim2.new(1, 0, 0, 50)
-                    frame.Position = UDim2.new(0, 0, 0, yPos)
-                    frame.BackgroundColor3 = Theme.Section
-                    frame.BackgroundTransparency = 0.2
-                    frame.BorderSizePixel = 1
-                    frame.BorderColor3 = Theme.Border
-                    local corner = Instance.new("UICorner")
-                    corner.Parent = frame
-                    corner.CornerRadius = UDim.new(0, 6)
-
-                    local label = Instance.new("TextLabel")
-                    label.Parent = frame
-                    label.Size = UDim2.new(0.7, 0, 0, 18)
-                    label.Position = UDim2.new(0, 10, 0, 4)
-                    label.BackgroundTransparency = 1
-                    label.Text = text
-                    label.TextColor3 = Theme.Text
-                    label.TextSize = 13
-                    label.Font = Enum.Font.GothamBold
-                    label.TextXAlignment = Enum.TextXAlignment.Left
-
-                    local descLabel = Instance.new("TextLabel")
-                    descLabel.Parent = frame
-                    descLabel.Size = UDim2.new(0.7, 0, 0, 16)
-                    descLabel.Position = UDim2.new(0, 10, 0, 26)
-                    descLabel.BackgroundTransparency = 1
-                    descLabel.Text = desc or ""
-                    descLabel.TextColor3 = Theme.TextDark
-                    descLabel.TextSize = 10
-                    descLabel.Font = Enum.Font.GothamMedium
-                    descLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-                    local toggleBtn = Instance.new("TextButton")
-                    toggleBtn.Parent = frame
-                    toggleBtn.Size = UDim2.new(0, 50, 0, 26)
-                    toggleBtn.Position = UDim2.new(1, -60, 0, 12)
-                    toggleBtn.BackgroundColor3 = Theme.ButtonOff
-                    toggleBtn.Text = "OFF"
-                    toggleBtn.TextColor3 = Theme.Text
-                    toggleBtn.TextSize = 11
-                    toggleBtn.Font = Enum.Font.GothamBold
-                    toggleBtn.BorderSizePixel = 0
-                    local btnCorner = Instance.new("UICorner")
-                    btnCorner.Parent = toggleBtn
-                    btnCorner.CornerRadius = UDim.new(0, 4)
-
-                    local state = false
-                    local function setState(val)
-                        state = val
-                        toggleBtn.Text = state and "ON" or "OFF"
-                        local targetColor = state and Theme.ButtonOn or Theme.ButtonOff
-                        Animate(toggleBtn, {BackgroundColor3 = targetColor}, 0.2)
-                        callback(state)
-                    end
-
-                    toggleBtn.MouseButton1Click:Connect(function()
-                        setState(not state)
-                    end)
-
-                    yPos = yPos + 54
-                    return {SetValue = setState, GetValue = function() return state end}
-                end,
-                _addSlider = function(self, text, desc, min, max, default, callback)
-                    local frame = Instance.new("Frame")
-                    frame.Parent = contentFrame
-                    frame.Size = UDim2.new(1, 0, 0, 55)
-                    frame.Position = UDim2.new(0, 0, 0, yPos)
-                    frame.BackgroundColor3 = Theme.Section
-                    frame.BackgroundTransparency = 0.2
-                    frame.BorderSizePixel = 1
-                    frame.BorderColor3 = Theme.Border
-                    local corner = Instance.new("UICorner")
-                    corner.Parent = frame
-                    corner.CornerRadius = UDim.new(0, 6)
-
-                    local label = Instance.new("TextLabel")
-                    label.Parent = frame
-                    label.Size = UDim2.new(0.6, 0, 0, 18)
-                    label.Position = UDim2.new(0, 10, 0, 4)
-                    label.BackgroundTransparency = 1
-                    label.Text = text .. " (" .. default .. ")"
-                    label.TextColor3 = Theme.Text
-                    label.TextSize = 13
-                    label.Font = Enum.Font.GothamBold
-                    label.TextXAlignment = Enum.TextXAlignment.Left
-
-                    local descLabel = Instance.new("TextLabel")
-                    descLabel.Parent = frame
-                    descLabel.Size = UDim2.new(0.6, 0, 0, 16)
-                    descLabel.Position = UDim2.new(0, 10, 0, 26)
-                    descLabel.BackgroundTransparency = 1
-                    descLabel.Text = desc or ""
-                    descLabel.TextColor3 = Theme.TextDark
-                    descLabel.TextSize = 10
-                    descLabel.Font = Enum.Font.GothamMedium
-                    descLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-                    local slider = Instance.new("Frame")
-                    slider.Parent = frame
-                    slider.Size = UDim2.new(0, 100, 0, 6)
-                    slider.Position = UDim2.new(0.6, 10, 0.5, -3)
-                    slider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-                    slider.BorderSizePixel = 0
-                    local sliderCorner = Instance.new("UICorner")
-                    sliderCorner.Parent = slider
-                    sliderCorner.CornerRadius = UDim.new(1, 0)
-
-                    local fill = Instance.new("Frame")
-                    fill.Parent = slider
-                    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-                    fill.BackgroundColor3 = Theme.Accent
-                    fill.BorderSizePixel = 0
-                    local fillCorner = Instance.new("UICorner")
-                    fillCorner.Parent = fill
-                    fillCorner.CornerRadius = UDim.new(1, 0)
-
-                    local valueLabel = Instance.new("TextLabel")
-                    valueLabel.Parent = frame
-                    valueLabel.Size = UDim2.new(0, 40, 0, 20)
-                    valueLabel.Position = UDim2.new(0.9, 0, 0.5, -10)
-                    valueLabel.BackgroundTransparency = 1
-                    valueLabel.Text = tostring(default)
-                    valueLabel.TextColor3 = Theme.Text
-                    valueLabel.TextSize = 12
-                    valueLabel.Font = Enum.Font.GothamBold
-
-                    local val = default
-                    local dragging = false
-                    local function updateSlider(mouseX)
-                        local relX = math.clamp((mouseX - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
-                        val = math.floor(min + (max - min) * relX)
-                        fill.Size = UDim2.new(relX, 0, 1, 0)
-                        valueLabel.Text = tostring(val)
-                        label.Text = text .. " (" .. val .. ")"
-                        callback(val)
-                    end
-
-                    slider.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            dragging = true
-                            updateSlider(input.Position.X)
-                        end
-                    end)
-                    slider.InputEnded:Connect(function()
-                        dragging = false
-                    end)
-                    UserInputService.InputChanged:Connect(function(input)
-                        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                            updateSlider(input.Position.X)
-                        end
-                    end)
-
-                    yPos = yPos + 59
-                    return {SetValue = function(v) val = v; callback(v); fill.Size = UDim2.new((v-min)/(max-min),0,1,0); valueLabel.Text=tostring(v); label.Text=text.." ("..v..")" end, GetValue = function() return val end}
-                end,
-                _addColorPicker = function(self, text, default, callback)
-                    local frame = Instance.new("Frame")
-                    frame.Parent = contentFrame
-                    frame.Size = UDim2.new(1, 0, 0, 40)
-                    frame.Position = UDim2.new(0, 0, 0, yPos)
-                    frame.BackgroundColor3 = Theme.Section
-                    frame.BackgroundTransparency = 0.2
-                    frame.BorderSizePixel = 1
-                    frame.BorderColor3 = Theme.Border
-                    local corner = Instance.new("UICorner")
-                    corner.Parent = frame
-                    corner.CornerRadius = UDim.new(0, 6)
-
-                    local label = Instance.new("TextLabel")
-                    label.Parent = frame
-                    label.Size = UDim2.new(0.7, 0, 1, 0)
-                    label.Position = UDim2.new(0, 10, 0, 0)
-                    label.BackgroundTransparency = 1
-                    label.Text = text
-                    label.TextColor3 = Theme.Text
-                    label.TextSize = 13
-                    label.Font = Enum.Font.GothamBold
-                    label.TextXAlignment = Enum.TextXAlignment.Left
-
-                    local colorDisplay = Instance.new("Frame")
-                    colorDisplay.Parent = frame
-                    colorDisplay.Size = UDim2.new(0, 30, 0, 26)
-                    colorDisplay.Position = UDim2.new(1, -40, 0.5, -13)
-                    colorDisplay.BackgroundColor3 = default
-                    colorDisplay.BorderSizePixel = 1
-                    colorDisplay.BorderColor3 = Theme.Border
-                    local colorCorner = Instance.new("UICorner")
-                    colorCorner.Parent = colorDisplay
-                    colorCorner.CornerRadius = UDim.new(0, 4)
-
-                    local colors = {Color3.fromRGB(255,0,0), Color3.fromRGB(0,255,0), Color3.fromRGB(0,0,255), Color3.fromRGB(255,255,0), Color3.fromRGB(255,165,0), Color3.fromRGB(255,20,147)}
-                    local index = 1
-                    colorDisplay.MouseButton1Click:Connect(function()
-                        index = index % #colors + 1
-                        colorDisplay.BackgroundColor3 = colors[index]
-                        callback(colors[index])
-                    end)
-
-                    yPos = yPos + 44
-                    return {SetValue = function(c) colorDisplay.BackgroundColor3 = c; callback(c) end}
-                end
-            }
-        end
-
-        function tab:CreateToggle(config)
-            local section = self:CreateSection("")
-            local toggle = section._addToggle(config.Name, config.Desc or "", function(v)
-                if config.Callback then config.Callback(v) end
-            end)
-            if config.CurrentValue then toggle:SetValue(config.CurrentValue) end
-            return toggle
-        end
-
-        function tab:CreateSlider(config)
-            local section = self:CreateSection("")
-            local slider = section._addSlider(config.Name, config.Desc or "", config.Range[1], config.Range[2], config.CurrentValue or config.Range[1], function(v)
-                if config.Callback then config.Callback(v) end
-            end)
-            return slider
-        end
-
-        function tab:CreateColorPicker(config)
-            local section = self:CreateSection("")
-            local picker = section._addColorPicker(config.Name, config.Color or Color3.fromRGB(255,255,255), function(c)
-                if config.Callback then config.Callback(c) end
-            end)
-            return picker
-        end
-
-        return tab
-    end
-
-    function window:Notify(config)
-        Notify(config.Title or "Notification", config.Content or "", config.Duration or 3)
-    end
-
-    return window
-end
--- =====================================================
--- AKHIR LIBRARY ZIP UI
--- =====================================================
-
--- =====================================================
--- ZIP HUB – Violence District Edition
--- Menggunakan ZIP UI Library (tanpa Rayfield)
--- =====================================================
-
-local Window = ZIP:CreateWindow({
+local Window = ZIP:CreateWindow({Name = "ZIP HUB – Test"})
+local tab = Window:CreateTab("Main")
+tab:CreateSection("Settings")
+tab:CreateToggle({
+    Name = "Speed Glitch",
+    CurrentValue = false,
+    Callback = function(v) print("Speed:", v) end
+})
+tab:CreateSlider({
+    Name = "Speed",
+    Range = {1, 100},
+    CurrentValue = 50,
+    Callback = function(v) print("Speed value:", v) end
+})
+Window:Notify({Title = "Loaded", Content = "ZIP UI ready!", Duration = 3})
    Name = "ZIP HUB – Violence District",
+   LoadingTitle = "Loading ZIP HUB Modules...",
+   LoadingSubtitle = "by ZIP",
+   ConfigurationSaving = { Enabled = false }
 })
 
 local LP = game:GetService("Players").LocalPlayer
@@ -521,9 +72,9 @@ local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
 
 -- =====================================================
--- TAB 1: MOVEMENT (Speed, Jump, Fly, NoClip)
+-- TAB 1: MOVEMENT (Speed, Jump, Fly, NoClip) – TETAP
 -- =====================================================
-local MoveTab = Window:CreateTab("Movement")
+local MoveTab = Window:CreateTab("Movement", 4483362458)
 
 -- Speed Glitch Variables
 local speedChecked = false
@@ -643,11 +194,12 @@ local function startNoclip()
     end)
 end
 
--- ===== GUI MOVEMENT =====
+-- ===== GUI MOVEMENT ===== (TETAP)
 MoveTab:CreateSection("Speed Settings")
 MoveTab:CreateToggle({
    Name = "Speed Glitch",
    CurrentValue = false,
+   Flag = "SpeedToggle",
    Callback = function(Value)
        speedChecked = Value
        if speedChecked then task.spawn(applyVelocity) end
@@ -659,6 +211,7 @@ MoveTab:CreateSlider({
    Increment = 1,
    Suffix = "Velocity",
    CurrentValue = 60,
+   Flag = "SpeedVal",
    Callback = function(Value) speedValue = Value end,
 })
 
@@ -666,6 +219,7 @@ MoveTab:CreateSection("Jump Settings")
 MoveTab:CreateToggle({
    Name = "Super Jump",
    CurrentValue = false,
+   Flag = "JumpToggle",
    Callback = function(Value)
        jumpChecked = Value
        if jumpChecked then task.spawn(applySuperJump) end
@@ -677,6 +231,7 @@ MoveTab:CreateSlider({
    Increment = 5,
    Suffix = "Height",
    CurrentValue = 100,
+   Flag = "JumpVal",
    Callback = function(Value) jumpPower = Value end,
 })
 
@@ -684,6 +239,7 @@ MoveTab:CreateSection("Flight & NoClip")
 MoveTab:CreateToggle({
    Name = "Fly (W,A,S,D,Space,Shift)",
    CurrentValue = false,
+   Flag = "FlyToggle",
    Callback = function(Value)
        flyChecked = Value
        if Value then startFly() else stopFly() end
@@ -695,11 +251,13 @@ MoveTab:CreateSlider({
    Increment = 10,
    Suffix = "Studs",
    CurrentValue = 150,
+   Flag = "FlySpeedVal",
    Callback = function(Value) flySpeed = Value end,
 })
 MoveTab:CreateToggle({
    Name = "NoClip",
    CurrentValue = false,
+   Flag = "NoclipToggle",
    Callback = function(Value)
        noclipChecked = Value
        if Value then startNoclip() else stopNoclip() end
@@ -720,11 +278,11 @@ LP.CharacterRemoving:Connect(function()
 end)
 
 -- =====================================================
--- TAB 2: VISUALS: ESP+
+-- TAB 2: VISUALS: ESP+ – TETAP
 -- =====================================================
-local VisualsAdvTab = Window:CreateTab("Visuals: ESP+")
+local VisualsAdvTab = Window:CreateTab("Visuals: ESP+", 4483362458)
 
--- ESP Settings
+-- ESP Settings (sama seperti sebelumnya)
 local ESP_Settings = {
     SurvivorColor = Color3.fromRGB(0, 255, 0),
     KillerColor = Color3.fromRGB(255, 0, 0),
@@ -954,9 +512,9 @@ Players.PlayerAdded:Connect(function(p)
 end)
 
 -- =====================================================
--- TAB 3: FUNCTIONS (GOD MODE - ANTI-FREEZE)
+-- TAB 3: FUNCTIONS (GOD MODE – ANTI-FREEZE) – TETAP
 -- =====================================================
-local FunctionsTab = Window:CreateTab("Functions")
+local FunctionsTab = Window:CreateTab("Functions", 4483362458)
 
 -- GOD MODE VARIABLES
 local godModeEnabled = false
@@ -992,11 +550,11 @@ local function toggleGodMode(state)
             end)
         end
 
-        Window:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
+        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
     else
         if godModeLoop then godModeLoop:Disconnect() end
         godModeEnabled = false
-        Window:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
+        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
     end
 end
 
@@ -1008,9 +566,9 @@ FunctionsTab:CreateToggle({
 })
 
 -- =====================================================
--- TAB 4: AUTO (Fitur Baru)
+-- TAB 4: AUTO (FITUR BARU) – Auto Generator, Auto Escape, Smart Gen Teleport
 -- =====================================================
-local AutoTab = Window:CreateTab("Auto")
+local AutoTab = Window:CreateTab("Auto", 4483362458)
 
 -- ===== VARIABLES =====
 local autoGenEnabled = false
@@ -1120,6 +678,7 @@ local function TriggerAutoEscape()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then isEscaping = false return end
 
+    -- Force open gates
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Name:lower():find("gate") then
             pcall(function()
@@ -1302,7 +861,7 @@ end)
 -- =====================================================
 -- NOTIFICATION AWAL
 -- =====================================================
-Window:Notify({
+Window:Notify({...})
    Title = "✅ ZIP HUB Loaded",
    Content = "All features ready!",
    Duration = 5,
