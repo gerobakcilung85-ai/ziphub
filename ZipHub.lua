@@ -14,7 +14,7 @@ local remote = ReplicatedStorage:WaitForChild("ZipAdminRemote")
 --==================================================
 
 local ADMINS = {
-	[the_king6085] = true, -- GANTI DENGAN USER ID ROBLOX-MU
+	[8801724233] = true, -- GANTI DENGAN USER ID ROBLOX-MU
 }
 
 if not ADMINS[player.UserId] then
