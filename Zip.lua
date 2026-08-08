@@ -22,7 +22,7 @@ IntroLogo.Size = UDim2.new(0, 0, 0, 0)
 IntroLogo.Position = UDim2.new(0.5, 0, 0.45, 0)
 IntroLogo.AnchorPoint = Vector2.new(0.5, 0.5)
 IntroLogo.BackgroundTransparency = 1
-IntroLogo.Image = "rbxassetid://127108636160194"
+IntroLogo.Image = "rbxassetid://128536767801427"
 
 local IntroTitle = Instance.new("TextLabel")
 IntroTitle.Parent = IntroFrame
