@@ -4,6 +4,7 @@
 -- Auto Generator, Auto Escape (Auto Win)
 -- Smart Generator Teleport (Auto Next Gen + Escape Killer)
 -- Custom UI – No Rayfield
+-- UI TETAP SEPERTI SEMULA
 -- =====================================================
 
 local Players = game:GetService("Players")
@@ -499,7 +500,7 @@ LP.CharacterRemoving:Connect(function()
 end)
 
 -- =====================================================
--- CUSTOM UI – ZIP HUB (TAMPILAN LAMA, TANPA SPLASH)
+-- UI – ZIP HUB (TAMPILAN LAMA, TANPA SPLASH)
 -- =====================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
