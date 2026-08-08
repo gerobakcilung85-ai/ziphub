@@ -4,59 +4,9 @@
 -- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
 -- =====================================================
 
--- =====================================================
--- ZIP UI LIBRARY v1.1
--- Custom UI dengan animasi sendiri
--- API mirip Rayfield agar mudah diadaptasi
--- =====================================================
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
-
-local ZIP = {}
-
--- ===== THEME =====
-local Theme = {
-    Background = Color3.fromRGB(15, 15, 35),
-    Section = Color3.fromRGB(25, 25, 50),
-    Accent = Color3.fromRGB(0, 180, 255),
-    Text = Color3.fromRGB(255, 255, 255),
-    TextDark = Color3.fromRGB(150, 150, 200),
-    ButtonOff = Color3.fromRGB(200, 40, 40),
-    ButtonOn = Color3.fromRGB(40, 200, 40),
-    Border = Color3.fromRGB(0, 180, 255),
-}
-
--- ===== ANIMATION HELPER =====
-local function Animate(obj, props, duration, style)
-    style = style or Enum.EasingStyle.Quad
-    local t = TweenService:Create(obj, TweenInfo.new(duration or 0.3, style, Enum.EasingDirection.Out), props)
-    t:Play()
-    return t
-end
-
--- ===== NOTIFICATION SYSTEM =====
-function ZIP:Notify(title, content, duration)
-    duration = duration or 3
-    local gui = Instance.new("ScreenGui")
-   
-
-local Window = ZIP:CreateWindow({Name = "ZIP HUB – Test"})
-local tab = Window:CreateTab("Main")
-tab:CreateSection("Settings")
-tab:CreateToggle({
-    Name = "Speed Glitch",
-    CurrentValue = false,
-    Callback = function(v) print("Speed:", v) end
-})
-tab:CreateSlider({
-    Name = "Speed",
-    Range = {1, 100},
-    CurrentValue = 50,
-    Callback = function(v) print("Speed value:", v) end
-})
-Window:Notify({Title = "Loaded", Content = "ZIP UI ready!", Duration = 3})
+local Window = Rayfield:CreateWindow({
    Name = "ZIP HUB – Violence District",
    LoadingTitle = "Loading ZIP HUB Modules...",
    LoadingSubtitle = "by ZIP",
@@ -861,8 +811,9 @@ end)
 -- =====================================================
 -- NOTIFICATION AWAL
 -- =====================================================
-Window:Notify({...})
+Rayfield:Notify({
    Title = "✅ ZIP HUB Loaded",
    Content = "All features ready!",
    Duration = 5,
+   Image = 4483362458,
 })
