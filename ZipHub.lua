@@ -40,7 +40,7 @@ local espGenerator = false
 local espObjects = {}
 local isEscaping = false
 
--- VARIABEL UNTUK SMART GENERATOR TELEPORT
+-- SMART GENERATOR TELEPORT
 local smartGenTeleportEnabled = false
 local smartGenLoop = nil
 local completedGenerators = {}
@@ -105,26 +105,12 @@ local function GetNearestIncompleteGenerator()
     local nearestDist = math.huge
 
     for _, gen in pairs(gens) do
-        -- Cek apakah generator sudah selesai
         local isCompleted = false
-        
-        -- Cek atribut langsung
-        if gen:GetAttribute("Completed") == true then
-            isCompleted = true
-        elseif gen:GetAttribute("Progress") and gen:GetAttribute("Progress") >= 1 then
-            isCompleted = true
-        end
-        
-        -- Cek atribut parent (jika gen adalah part di dalam model)
-        if gen.Parent and gen.Parent:GetAttribute("Completed") == true then
-            isCompleted = true
-        elseif gen.Parent and gen.Parent:GetAttribute("Progress") and gen.Parent:GetAttribute("Progress") >= 1 then
-            isCompleted = true
-        end
-        
-        -- Cek dari daftar completedGenerators
-        if completedGenerators[gen] then
-            isCompleted = true
+        if gen:GetAttribute("Completed") == true then isCompleted = true
+        elseif gen:GetAttribute("Progress") and gen:GetAttribute("Progress") >= 1 then isCompleted = true
+        elseif gen.Parent and gen.Parent:GetAttribute("Completed") == true then isCompleted = true
+        elseif gen.Parent and gen.Parent:GetAttribute("Progress") and gen.Parent:GetAttribute("Progress") >= 1 then isCompleted = true
+        elseif completedGenerators[gen] then isCompleted = true
         end
 
         if not isCompleted then
@@ -135,14 +121,12 @@ local function GetNearestIncompleteGenerator()
             end
         end
     end
-
     return nearest
 end
 
 local function TeleportToNearestIncompleteGenerator()
     local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     local target = GetNearestIncompleteGenerator()
     if target then
         hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
@@ -152,7 +136,6 @@ local function TeleportToNearestIncompleteGenerator()
     end
 end
 
--- Fungsi untuk menandai generator sebagai selesai
 local function MarkGeneratorAsCompleted(gen)
     if gen then
         completedGenerators[gen] = true
@@ -160,7 +143,6 @@ local function MarkGeneratorAsCompleted(gen)
     end
 end
 
--- Loop Smart Generator Teleport
 local function SmartGenTeleportLoop()
     while smartGenTeleportEnabled and task.wait(1) do
         local char = LP.Character
@@ -168,22 +150,17 @@ local function SmartGenTeleportLoop()
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if not hrp then continue end
 
-        -- CEK 1: Apakah ada Killer di dekat? (radius 40 studs)
         local killer = FindKiller()
         local killerNearby = false
         if killer and killer.Character then
             local killerHrp = killer.Character:FindFirstChild("HumanoidRootPart")
             if killerHrp then
                 local dist = (hrp.Position - killerHrp.Position).Magnitude
-                if dist < 40 then
-                    killerNearby = true
-                end
+                if dist < 40 then killerNearby = true end
             end
         end
 
-        -- CEK 2: Apakah generator saat ini sudah selesai?
         local currentGenCompleted = false
-        -- Cek posisi player terhadap generator terdekat
         local gens = FindGenerators()
         local currentGen = nil
         local minDist = 5
@@ -204,18 +181,13 @@ local function SmartGenTeleportLoop()
             end
         end
 
-        -- EKSEKUSI TELEPORT
         if killerNearby then
-            -- Jika ada Killer di dekat, teleport ke generator terdekat yang belum selesai
             print("🔴 ZIP HUB: Killer terdeteksi! Mencari generator aman...")
             TeleportToNearestIncompleteGenerator()
             task.wait(0.5)
         elseif currentGenCompleted then
-            -- Jika generator selesai, cari generator berikutnya
             print("⚡ ZIP HUB: Generator selesai! Mencari generator berikutnya...")
-            if currentGen then
-                MarkGeneratorAsCompleted(currentGen)
-            end
+            if currentGen then MarkGeneratorAsCompleted(currentGen) end
             TeleportToNearestIncompleteGenerator()
             task.wait(0.5)
         end
@@ -242,14 +214,10 @@ local function AutoGeneratorLoop()
         local target = gens[1]
         if not target then continue end
 
-        -- Cek apakah generator sudah selesai
         local isCompleted = false
-        if target:GetAttribute("Completed") == true then
-            isCompleted = true
-        elseif target:GetAttribute("Progress") and target:GetAttribute("Progress") >= 1 then
-            isCompleted = true
-        elseif target.Parent and target.Parent:GetAttribute("Completed") == true then
-            isCompleted = true
+        if target:GetAttribute("Completed") == true then isCompleted = true
+        elseif target:GetAttribute("Progress") and target:GetAttribute("Progress") >= 1 then isCompleted = true
+        elseif target.Parent and target.Parent:GetAttribute("Completed") == true then isCompleted = true
         end
 
         if isCompleted then
@@ -279,7 +247,7 @@ local function AutoGeneratorLoop()
 end
 
 -- =====================================================
--- AUTO ESCAPE (AUTO WIN)
+-- AUTO ESCAPE
 -- =====================================================
 local function TriggerAutoEscape()
     if isEscaping then return end
@@ -290,7 +258,6 @@ local function TriggerAutoEscape()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then isEscaping = false return end
 
-    -- 1. Force End Game (buka semua gate)
     for _, obj in pairs(Workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Name:lower():find("gate") then
             pcall(function()
@@ -307,7 +274,6 @@ local function TriggerAutoEscape()
     end
     task.wait(0.3)
 
-    -- 2. Instant Escape (teleport ke gate terdekat)
     local gates = FindEscapeGates()
     if #gates > 0 then
         table.sort(gates, function(a, b)
@@ -389,11 +355,7 @@ local function UpdateESP()
 end
 
 RunService.RenderStepped:Connect(function()
-    if espKiller or espSurvivor or espGenerator then
-        UpdateESP()
-    else
-        ClearESP()
-    end
+    if espKiller or espSurvivor or espGenerator then UpdateESP() else ClearESP() end
 end)
 
 -- =====================================================
@@ -537,7 +499,7 @@ LP.CharacterRemoving:Connect(function()
 end)
 
 -- =====================================================
--- CUSTOM UI – ZIP HUB (TAMPILAN LAMA DI PERTAHANKAN)
+-- CUSTOM UI – ZIP HUB (TAMPILAN LAMA, TANPA SPLASH)
 -- =====================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
@@ -546,7 +508,7 @@ ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 340, 0, 520) -- Sedikit lebih tinggi untuk fitur baru
+MainFrame.Size = UDim2.new(0, 340, 0, 520)
 MainFrame.Position = UDim2.new(0.5, -170, 0.5, -260)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
 MainFrame.BackgroundTransparency = 0.05
@@ -565,7 +527,7 @@ MainBorder.Color = Color3.fromRGB(0, 180, 255)
 MainBorder.Thickness = 1.5
 MainBorder.Transparency = 0.2
 
--- HEADER (TAMPILAN LAMA)
+-- HEADER
 local Header = Instance.new("Frame")
 Header.Parent = MainFrame
 Header.Size = UDim2.new(1, 0, 0, 45)
@@ -664,7 +626,7 @@ ScrollingFrame.ScrollBarThickness = 3
 ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
 ScrollingFrame.BorderSizePixel = 0
 
--- TOGGLE CREATOR (TAMPILAN LAMA)
+-- TOGGLE CREATOR
 local function CreateToggle(text, desc, key, yPos)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
@@ -731,12 +693,7 @@ local function CreateToggle(text, desc, key, yPos)
         elseif key == "espgen" then espGenerator = state
         elseif key == "smartgen" then 
             smartGenTeleportEnabled = state
-            if state then 
-                task.spawn(SmartGenTeleportLoop)
-                print("🧠 ZIP HUB: Smart Generator Teleport AKTIF!")
-            else
-                print("🧠 ZIP HUB: Smart Generator Teleport MATI!")
-            end
+            if state then task.spawn(SmartGenTeleportLoop) end
         end
     end
 
@@ -747,7 +704,7 @@ local function CreateToggle(text, desc, key, yPos)
     return yPos + 54, setState
 end
 
--- SLIDER CREATOR (TAMPILAN LAMA)
+-- SLIDER CREATOR
 local function CreateSlider(text, desc, key, min, max, default, yPos)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
