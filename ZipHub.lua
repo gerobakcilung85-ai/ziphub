@@ -6,9 +6,7 @@
 
 local Zip = loadstring(game:HttpGet("https://raw.githubusercontent.com/gerobakcilung85-ai/ziphub/main/Zip.lua"))()
 
-
-
-local Window = Rayfield:CreateWindow({
+local Window = ziphub:CreateWindow({...})
    Name = "ZIP HUB – Violence District",
    LoadingTitle = "Loading ZIP HUB Modules...",
    LoadingSubtitle = "by ZIP",
@@ -813,9 +811,9 @@ end)
 -- =====================================================
 -- NOTIFICATION AWAL
 -- =====================================================
-Rayfield:Notify({
+Rayfield:Notify({...})
    Title = "✅ ZIP HUB Loaded",
    Content = "All features ready!",
    Duration = 5,
-   Image = 4483362458,
+   Image = 127108636160194
 })
