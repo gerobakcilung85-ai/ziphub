@@ -1,58 +1,536 @@
 -- =====================================================
 -- ZIP HUB – Violence District Edition
--- ALL FEATURES: Movement, ESP, God Mode,
--- Auto Generator, Auto Escape (Auto Win)
--- Smart Generator Teleport (Auto Next Gen + Escape Killer)
--- Custom UI – No Rayfield
--- UI TETAP SEPERTI SEMULA
+-- UI: Rayfield (sirius.menu) – TIDAK DIUBAH
+-- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
 -- =====================================================
 
-local Players = game:GetService("Players")
-local LP = Players.LocalPlayer
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "ZIP HUB – Violence District",
+   LoadingTitle = "Loading ZIP HUB Modules...",
+   LoadingSubtitle = "by ZIP",
+   ConfigurationSaving = { Enabled = false }
+})
+
+local LP = game:GetService("Players").LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
+local Teams = game:GetService("Teams")
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
 
 -- =====================================================
--- VARIABLES
+-- TAB 1: MOVEMENT (Speed, Jump, Fly, NoClip) – TETAP
 -- =====================================================
+local MoveTab = Window:CreateTab("Movement", 4483362458)
+
+-- Speed Glitch Variables
 local speedChecked = false
 local speedValue = 60
+
+-- Super Jump Variables
 local jumpChecked = false
 local jumpPower = 100
+
+-- Fly Variables
 local flyChecked = false
 local flySpeed = 150
 local flying = false
 local bv, bg
+
+-- NoClip Variables
 local noclipChecked = false
 local noclipConnection
+
+-- ===== SPEED GLITCH =====
+local function applyVelocity()
+    while speedChecked and task.wait() do
+        local character = LP.Character
+        if not character then continue end
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if hrp and humanoid and humanoid.MoveDirection.Magnitude > 0 then
+            local currentY = hrp.Velocity.Y
+            local move = humanoid.MoveDirection * speedValue
+            hrp.Velocity = Vector3.new(move.X, currentY, move.Z)
+        end
+    end
+end
+
+-- ===== SUPER JUMP =====
+local function applySuperJump()
+    while jumpChecked and task.wait() do
+        local character = LP.Character
+        if not character then continue end
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if hrp and humanoid and humanoid.Jump then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpPower, hrp.Velocity.Z)
+        end
+    end
+end
+
+-- ===== FLY =====
+local function stopFly()
+    flying = false
+    if bv then bv:Destroy() bv = nil end
+    if bg then bg:Destroy() bg = nil end
+end
+
+local function startFly()
+    if flying then return end
+    local character = LP.Character
+    if not character then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    flying = true
+    bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+    bv.Velocity = Vector3.zero
+    bv.Parent = root
+    bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bg.P = 9e4
+    bg.CFrame = root.CFrame
+    bg.Parent = root
+end
+
+-- Fly Control Loop
+RunService.Heartbeat:Connect(function()
+    if not flying or not bv or not bg then return end
+    local character = LP.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local root = character.HumanoidRootPart
+    local move = Vector3.new()
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0, 0, -1) end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move + Vector3.new(0, 0, 1) end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move + Vector3.new(-1, 0, 0) end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + Vector3.new(1, 0, 0) end
+    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
+    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then move = move + Vector3.new(0, -1, 0) end
+    local cam = workspace.CurrentCamera
+    if move.Magnitude > 0 then
+        move = cam.CFrame:VectorToWorldSpace(move.Unit) * flySpeed
+    else
+        move = Vector3.zero
+    end
+    bv.Velocity = move
+    bg.CFrame = cam.CFrame
+end)
+
+-- ===== NOCLIP =====
+local function stopNoclip()
+    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+    local char = LP.Character
+    if char then
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = true end
+        end
+    end
+end
+
+local function startNoclip()
+    if noclipConnection then return end
+    noclipConnection = RunService.Stepped:Connect(function()
+        if not noclipChecked and not flying then return end
+        local char = LP.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end)
+end
+
+-- ===== GUI MOVEMENT ===== (TETAP)
+MoveTab:CreateSection("Speed Settings")
+MoveTab:CreateToggle({
+   Name = "Speed Glitch",
+   CurrentValue = false,
+   Flag = "SpeedToggle",
+   Callback = function(Value)
+       speedChecked = Value
+       if speedChecked then task.spawn(applyVelocity) end
+   end,
+})
+MoveTab:CreateSlider({
+   Name = "Speed Multiplier",
+   Range = {16, 300},
+   Increment = 1,
+   Suffix = "Velocity",
+   CurrentValue = 60,
+   Flag = "SpeedVal",
+   Callback = function(Value) speedValue = Value end,
+})
+
+MoveTab:CreateSection("Jump Settings")
+MoveTab:CreateToggle({
+   Name = "Super Jump",
+   CurrentValue = false,
+   Flag = "JumpToggle",
+   Callback = function(Value)
+       jumpChecked = Value
+       if jumpChecked then task.spawn(applySuperJump) end
+   end,
+})
+MoveTab:CreateSlider({
+   Name = "Jump Power",
+   Range = {50, 500},
+   Increment = 5,
+   Suffix = "Height",
+   CurrentValue = 100,
+   Flag = "JumpVal",
+   Callback = function(Value) jumpPower = Value end,
+})
+
+MoveTab:CreateSection("Flight & NoClip")
+MoveTab:CreateToggle({
+   Name = "Fly (W,A,S,D,Space,Shift)",
+   CurrentValue = false,
+   Flag = "FlyToggle",
+   Callback = function(Value)
+       flyChecked = Value
+       if Value then startFly() else stopFly() end
+   end,
+})
+MoveTab:CreateSlider({
+   Name = "Fly Speed",
+   Range = {10, 500},
+   Increment = 10,
+   Suffix = "Studs",
+   CurrentValue = 150,
+   Flag = "FlySpeedVal",
+   Callback = function(Value) flySpeed = Value end,
+})
+MoveTab:CreateToggle({
+   Name = "NoClip",
+   CurrentValue = false,
+   Flag = "NoclipToggle",
+   Callback = function(Value)
+       noclipChecked = Value
+       if Value then startNoclip() else stopNoclip() end
+   end,
+})
+
+-- Character respawn handlers (Movement)
+LP.CharacterAdded:Connect(function()
+    task.wait(1)
+    if speedChecked then task.spawn(applyVelocity) end
+    if jumpChecked then task.spawn(applySuperJump) end
+    if flyChecked then startFly() end
+    if noclipChecked then startNoclip() end
+end)
+LP.CharacterRemoving:Connect(function()
+    stopFly()
+    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+end)
+
+-- =====================================================
+-- TAB 2: VISUALS: ESP+ – TETAP
+-- =====================================================
+local VisualsAdvTab = Window:CreateTab("Visuals: ESP+", 4483362458)
+
+-- ESP Settings (sama seperti sebelumnya)
+local ESP_Settings = {
+    SurvivorColor = Color3.fromRGB(0, 255, 0),
+    KillerColor = Color3.fromRGB(255, 0, 0),
+    GenColor = Color3.fromRGB(0, 255, 255),
+    PalletColor = Color3.fromRGB(127, 0, 255),
+    GenProgressColor = Color3.fromRGB(255, 255, 255),
+    SurvivorsActive = false,
+    KillerActive = false,
+    GenActive = false,
+    PalletsActive = false,
+    TracersActive = false,
+    GenProgressActive = false
+}
+
+local playerTrackers = {}
+local generatorProgressBillboards = {}
+
+-- ===== HIGHLIGHTS =====
+local function refreshHighlights()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LP or not player.Character then continue end
+        local isSurvivor = player.Team and player.Team.Name == "Survivors"
+        local isKiller = player.Team and player.Team.Name == "Killer"
+        local hl = player.Character:FindFirstChild("CustomESP")
+        if (isSurvivor and ESP_Settings.SurvivorsActive) or (isKiller and ESP_Settings.KillerActive) then
+            if not hl then
+                hl = Instance.new("Highlight")
+                hl.Name = "CustomESP"
+                hl.FillTransparency = 1
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                hl.Parent = player.Character
+            end
+            hl.OutlineColor = isSurvivor and ESP_Settings.SurvivorColor or ESP_Settings.KillerColor
+        else
+            if hl then hl:Destroy() end
+        end
+    end
+end
+
+local function updateGenESP()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name:lower():find("generator") and (obj:IsA("Model") or obj:IsA("BasePart")) then
+            local hl = obj:FindFirstChild("GenHL")
+            if ESP_Settings.GenActive then
+                if not hl then
+                    hl = Instance.new("Highlight", obj)
+                    hl.Name = "GenHL"
+                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                end
+                hl.FillColor = ESP_Settings.GenColor
+                hl.OutlineColor = Color3.new(1,1,1)
+                hl.FillTransparency = 0.5
+            else
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+end
+
+local function updatePalletESP()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "Palletwrong" then
+            local hl = obj:FindFirstChild("PalletHL")
+            if ESP_Settings.PalletsActive then
+                if not hl then
+                    hl = Instance.new("Highlight", obj)
+                    hl.Name = "PalletHL"
+                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                end
+                hl.FillColor = ESP_Settings.PalletColor
+                hl.OutlineColor = ESP_Settings.PalletColor
+                hl.FillTransparency = 0.5
+            else
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+end
+
+-- ===== TRACERS =====
+RunService.RenderStepped:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LP then continue end
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local isSurvivor = player.Team and player.Team.Name == "Survivors"
+        local isKiller = player.Team and player.Team.Name == "Killer"
+        local canShowTracer = ESP_Settings.TracersActive and ((isSurvivor and ESP_Settings.SurvivorsActive) or (isKiller and ESP_Settings.KillerActive))
+        if canShowTracer and hrp then
+            local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                local line = playerTrackers[player] or Drawing.new("Line")
+                line.Visible = true
+                line.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
+                line.To = Vector2.new(vector.X, vector.Y)
+                line.Color = isSurvivor and ESP_Settings.SurvivorColor or ESP_Settings.KillerColor
+                line.Thickness = 1.5
+                line.Transparency = 1
+                playerTrackers[player] = line
+            elseif playerTrackers[player] then playerTrackers[player].Visible = false end
+        elseif playerTrackers[player] then playerTrackers[player].Visible = false end
+    end
+end)
+
+-- ===== GENERATOR PROGRESS =====
+local function getRepairValue(model)
+    local val = model:GetAttribute("RepairProgress") or model:GetAttribute("Progress")
+    if val ~= nil then return val end
+    for _, child in ipairs(model:GetDescendants()) do
+        local cVal = child:GetAttribute("RepairProgress") or child:GetAttribute("Progress")
+        if cVal ~= nil then return cVal end
+    end
+    return nil
+end
+
+local function createGenProgressUI(model)
+    if generatorProgressBillboards[model] then return end
+    local bbg = Instance.new("BillboardGui", model)
+    bbg.Name = "GenProgressUI"
+    bbg.Size = UDim2.new(0, 100, 0, 40)
+    bbg.StudsOffset = Vector3.new(0, 8, 0)
+    bbg.AlwaysOnTop = true
+    local label = Instance.new("TextLabel", bbg)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = ESP_Settings.GenProgressColor
+    generatorProgressBillboards[model] = bbg
+    task.spawn(function()
+        while ESP_Settings.GenProgressActive and bbg and bbg.Parent do
+            local raw = getRepairValue(model) or 0
+            local percent = math.floor(raw <= 1.1 and raw * 100 or raw)
+            label.Text = math.clamp(percent, 0, 100) .. "%"
+            label.TextColor3 = ESP_Settings.GenProgressColor
+            task.wait(0.5)
+        end
+        bbg:Destroy()
+        generatorProgressBillboards[model] = nil
+    end)
+end
+
+local function updateGenProgress(state)
+    ESP_Settings.GenProgressActive = state
+    if not state then return end
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj.Name:lower():find("generator") then
+            if getRepairValue(obj) then createGenProgressUI(obj) end
+        end
+    end
+end
+
+-- ===== GUI ESP =====
+VisualsAdvTab:CreateSection("Player ESP")
+VisualsAdvTab:CreateToggle({
+   Name = "ESP Survivors",
+   CurrentValue = false,
+   Callback = function(v) ESP_Settings.SurvivorsActive = v refreshHighlights() end
+})
+VisualsAdvTab:CreateColorPicker({
+    Name = "Survivors Color",
+    Color = ESP_Settings.SurvivorColor,
+    Callback = function(v) ESP_Settings.SurvivorColor = v refreshHighlights() end
+})
+VisualsAdvTab:CreateToggle({
+   Name = "ESP Killer",
+   CurrentValue = false,
+   Callback = function(v) ESP_Settings.KillerActive = v refreshHighlights() end
+})
+VisualsAdvTab:CreateColorPicker({
+    Name = "Killer Color",
+    Color = ESP_Settings.KillerColor,
+    Callback = function(v) ESP_Settings.KillerColor = v refreshHighlights() end
+})
+VisualsAdvTab:CreateToggle({
+   Name = "Enable Tracers (Top Center)",
+   CurrentValue = false,
+   Callback = function(v) ESP_Settings.TracersActive = v end
+})
+
+VisualsAdvTab:CreateSection("Environment ESP")
+VisualsAdvTab:CreateToggle({
+   Name = "Generator Outlines",
+   CurrentValue = false,
+   Callback = function(v) ESP_Settings.GenActive = v updateGenESP() end
+})
+VisualsAdvTab:CreateColorPicker({
+    Name = "Generator Color",
+    Color = ESP_Settings.GenColor,
+    Callback = function(v) ESP_Settings.GenColor = v updateGenESP() end
+})
+VisualsAdvTab:CreateToggle({
+   Name = "Pallets ESP",
+   CurrentValue = false,
+   Callback = function(v) ESP_Settings.PalletsActive = v updatePalletESP() end
+})
+VisualsAdvTab:CreateColorPicker({
+    Name = "Pallet Color",
+    Color = ESP_Settings.PalletColor,
+    Callback = function(v) ESP_Settings.PalletColor = v updatePalletESP() end
+})
+
+VisualsAdvTab:CreateSection("Generator Progress")
+VisualsAdvTab:CreateToggle({
+   Name = "Show Repair %",
+   CurrentValue = false,
+   Callback = function(v) updateGenProgress(v) end
+})
+VisualsAdvTab:CreateColorPicker({
+    Name = "Percentage Color",
+    Color = ESP_Settings.GenProgressColor,
+    Callback = function(v) ESP_Settings.GenProgressColor = v end
+})
+
+-- ESP events
+Players.PlayerRemoving:Connect(function(p)
+    if playerTrackers[p] then
+        playerTrackers[p]:Remove()
+        playerTrackers[p] = nil
+    end
+end)
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function()
+        task.wait(0.5)
+        refreshHighlights()
+    end)
+end)
+
+-- =====================================================
+-- TAB 3: FUNCTIONS (GOD MODE – ANTI-FREEZE) – TETAP
+-- =====================================================
+local FunctionsTab = Window:CreateTab("Functions", 4483362458)
+
+-- GOD MODE VARIABLES
 local godModeEnabled = false
 local godModeLoop = nil
+local oldNamecallHook = nil
+
+local function toggleGodMode(state)
+    godModeEnabled = state
+
+    if state then
+        if godModeLoop then godModeLoop:Disconnect() end
+        godModeLoop = RunService.Heartbeat:Connect(function()
+            if not godModeEnabled then return end
+            local char = LP.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            if hum.Health < 100 and hum.Health > 0 then
+                hum.Health = 100
+            end
+        end)
+
+        if hookmetamethod and not oldNamecallHook then
+            oldNamecallHook = hookmetamethod(game, "__namecall", function(self, ...)
+                local method = getnamecallmethod()
+                if godModeEnabled and method == "FireServer" then
+                    local name = string.lower(self.Name)
+                    if name:find("damage") or name:find("twist") or name:find("fate") or name:find("hurt") or name:find("kill") then
+                        return nil
+                    end
+                end
+                return oldNamecallHook(self, ...)
+            end)
+        end
+
+        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "✅ Aktif", Duration = 2})
+    else
+        if godModeLoop then godModeLoop:Disconnect() end
+        godModeEnabled = false
+        Rayfield:Notify({Title = "ZIP HUB – God Mode", Content = "❌ Mati", Duration = 2})
+    end
+end
+
+FunctionsTab:CreateSection("Protection")
+FunctionsTab:CreateToggle({
+    Name = "God Mode (Anti Twist / Damage)",
+    CurrentValue = false,
+    Callback = function(v) toggleGodMode(v) end
+})
+
+-- =====================================================
+-- TAB 4: AUTO (FITUR BARU) – Auto Generator, Auto Escape, Smart Gen Teleport
+-- =====================================================
+local AutoTab = Window:CreateTab("Auto", 4483362458)
+
+-- ===== VARIABLES =====
 local autoGenEnabled = false
-local autoGenLoop = nil
 local autoEscapeEnabled = false
-local autoEscapeLoop = nil
-local espKiller = false
-local espSurvivor = false
-local espGenerator = false
-local espObjects = {}
+local smartGenEnabled = false
+local completedGenerators = {}
 local isEscaping = false
 
--- SMART GENERATOR TELEPORT
-local smartGenTeleportEnabled = false
-local smartGenLoop = nil
-local completedGenerators = {}
-local lastGenCheck = 0
-
--- =====================================================
--- FIND GENERATORS
--- =====================================================
+-- ===== FIND GENERATORS =====
 local function FindGenerators()
     local gens = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
+    for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and (obj.Name:lower():find("generator") or obj.Name:lower():find("gen")) then
             table.insert(gens, obj)
         end
@@ -65,12 +543,10 @@ local function FindGenerators()
     return gens
 end
 
--- =====================================================
--- FIND ESCAPE GATES
--- =====================================================
+-- ===== FIND ESCAPE GATES =====
 local function FindEscapeGates()
     local gates = {}
-    for _, obj in pairs(Workspace:GetDescendants()) do
+    for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") or obj:IsA("Model") then
             local name = obj.Name:lower()
             if name:find("gate") or name:find("escape") or name:find("exit") or name:find("door") then
@@ -81,11 +557,9 @@ local function FindEscapeGates()
     return gates
 end
 
--- =====================================================
--- FIND KILLER
--- =====================================================
+-- ===== FIND KILLER =====
 local function FindKiller()
-    for _, player in pairs(Players:GetPlayers()) do
+    for _, player in ipairs(Players:GetPlayers()) do
         if player == LP then continue end
         if player.Team and player.Team.Name == "Killer" then
             return player
@@ -94,110 +568,7 @@ local function FindKiller()
     return nil
 end
 
--- =====================================================
--- SMART GENERATOR TELEPORT
--- =====================================================
-local function GetNearestIncompleteGenerator()
-    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-
-    local gens = FindGenerators()
-    local nearest = nil
-    local nearestDist = math.huge
-
-    for _, gen in pairs(gens) do
-        local isCompleted = false
-        if gen:GetAttribute("Completed") == true then isCompleted = true
-        elseif gen:GetAttribute("Progress") and gen:GetAttribute("Progress") >= 1 then isCompleted = true
-        elseif gen.Parent and gen.Parent:GetAttribute("Completed") == true then isCompleted = true
-        elseif gen.Parent and gen.Parent:GetAttribute("Progress") and gen.Parent:GetAttribute("Progress") >= 1 then isCompleted = true
-        elseif completedGenerators[gen] then isCompleted = true
-        end
-
-        if not isCompleted then
-            local dist = (hrp.Position - gen.Position).Magnitude
-            if dist < nearestDist then
-                nearestDist = dist
-                nearest = gen
-            end
-        end
-    end
-    return nearest
-end
-
-local function TeleportToNearestIncompleteGenerator()
-    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    local target = GetNearestIncompleteGenerator()
-    if target then
-        hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
-        print("📍 ZIP HUB: Teleport ke generator terdekat yang belum selesai!")
-    else
-        print("⚠️ ZIP HUB: Tidak ada generator yang belum selesai ditemukan!")
-    end
-end
-
-local function MarkGeneratorAsCompleted(gen)
-    if gen then
-        completedGenerators[gen] = true
-        print("✅ ZIP HUB: Generator ditandai selesai!")
-    end
-end
-
-local function SmartGenTeleportLoop()
-    while smartGenTeleportEnabled and task.wait(1) do
-        local char = LP.Character
-        if not char then continue end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
-
-        local killer = FindKiller()
-        local killerNearby = false
-        if killer and killer.Character then
-            local killerHrp = killer.Character:FindFirstChild("HumanoidRootPart")
-            if killerHrp then
-                local dist = (hrp.Position - killerHrp.Position).Magnitude
-                if dist < 40 then killerNearby = true end
-            end
-        end
-
-        local currentGenCompleted = false
-        local gens = FindGenerators()
-        local currentGen = nil
-        local minDist = 5
-        for _, gen in pairs(gens) do
-            local dist = (hrp.Position - gen.Position).Magnitude
-            if dist < minDist then
-                minDist = dist
-                currentGen = gen
-            end
-        end
-
-        if currentGen then
-            if currentGen:GetAttribute("Completed") == true or 
-               (currentGen:GetAttribute("Progress") and currentGen:GetAttribute("Progress") >= 1) or
-               (currentGen.Parent and currentGen.Parent:GetAttribute("Completed") == true) or
-               completedGenerators[currentGen] then
-                currentGenCompleted = true
-            end
-        end
-
-        if killerNearby then
-            print("🔴 ZIP HUB: Killer terdeteksi! Mencari generator aman...")
-            TeleportToNearestIncompleteGenerator()
-            task.wait(0.5)
-        elseif currentGenCompleted then
-            print("⚡ ZIP HUB: Generator selesai! Mencari generator berikutnya...")
-            if currentGen then MarkGeneratorAsCompleted(currentGen) end
-            TeleportToNearestIncompleteGenerator()
-            task.wait(0.5)
-        end
-    end
-end
-
--- =====================================================
--- AUTO GENERATOR
--- =====================================================
+-- ===== AUTO GENERATOR =====
 local function AutoGeneratorLoop()
     while autoGenEnabled and task.wait(1.5) do
         local char = LP.Character
@@ -222,7 +593,7 @@ local function AutoGeneratorLoop()
         end
 
         if isCompleted then
-            MarkGeneratorAsCompleted(target)
+            completedGenerators[target] = true
             continue
         end
 
@@ -247,9 +618,7 @@ local function AutoGeneratorLoop()
     end
 end
 
--- =====================================================
--- AUTO ESCAPE
--- =====================================================
+-- ===== AUTO ESCAPE =====
 local function TriggerAutoEscape()
     if isEscaping then return end
     isEscaping = true
@@ -259,7 +628,8 @@ local function TriggerAutoEscape()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then isEscaping = false return end
 
-    for _, obj in pairs(Workspace:GetDescendants()) do
+    -- Force open gates
+    for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Name:lower():find("gate") then
             pcall(function()
                 obj:SetAttribute("Open", true)
@@ -311,531 +681,139 @@ local function AutoEscapeLoop()
     end
 end
 
--- =====================================================
--- ESP
--- =====================================================
-local function ClearESP()
-    for _, obj in pairs(espObjects) do
-        pcall(function() obj:Destroy() end)
-    end
-    espObjects = {}
-end
+-- ===== SMART GENERATOR TELEPORT =====
+local function GetNearestIncompleteGenerator()
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
 
-local function AddESP(target, color)
-    if not target then return end
-    local hl = Instance.new("Highlight")
-    hl.Parent = target
-    hl.FillColor = color
-    hl.FillTransparency = 0.4
-    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-    hl.OutlineTransparency = 0.1
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    table.insert(espObjects, hl)
-end
+    local gens = FindGenerators()
+    local nearest = nil
+    local nearestDist = math.huge
 
-local function UpdateESP()
-    ClearESP()
-    if not espKiller and not espSurvivor and not espGenerator then return end
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player == LP or not player.Character then continue end
-        local isKiller = player.Team and player.Team.Name == "Killer"
-        if espKiller and isKiller then
-            AddESP(player.Character, Color3.fromRGB(255, 0, 0))
+    for _, gen in pairs(gens) do
+        local isCompleted = false
+        if gen:GetAttribute("Completed") == true then isCompleted = true
+        elseif gen:GetAttribute("Progress") and gen:GetAttribute("Progress") >= 1 then isCompleted = true
+        elseif gen.Parent and gen.Parent:GetAttribute("Completed") == true then isCompleted = true
+        elseif completedGenerators[gen] then isCompleted = true
         end
-        if espSurvivor and not isKiller then
-            AddESP(player.Character, Color3.fromRGB(0, 255, 0))
+
+        if not isCompleted then
+            local dist = (hrp.Position - gen.Position).Magnitude
+            if dist < nearestDist then
+                nearestDist = dist
+                nearest = gen
+            end
         end
     end
+    return nearest
+end
 
-    if espGenerator then
-        for _, gen in pairs(FindGenerators()) do
-            AddESP(gen.Parent or gen, Color3.fromRGB(0, 255, 255))
-        end
+local function TeleportToNearestIncompleteGenerator()
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local target = GetNearestIncompleteGenerator()
+    if target then
+        hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
+        print("📍 ZIP HUB: Teleport ke generator terdekat yang belum selesai!")
+    else
+        print("⚠️ ZIP HUB: Tidak ada generator yang belum selesai ditemukan!")
     end
 end
 
-RunService.RenderStepped:Connect(function()
-    if espKiller or espSurvivor or espGenerator then UpdateESP() else ClearESP() end
-end)
-
--- =====================================================
--- MOVEMENT
--- =====================================================
-local function applyVelocity()
-    while speedChecked and task.wait() do
+local function SmartGenLoop()
+    while smartGenEnabled and task.wait(1) do
         local char = LP.Character
         if not char then continue end
         local hrp = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hrp and hum and hum.MoveDirection.Magnitude > 0 then
-            local currentY = hrp.Velocity.Y
-            local move = hum.MoveDirection * speedValue
-            hrp.Velocity = Vector3.new(move.X, currentY, move.Z)
-        end
-    end
-end
+        if not hrp then continue end
 
-local function applySuperJump()
-    while jumpChecked and task.wait() do
-        local char = LP.Character
-        if not char then continue end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hrp and hum and hum.Jump then
-            hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpPower, hrp.Velocity.Z)
-        end
-    end
-end
-
-local function stopFly()
-    flying = false
-    if bv then bv:Destroy() bv = nil end
-    if bg then bg:Destroy() bg = nil end
-end
-
-local function startFly()
-    if flying then return end
-    local char = LP.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    flying = true
-    bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
-    bv.Velocity = Vector3.zero
-    bv.Parent = root
-    bg = Instance.new("BodyGyro")
-    bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-    bg.P = 9e4
-    bg.CFrame = root.CFrame
-    bg.Parent = root
-end
-
-RunService.Heartbeat:Connect(function()
-    if not flying or not bv or not bg then return end
-    local char = LP.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    local move = Vector3.new()
-    if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0, 0, -1) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move + Vector3.new(0, 0, 1) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move + Vector3.new(-1, 0, 0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + Vector3.new(1, 0, 0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
-    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then move = move + Vector3.new(0, -1, 0) end
-    local cam = Workspace.CurrentCamera
-    if move.Magnitude > 0 then
-        move = cam.CFrame:VectorToWorldSpace(move.Unit) * flySpeed
-    else
-        move = Vector3.zero
-    end
-    bv.Velocity = move
-    bg.CFrame = cam.CFrame
-end)
-
-local function stopNoclip()
-    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
-    local char = LP.Character
-    if char then
-        for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = true end
-        end
-    end
-end
-
-local function startNoclip()
-    if noclipConnection then return end
-    noclipConnection = RunService.Stepped:Connect(function()
-        if not noclipChecked and not flying then return end
-        local char = LP.Character
-        if char then
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = false end
+        local killer = FindKiller()
+        local killerNearby = false
+        if killer and killer.Character then
+            local killerHrp = killer.Character:FindFirstChild("HumanoidRootPart")
+            if killerHrp then
+                local dist = (hrp.Position - killerHrp.Position).Magnitude
+                if dist < 40 then killerNearby = true end
             end
         end
-    end)
-end
 
--- =====================================================
--- GOD MODE
--- =====================================================
-local function toggleGodMode(state)
-    godModeEnabled = state
-    if state then
-        if godModeLoop then godModeLoop:Disconnect() end
-        godModeLoop = RunService.Heartbeat:Connect(function()
-            if not godModeEnabled then return end
-            local char = LP.Character
-            if not char then return end
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if not hum then return end
-            if hum.Health < 100 and hum.Health > 0 then
-                hum.Health = 100
+        local currentGenCompleted = false
+        local gens = FindGenerators()
+        local currentGen = nil
+        local minDist = 5
+        for _, gen in pairs(gens) do
+            local dist = (hrp.Position - gen.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                currentGen = gen
             end
-        end)
-    else
-        if godModeLoop then godModeLoop:Disconnect() godModeLoop = nil end
+        end
+
+        if currentGen then
+            if currentGen:GetAttribute("Completed") == true or 
+               (currentGen:GetAttribute("Progress") and currentGen:GetAttribute("Progress") >= 1) or
+               (currentGen.Parent and currentGen.Parent:GetAttribute("Completed") == true) or
+               completedGenerators[currentGen] then
+                currentGenCompleted = true
+            end
+        end
+
+        if killerNearby then
+            print("🔴 ZIP HUB: Killer terdeteksi! Mencari generator aman...")
+            TeleportToNearestIncompleteGenerator()
+            task.wait(0.5)
+        elseif currentGenCompleted then
+            print("⚡ ZIP HUB: Generator selesai! Mencari generator berikutnya...")
+            if currentGen then completedGenerators[currentGen] = true end
+            TeleportToNearestIncompleteGenerator()
+            task.wait(0.5)
+        end
     end
 end
 
--- =====================================================
--- RESPOND HANDLER
--- =====================================================
+-- ===== GUI AUTO =====
+AutoTab:CreateSection("Generator")
+AutoTab:CreateToggle({
+    Name = "Auto Generator",
+    CurrentValue = false,
+    Callback = function(v)
+        autoGenEnabled = v
+        if v then task.spawn(AutoGeneratorLoop) end
+    end
+})
+AutoTab:CreateToggle({
+    Name = "Smart Gen Teleport",
+    CurrentValue = false,
+    Callback = function(v)
+        smartGenEnabled = v
+        if v then task.spawn(SmartGenLoop) end
+    end
+})
+AutoTab:CreateSection("Escape")
+AutoTab:CreateToggle({
+    Name = "Auto Escape (Auto Win)",
+    CurrentValue = false,
+    Callback = function(v)
+        autoEscapeEnabled = v
+        if v then task.spawn(AutoEscapeLoop) end
+    end
+})
+
+-- Character respawn handler untuk fitur baru
 LP.CharacterAdded:Connect(function()
     task.wait(1)
-    if speedChecked then task.spawn(applyVelocity) end
-    if jumpChecked then task.spawn(applySuperJump) end
-    if flyChecked then startFly() end
-    if noclipChecked then startNoclip() end
     if autoGenEnabled then task.spawn(AutoGeneratorLoop) end
     if autoEscapeEnabled then task.spawn(AutoEscapeLoop) end
-    if smartGenTeleportEnabled then task.spawn(SmartGenTeleportLoop) end
-end)
-
-LP.CharacterRemoving:Connect(function()
-    stopFly()
-    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+    if smartGenEnabled then task.spawn(SmartGenLoop) end
 end)
 
 -- =====================================================
--- UI – ZIP HUB (TAMPILAN LAMA, TANPA SPLASH)
+-- NOTIFICATION AWAL
 -- =====================================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = CoreGui
-ScreenGui.Name = "ZIPHUB"
-ScreenGui.ResetOnSpawn = false
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 340, 0, 520)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -260)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
-MainFrame.BackgroundTransparency = 0.05
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-MainFrame.Active = true
-MainFrame.Draggable = true
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.Parent = MainFrame
-MainCorner.CornerRadius = UDim.new(0, 12)
-
-local MainBorder = Instance.new("UIStroke")
-MainBorder.Parent = MainFrame
-MainBorder.Color = Color3.fromRGB(0, 180, 255)
-MainBorder.Thickness = 1.5
-MainBorder.Transparency = 0.2
-
--- HEADER
-local Header = Instance.new("Frame")
-Header.Parent = MainFrame
-Header.Size = UDim2.new(1, 0, 0, 45)
-Header.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-Header.BackgroundTransparency = 0.2
-Header.BorderSizePixel = 0
-
-local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.Parent = Header
-HeaderCorner.CornerRadius = UDim.new(0, 12)
-
-local Logo = Instance.new("Frame")
-Logo.Parent = Header
-Logo.Size = UDim2.new(0, 30, 0, 30)
-Logo.Position = UDim2.new(0, 8, 0.5, -15)
-Logo.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-Logo.BackgroundTransparency = 0
-Logo.BorderSizePixel = 0
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.Parent = Logo
-LogoCorner.CornerRadius = UDim.new(1, 0)
-local LogoText = Instance.new("TextLabel")
-LogoText.Parent = Logo
-LogoText.Size = UDim2.new(1, 0, 1, 0)
-LogoText.BackgroundTransparency = 1
-LogoText.Text = "Z"
-LogoText.TextColor3 = Color3.fromRGB(10, 10, 25)
-LogoText.TextSize = 20
-LogoText.Font = Enum.Font.GothamBold
-
-local Title = Instance.new("TextLabel")
-Title.Parent = Header
-Title.Size = UDim2.new(0.6, 0, 1, 0)
-Title.Position = UDim2.new(0, 44, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "ZIP HUB"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 16
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Parent = Header
-SubTitle.Size = UDim2.new(0.3, 0, 1, 0)
-SubTitle.Position = UDim2.new(0.65, 0, 0, 0)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "v4.0"
-SubTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
-SubTitle.TextSize = 10
-SubTitle.Font = Enum.Font.GothamMedium
-SubTitle.TextXAlignment = Enum.TextXAlignment.Right
-
-local HideBtn = Instance.new("TextButton")
-HideBtn.Parent = Header
-HideBtn.Size = UDim2.new(0, 28, 0, 28)
-HideBtn.Position = UDim2.new(1, -66, 0.5, -14)
-HideBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-HideBtn.Text = "−"
-HideBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-HideBtn.TextSize = 18
-HideBtn.Font = Enum.Font.GothamBold
-HideBtn.BorderSizePixel = 0
-local HideCorner = Instance.new("UICorner")
-HideCorner.Parent = HideBtn
-HideCorner.CornerRadius = UDim.new(1, 0)
-local menuVisible = true
-HideBtn.MouseButton1Click:Connect(function()
-    menuVisible = not menuVisible
-    MainFrame.Visible = menuVisible
-    HideBtn.Text = menuVisible and "−" or "+"
-end)
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = Header
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position = UDim2.new(1, -34, 0.5, -14)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 14
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.BorderSizePixel = 0
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.Parent = CloseBtn
-CloseCorner.CornerRadius = UDim.new(1, 0)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
--- SCROLLING FRAME
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Parent = MainFrame
-ScrollingFrame.Size = UDim2.new(1, -12, 1, -65)
-ScrollingFrame.Position = UDim2.new(0, 6, 0, 60)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollingFrame.ScrollBarThickness = 3
-ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
-ScrollingFrame.BorderSizePixel = 0
-
--- TOGGLE CREATOR
-local function CreateToggle(text, desc, key, yPos)
-    local frame = Instance.new("Frame")
-    frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 50)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
-    frame.BackgroundTransparency = 0.2
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(0, 180, 255)
-    local corner = Instance.new("UICorner")
-    corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 6)
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.Size = UDim2.new(0.7, 0, 0, 18)
-    label.Position = UDim2.new(0, 10, 0, 4)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local descLabel = Instance.new("TextLabel")
-    descLabel.Parent = frame
-    descLabel.Size = UDim2.new(0.7, 0, 0, 16)
-    descLabel.Position = UDim2.new(0, 10, 0, 26)
-    descLabel.BackgroundTransparency = 1
-    descLabel.Text = desc or ""
-    descLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
-    descLabel.TextSize = 10
-    descLabel.Font = Enum.Font.GothamMedium
-    descLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Parent = frame
-    toggleBtn.Size = UDim2.new(0, 50, 0, 26)
-    toggleBtn.Position = UDim2.new(1, -60, 0, 12)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-    toggleBtn.Text = "OFF"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 11
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.BorderSizePixel = 0
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.Parent = toggleBtn
-    btnCorner.CornerRadius = UDim.new(0, 4)
-
-    local state = false
-    local function setState(val)
-        state = val
-        toggleBtn.Text = state and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(200, 40, 40)
-        if key == "speed" then speedChecked = state; if state then task.spawn(applyVelocity) end
-        elseif key == "jump" then jumpChecked = state; if state then task.spawn(applySuperJump) end
-        elseif key == "fly" then flyChecked = state; if state then startFly() else stopFly() end
-        elseif key == "noclip" then noclipChecked = state; if state then startNoclip() else stopNoclip() end
-        elseif key == "godmode" then toggleGodMode(state)
-        elseif key == "autogen" then autoGenEnabled = state; if state then task.spawn(AutoGeneratorLoop) end
-        elseif key == "autoescape" then autoEscapeEnabled = state; if state then task.spawn(AutoEscapeLoop) end
-        elseif key == "espkiller" then espKiller = state
-        elseif key == "espsurvivor" then espSurvivor = state
-        elseif key == "espgen" then espGenerator = state
-        elseif key == "smartgen" then 
-            smartGenTeleportEnabled = state
-            if state then task.spawn(SmartGenTeleportLoop) end
-        end
-    end
-
-    toggleBtn.MouseButton1Click:Connect(function()
-        setState(not state)
-    end)
-
-    return yPos + 54, setState
-end
-
--- SLIDER CREATOR
-local function CreateSlider(text, desc, key, min, max, default, yPos)
-    local frame = Instance.new("Frame")
-    frame.Parent = ScrollingFrame
-    frame.Size = UDim2.new(1, -10, 0, 55)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
-    frame.BackgroundTransparency = 0.2
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(0, 180, 255)
-    local corner = Instance.new("UICorner")
-    corner.Parent = frame
-    corner.CornerRadius = UDim.new(0, 6)
-
-    local label = Instance.new("TextLabel")
-    label.Parent = frame
-    label.Size = UDim2.new(0.6, 0, 0, 18)
-    label.Position = UDim2.new(0, 10, 0, 4)
-    label.BackgroundTransparency = 1
-    label.Text = text .. " (" .. default .. ")"
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local descLabel = Instance.new("TextLabel")
-    descLabel.Parent = frame
-    descLabel.Size = UDim2.new(0.6, 0, 0, 16)
-    descLabel.Position = UDim2.new(0, 10, 0, 26)
-    descLabel.BackgroundTransparency = 1
-    descLabel.Text = desc or ""
-    descLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
-    descLabel.TextSize = 10
-    descLabel.Font = Enum.Font.GothamMedium
-    descLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local val = default
-    local slider = Instance.new("Frame")
-    slider.Parent = frame
-    slider.Size = UDim2.new(0, 100, 0, 6)
-    slider.Position = UDim2.new(0.6, 10, 0.5, -3)
-    slider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-    slider.BorderSizePixel = 0
-    local sliderCorner = Instance.new("UICorner")
-    sliderCorner.Parent = slider
-    sliderCorner.CornerRadius = UDim.new(1, 0)
-
-    local fill = Instance.new("Frame")
-    fill.Parent = slider
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    fill.BorderSizePixel = 0
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.Parent = fill
-    fillCorner.CornerRadius = UDim.new(1, 0)
-
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Parent = frame
-    valueLabel.Size = UDim2.new(0, 40, 0, 20)
-    valueLabel.Position = UDim2.new(0.9, 0, 0.5, -10)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Text = tostring(default)
-    valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    valueLabel.TextSize = 12
-    valueLabel.Font = Enum.Font.GothamBold
-
-    local dragging = false
-    local function updateSlider(mouseX)
-        local relX = math.clamp((mouseX - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
-        val = math.floor(min + (max - min) * relX)
-        fill.Size = UDim2.new(relX, 0, 1, 0)
-        valueLabel.Text = tostring(val)
-        label.Text = text .. " (" .. val .. ")"
-        if key == "speed" then speedValue = val
-        elseif key == "jump" then jumpPower = val
-        elseif key == "flyspeed" then flySpeed = val
-        end
-    end
-
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            updateSlider(input.Position.X)
-        end
-    end)
-    slider.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input.Position.X)
-        end
-    end)
-
-    return yPos + 59
-end
-
--- =====================================================
--- BUILD UI
--- =====================================================
-local yPos = 2
-yPos = CreateToggle("⚡ Speed Glitch", "Run faster", "speed", yPos)
-yPos = CreateSlider("Speed Multiplier", "Speed value", "speed", 16, 300, 60, yPos)
-yPos = CreateToggle("🦘 Super Jump", "Jump higher", "jump", yPos)
-yPos = CreateSlider("Jump Power", "Jump height", "jump", 50, 500, 100, yPos)
-yPos = CreateToggle("✈️ Fly", "WASD + Space/Shift", "fly", yPos)
-yPos = CreateSlider("Fly Speed", "Flying speed", "flyspeed", 10, 500, 150, yPos)
-yPos = CreateToggle("🚪 No Clip", "Walk through walls", "noclip", yPos)
-yPos = CreateToggle("🛡️ God Mode", "Infinite health (anti-freeze)", "godmode", yPos)
-yPos = CreateToggle("⚡ Auto Generator", "Auto repair generators", "autogen", yPos)
-yPos = CreateToggle("🧠 Smart Gen Teleport", "Auto teleport to next gen / escape killer", "smartgen", yPos)
-yPos = CreateToggle("🏃 Auto Escape", "Auto win as survivor", "autoescape", yPos)
-yPos = CreateToggle("🔴 Killer ESP", "Highlight killer", "espkiller", yPos)
-yPos = CreateToggle("🟢 Survivor ESP", "Highlight survivors", "espsurvivor", yPos)
-yPos = CreateToggle("⚡ Generator ESP", "Highlight generators", "espgen", yPos)
-
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yPos + 20)
-
--- WATERMARK
-local Watermark = Instance.new("TextLabel")
-Watermark.Parent = ScreenGui
-Watermark.Size = UDim2.new(0, 160, 0, 16)
-Watermark.Position = UDim2.new(0, 8, 1, -22)
-Watermark.BackgroundTransparency = 1
-Watermark.Text = "⚡ ZIP HUB v4.0 ⚡"
-Watermark.TextColor3 = Color3.fromRGB(0, 180, 255)
-Watermark.TextSize = 10
-Watermark.Font = Enum.Font.GothamMedium
-Watermark.TextTransparency = 0.4
-
-print("✅ ZIP HUB v4.0 Loaded – Smart Generator Teleport included!")
-print("✅ Aktifkan 'Smart Gen Teleport' untuk auto pindah gen & hindari killer!")
+Rayfield:Notify({
+   Title = "✅ ZIP HUB Loaded",
+   Content = "All features ready!",
+   Duration = 5,
+   Image = 4483362458,
+})
