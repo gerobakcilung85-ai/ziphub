@@ -4,6 +4,8 @@
 -- FITUR TAMBAHAN: Auto Generator, Auto Escape, Smart Gen Teleport
 -- =====================================================
 
+local Zip = loadstring(game:HttpGet("https://raw.githubusercontent.com/gerobakcilung85-ai/ziphub/main/Zip.lua"))()
+
 
 
 local Window = Rayfield:CreateWindow({
