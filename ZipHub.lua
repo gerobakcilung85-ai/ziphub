@@ -2,6 +2,7 @@
 -- ZIP HUB – Violence District Edition
 -- ALL FEATURES: Movement, ESP, God Mode,
 -- Auto Generator, Auto Escape (Auto Win)
+-- Smart Generator Teleport (Auto Next Gen + Escape Killer)
 -- Custom UI – No Rayfield
 -- =====================================================
 
@@ -39,6 +40,12 @@ local espGenerator = false
 local espObjects = {}
 local isEscaping = false
 
+-- VARIABEL UNTUK SMART GENERATOR TELEPORT
+local smartGenTeleportEnabled = false
+local smartGenLoop = nil
+local completedGenerators = {}
+local lastGenCheck = 0
+
 -- =====================================================
 -- FIND GENERATORS
 -- =====================================================
@@ -74,6 +81,148 @@ local function FindEscapeGates()
 end
 
 -- =====================================================
+-- FIND KILLER
+-- =====================================================
+local function FindKiller()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LP then continue end
+        if player.Team and player.Team.Name == "Killer" then
+            return player
+        end
+    end
+    return nil
+end
+
+-- =====================================================
+-- SMART GENERATOR TELEPORT
+-- =====================================================
+local function GetNearestIncompleteGenerator()
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local gens = FindGenerators()
+    local nearest = nil
+    local nearestDist = math.huge
+
+    for _, gen in pairs(gens) do
+        -- Cek apakah generator sudah selesai
+        local isCompleted = false
+        
+        -- Cek atribut langsung
+        if gen:GetAttribute("Completed") == true then
+            isCompleted = true
+        elseif gen:GetAttribute("Progress") and gen:GetAttribute("Progress") >= 1 then
+            isCompleted = true
+        end
+        
+        -- Cek atribut parent (jika gen adalah part di dalam model)
+        if gen.Parent and gen.Parent:GetAttribute("Completed") == true then
+            isCompleted = true
+        elseif gen.Parent and gen.Parent:GetAttribute("Progress") and gen.Parent:GetAttribute("Progress") >= 1 then
+            isCompleted = true
+        end
+        
+        -- Cek dari daftar completedGenerators
+        if completedGenerators[gen] then
+            isCompleted = true
+        end
+
+        if not isCompleted then
+            local dist = (hrp.Position - gen.Position).Magnitude
+            if dist < nearestDist then
+                nearestDist = dist
+                nearest = gen
+            end
+        end
+    end
+
+    return nearest
+end
+
+local function TeleportToNearestIncompleteGenerator()
+    local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local target = GetNearestIncompleteGenerator()
+    if target then
+        hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
+        print("📍 ZIP HUB: Teleport ke generator terdekat yang belum selesai!")
+    else
+        print("⚠️ ZIP HUB: Tidak ada generator yang belum selesai ditemukan!")
+    end
+end
+
+-- Fungsi untuk menandai generator sebagai selesai
+local function MarkGeneratorAsCompleted(gen)
+    if gen then
+        completedGenerators[gen] = true
+        print("✅ ZIP HUB: Generator ditandai selesai!")
+    end
+end
+
+-- Loop Smart Generator Teleport
+local function SmartGenTeleportLoop()
+    while smartGenTeleportEnabled and task.wait(1) do
+        local char = LP.Character
+        if not char then continue end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        -- CEK 1: Apakah ada Killer di dekat? (radius 40 studs)
+        local killer = FindKiller()
+        local killerNearby = false
+        if killer and killer.Character then
+            local killerHrp = killer.Character:FindFirstChild("HumanoidRootPart")
+            if killerHrp then
+                local dist = (hrp.Position - killerHrp.Position).Magnitude
+                if dist < 40 then
+                    killerNearby = true
+                end
+            end
+        end
+
+        -- CEK 2: Apakah generator saat ini sudah selesai?
+        local currentGenCompleted = false
+        -- Cek posisi player terhadap generator terdekat
+        local gens = FindGenerators()
+        local currentGen = nil
+        local minDist = 5
+        for _, gen in pairs(gens) do
+            local dist = (hrp.Position - gen.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                currentGen = gen
+            end
+        end
+
+        if currentGen then
+            if currentGen:GetAttribute("Completed") == true or 
+               (currentGen:GetAttribute("Progress") and currentGen:GetAttribute("Progress") >= 1) or
+               (currentGen.Parent and currentGen.Parent:GetAttribute("Completed") == true) or
+               completedGenerators[currentGen] then
+                currentGenCompleted = true
+            end
+        end
+
+        -- EKSEKUSI TELEPORT
+        if killerNearby then
+            -- Jika ada Killer di dekat, teleport ke generator terdekat yang belum selesai
+            print("🔴 ZIP HUB: Killer terdeteksi! Mencari generator aman...")
+            TeleportToNearestIncompleteGenerator()
+            task.wait(0.5)
+        elseif currentGenCompleted then
+            -- Jika generator selesai, cari generator berikutnya
+            print("⚡ ZIP HUB: Generator selesai! Mencari generator berikutnya...")
+            if currentGen then
+                MarkGeneratorAsCompleted(currentGen)
+            end
+            TeleportToNearestIncompleteGenerator()
+            task.wait(0.5)
+        end
+    end
+end
+
+-- =====================================================
 -- AUTO GENERATOR
 -- =====================================================
 local function AutoGeneratorLoop()
@@ -92,6 +241,21 @@ local function AutoGeneratorLoop()
 
         local target = gens[1]
         if not target then continue end
+
+        -- Cek apakah generator sudah selesai
+        local isCompleted = false
+        if target:GetAttribute("Completed") == true then
+            isCompleted = true
+        elseif target:GetAttribute("Progress") and target:GetAttribute("Progress") >= 1 then
+            isCompleted = true
+        elseif target.Parent and target.Parent:GetAttribute("Completed") == true then
+            isCompleted = true
+        end
+
+        if isCompleted then
+            MarkGeneratorAsCompleted(target)
+            continue
+        end
 
         hrp.CFrame = CFrame.new(target.Position + Vector3.new(0, 2, 0))
         task.wait(0.2)
@@ -364,6 +528,7 @@ LP.CharacterAdded:Connect(function()
     if noclipChecked then startNoclip() end
     if autoGenEnabled then task.spawn(AutoGeneratorLoop) end
     if autoEscapeEnabled then task.spawn(AutoEscapeLoop) end
+    if smartGenTeleportEnabled then task.spawn(SmartGenTeleportLoop) end
 end)
 
 LP.CharacterRemoving:Connect(function()
@@ -372,7 +537,7 @@ LP.CharacterRemoving:Connect(function()
 end)
 
 -- =====================================================
--- CUSTOM UI – ZIP HUB
+-- CUSTOM UI – ZIP HUB (TAMPILAN LAMA DI PERTAHANKAN)
 -- =====================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
@@ -381,8 +546,8 @@ ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.Size = UDim2.new(0, 340, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -240)
+MainFrame.Size = UDim2.new(0, 340, 0, 520) -- Sedikit lebih tinggi untuk fitur baru
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -260)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
@@ -400,7 +565,7 @@ MainBorder.Color = Color3.fromRGB(0, 180, 255)
 MainBorder.Thickness = 1.5
 MainBorder.Transparency = 0.2
 
--- HEADER
+-- HEADER (TAMPILAN LAMA)
 local Header = Instance.new("Frame")
 Header.Parent = MainFrame
 Header.Size = UDim2.new(1, 0, 0, 45)
@@ -447,7 +612,7 @@ SubTitle.Parent = Header
 SubTitle.Size = UDim2.new(0.3, 0, 1, 0)
 SubTitle.Position = UDim2.new(0.65, 0, 0, 0)
 SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "v3.0"
+SubTitle.Text = "v4.0"
 SubTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
 SubTitle.TextSize = 10
 SubTitle.Font = Enum.Font.GothamMedium
@@ -499,7 +664,7 @@ ScrollingFrame.ScrollBarThickness = 3
 ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
 ScrollingFrame.BorderSizePixel = 0
 
--- TOGGLE CREATOR
+-- TOGGLE CREATOR (TAMPILAN LAMA)
 local function CreateToggle(text, desc, key, yPos)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
@@ -564,6 +729,14 @@ local function CreateToggle(text, desc, key, yPos)
         elseif key == "espkiller" then espKiller = state
         elseif key == "espsurvivor" then espSurvivor = state
         elseif key == "espgen" then espGenerator = state
+        elseif key == "smartgen" then 
+            smartGenTeleportEnabled = state
+            if state then 
+                task.spawn(SmartGenTeleportLoop)
+                print("🧠 ZIP HUB: Smart Generator Teleport AKTIF!")
+            else
+                print("🧠 ZIP HUB: Smart Generator Teleport MATI!")
+            end
         end
     end
 
@@ -574,7 +747,7 @@ local function CreateToggle(text, desc, key, yPos)
     return yPos + 54, setState
 end
 
--- SLIDER CREATOR
+-- SLIDER CREATOR (TAMPILAN LAMA)
 local function CreateSlider(text, desc, key, min, max, default, yPos)
     local frame = Instance.new("Frame")
     frame.Parent = ScrollingFrame
@@ -686,6 +859,7 @@ yPos = CreateSlider("Fly Speed", "Flying speed", "flyspeed", 10, 500, 150, yPos)
 yPos = CreateToggle("🚪 No Clip", "Walk through walls", "noclip", yPos)
 yPos = CreateToggle("🛡️ God Mode", "Infinite health (anti-freeze)", "godmode", yPos)
 yPos = CreateToggle("⚡ Auto Generator", "Auto repair generators", "autogen", yPos)
+yPos = CreateToggle("🧠 Smart Gen Teleport", "Auto teleport to next gen / escape killer", "smartgen", yPos)
 yPos = CreateToggle("🏃 Auto Escape", "Auto win as survivor", "autoescape", yPos)
 yPos = CreateToggle("🔴 Killer ESP", "Highlight killer", "espkiller", yPos)
 yPos = CreateToggle("🟢 Survivor ESP", "Highlight survivors", "espsurvivor", yPos)
@@ -699,11 +873,11 @@ Watermark.Parent = ScreenGui
 Watermark.Size = UDim2.new(0, 160, 0, 16)
 Watermark.Position = UDim2.new(0, 8, 1, -22)
 Watermark.BackgroundTransparency = 1
-Watermark.Text = "⚡ ZIP HUB v3.0 ⚡"
+Watermark.Text = "⚡ ZIP HUB v4.0 ⚡"
 Watermark.TextColor3 = Color3.fromRGB(0, 180, 255)
 Watermark.TextSize = 10
 Watermark.Font = Enum.Font.GothamMedium
 Watermark.TextTransparency = 0.4
 
-print("✅ ZIP HUB v3.0 Loaded – All features ready!")
-print("✅ Auto Escape (Auto Win) included!")
+print("✅ ZIP HUB v4.0 Loaded – Smart Generator Teleport included!")
+print("✅ Aktifkan 'Smart Gen Teleport' untuk auto pindah gen & hindari killer!")
