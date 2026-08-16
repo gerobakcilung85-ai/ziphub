@@ -3,542 +3,893 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ZIPHELP — Electronics Store</title>
+<title>ZIPHELP — Dark Electronics</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 :root{
---blue:#1769e0;
---dark:#111827;
---text:#17191c;
---muted:#6b7280;
---line:#e5e7eb;
---bg:#f7f8fa;
---white:#fff;
---green:#16803c;
+  --bg:#050608;
+  --surface:#0b0d11;
+  --surface2:#10131a;
+  --border:#20242d;
+  --text:#f5f7fa;
+  --muted:#8b93a1;
+  --blue:#2583ff;
+  --blue2:#56a0ff;
+  --green:#28c76f;
 }
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
 body{
-font-family:Inter,Arial,sans-serif;
-background:var(--bg);
-color:var(--text);
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+  overflow-x:hidden;
 }
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-a{text-decoration:none;color:inherit}
+
+/* MOVING BACKGROUND */
+
+body::before{
+  content:"";
+  position:fixed;
+  width:600px;
+  height:600px;
+  left:-300px;
+  top:-250px;
+  background:radial-gradient(
+    circle,
+    rgba(37,131,255,.13),
+    transparent 65%
+  );
+  animation:float 10s ease-in-out infinite alternate;
+  pointer-events:none;
+  z-index:-1;
+}
+
+body::after{
+  content:"";
+  position:fixed;
+  width:500px;
+  height:500px;
+  right:-250px;
+  bottom:-200px;
+  background:radial-gradient(
+    circle,
+    rgba(37,131,255,.08),
+    transparent 65%
+  );
+  animation:float2 13s ease-in-out infinite alternate;
+  pointer-events:none;
+  z-index:-1;
+}
+
+@keyframes float{
+  from{transform:translate(0,0)}
+  to{transform:translate(150px,120px)}
+}
+
+@keyframes float2{
+  from{transform:translate(0,0)}
+  to{transform:translate(-130px,-100px)}
+}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+button,input,select,textarea{
+  font:inherit;
+}
+
+/* TOP */
+
+.top{
+  height:34px;
+  background:#080a0e;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#8f98a7;
+  font-size:11px;
+}
 
 /* HEADER */
-.top{
-background:#111827;
-color:white;
-text-align:center;
-padding:8px;
-font-size:12px
-}
+
 header{
-background:#fff;
-border-bottom:1px solid var(--line);
-position:sticky;
-top:0;
-z-index:20
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(5,6,8,.82);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
+
 .head{
-max-width:1200px;
-margin:auto;
-min-height:70px;
-padding:0 20px;
-display:flex;
-align-items:center;
-gap:25px
+  max-width:1240px;
+  height:72px;
+  margin:auto;
+  padding:0 22px;
+  display:flex;
+  align-items:center;
+  gap:30px;
 }
+
 .logo{
-font-size:25px;
-font-weight:800;
-letter-spacing:-1px;
-white-space:nowrap
+  font-size:25px;
+  font-weight:900;
+  letter-spacing:-1.5px;
 }
-.logo span{color:var(--blue)}
+
+.logo span{
+  color:var(--blue);
+}
+
 .search{
-flex:1;
-position:relative
+  flex:1;
+  position:relative;
 }
+
 .search input{
-width:100%;
-height:42px;
-border:1px solid #d8dce1;
-border-radius:6px;
-padding:0 42px 0 14px;
-outline:none;
-background:#fafafa
+  width:100%;
+  height:42px;
+  padding:0 45px 0 15px;
+  color:white;
+  background:#0b0e13;
+  border:1px solid #242a34;
+  border-radius:7px;
+  outline:none;
+  transition:.25s;
 }
+
 .search input:focus{
-border-color:var(--blue);
-background:#fff
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,131,255,.08);
 }
+
 .search-icon{
-position:absolute;
-right:14px;
-top:10px;
-color:#777
+  position:absolute;
+  right:15px;
+  top:10px;
+  color:#707988;
 }
+
 .account{
-font-size:12px;
-white-space:nowrap
+  color:#9aa2af;
+  font-size:11px;
+  white-space:nowrap;
 }
-.account strong{display:block}
+
+.account strong{
+  color:white;
+  display:block;
+  font-size:12px;
+}
+
 .cart{
-font-size:22px;
-position:relative;
-cursor:pointer
+  cursor:pointer;
+  font-size:20px;
+  position:relative;
 }
+
 .cart-count{
-position:absolute;
-top:-8px;
-right:-9px;
-background:var(--blue);
-color:white;
-font-size:10px;
-width:18px;
-height:18px;
-display:flex;
-justify-content:center;
-align-items:center;
-border-radius:50%
+  position:absolute;
+  right:-9px;
+  top:-8px;
+  width:18px;
+  height:18px;
+  background:var(--blue);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:9px;
+  font-weight:bold;
 }
+
+/* NAV */
+
 nav{
-background:#fff;
-border-bottom:1px solid var(--line)
+  border-bottom:1px solid var(--border);
+  background:rgba(5,6,8,.7);
 }
+
 .nav{
-max-width:1200px;
-height:45px;
-margin:auto;
-padding:0 20px;
-display:flex;
-align-items:center;
-gap:27px
+  max-width:1240px;
+  margin:auto;
+  padding:0 22px;
+  height:45px;
+  display:flex;
+  align-items:center;
+  gap:28px;
 }
+
 .nav a{
-font-size:13px;
-color:#4b5563
+  color:#929aa8;
+  font-size:12px;
+  transition:.2s;
 }
-.nav a:hover{color:var(--blue)}
+
+.nav a:hover{
+  color:white;
+}
 
 /* HERO */
+
 .hero{
-max-width:1200px;
-margin:25px auto;
-padding:0 20px
+  max-width:1240px;
+  margin:25px auto;
+  padding:0 22px;
 }
+
 .hero-box{
-min-height:350px;
-display:grid;
-grid-template-columns:1fr 1fr;
-background:#eaf2ff;
-overflow:hidden
+  min-height:390px;
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  border:1px solid var(--border);
+  background:
+    linear-gradient(
+      120deg,
+      #0b0e14,
+      #07090d
+    );
+  overflow:hidden;
+  position:relative;
 }
+
+.hero-box::before{
+  content:"";
+  position:absolute;
+  width:450px;
+  height:450px;
+  background:radial-gradient(
+    circle,
+    rgba(37,131,255,.16),
+    transparent 65%
+  );
+  right:20%;
+  top:-250px;
+  animation:heroGlow 7s infinite alternate;
+}
+
+@keyframes heroGlow{
+  from{transform:translateX(-50px)}
+  to{transform:translateX(80px)}
+}
+
 .hero-content{
-padding:55px;
-display:flex;
-justify-content:center;
-flex-direction:column
+  padding:65px 55px;
+  display:flex;
+  justify-content:center;
+  flex-direction:column;
+  position:relative;
+  z-index:2;
 }
+
 .label{
-color:var(--blue);
-font-size:11px;
-font-weight:800;
-letter-spacing:1.5px;
-margin-bottom:12px
+  color:var(--blue2);
+  font-size:10px;
+  letter-spacing:2px;
+  font-weight:800;
+  margin-bottom:15px;
 }
+
 .hero h1{
-font-size:44px;
-line-height:1.08;
-letter-spacing:-2px;
-max-width:500px;
-margin-bottom:15px
+  max-width:600px;
+  font-size:50px;
+  line-height:1.02;
+  letter-spacing:-2.8px;
+  margin-bottom:18px;
 }
+
+.hero h1 span{
+  color:var(--blue);
+}
+
 .hero p{
-color:#626b77;
-line-height:1.6;
-font-size:14px;
-max-width:470px;
-margin-bottom:24px
+  max-width:510px;
+  color:#8992a0;
+  font-size:14px;
+  line-height:1.7;
+  margin-bottom:28px;
 }
+
 .primary{
-display:inline-block;
-background:var(--blue);
-color:#fff;
-border:0;
-padding:12px 21px;
-border-radius:5px;
-font-size:13px;
-font-weight:700;
-width:max-content
+  width:max-content;
+  padding:12px 22px;
+  background:var(--blue);
+  color:white;
+  border:0;
+  border-radius:5px;
+  font-size:12px;
+  font-weight:800;
+  transition:.25s;
 }
-.primary:hover{background:#0f55bd}
-.hero-img{
-overflow:hidden;
-background:#dceaff
+
+.primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(37,131,255,.25);
 }
-.hero-img img{
-width:100%;
-height:100%;
-object-fit:cover
+
+.hero-image{
+  overflow:hidden;
+  position:relative;
+}
+
+.hero-image::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    90deg,
+    #0b0e14 0%,
+    transparent 45%
+  );
+}
+
+.hero-image img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:saturate(.7) contrast(1.05);
+  transition:transform 1s ease;
+}
+
+.hero-box:hover .hero-image img{
+  transform:scale(1.045);
 }
 
 /* CONTENT */
+
 .container{
-max-width:1200px;
-margin:auto;
-padding:0 20px 60px
+  max-width:1240px;
+  margin:auto;
+  padding:10px 22px 70px;
 }
+
 .title{
-display:flex;
-justify-content:space-between;
-align-items:end;
-margin:35px 0 18px
+  margin:45px 0 20px;
 }
-.title h2{font-size:23px}
+
+.title h2{
+  font-size:24px;
+  letter-spacing:-.5px;
+}
+
 .title p{
-font-size:12px;
-color:var(--muted);
-margin-top:5px
+  color:var(--muted);
+  font-size:12px;
+  margin-top:6px;
 }
+
+/* CATEGORIES */
+
 .categories{
-display:grid;
-grid-template-columns:repeat(6,1fr);
-gap:10px
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:10px;
 }
+
 .category{
-background:#fff;
-border:1px solid var(--line);
-padding:20px 8px;
-text-align:center;
-transition:.2s
+  border:1px solid var(--border);
+  background:rgba(12,15,20,.7);
+  padding:22px 8px;
+  text-align:center;
+  cursor:pointer;
+  transition:.25s;
 }
+
 .category:hover{
-border-color:#a8c3ee;
-transform:translateY(-2px)
+  transform:translateY(-4px);
+  border-color:#28558e;
+  background:#0e131c;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
 }
+
 .category img{
-width:50px;
-height:50px;
-object-fit:contain;
-margin-bottom:8px
+  width:52px;
+  height:52px;
+  object-fit:contain;
+  border-radius:5px;
+  margin-bottom:10px;
+  filter:brightness(.85);
 }
+
 .category span{
-display:block;
-font-size:12px;
-font-weight:600
+  display:block;
+  font-size:12px;
+  color:#c3c8d0;
 }
 
 /* PRODUCTS */
+
 .products{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:15px
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
 }
+
 .product{
-background:#fff;
-border:1px solid var(--line);
-transition:.2s
+  background:var(--surface);
+  border:1px solid var(--border);
+  overflow:hidden;
+  transition:
+    transform .3s,
+    border-color .3s,
+    box-shadow .3s;
 }
+
 .product:hover{
-box-shadow:0 8px 25px rgba(0,0,0,.08);
-transform:translateY(-2px)
+  transform:translateY(-6px);
+  border-color:#273d5d;
+  box-shadow:0 18px 45px rgba(0,0,0,.3);
 }
+
 .photo{
-height:225px;
-background:#f3f4f6;
-position:relative;
-overflow:hidden
+  height:230px;
+  background:#0e1117;
+  position:relative;
+  overflow:hidden;
 }
+
 .photo img{
-width:100%;
-height:100%;
-object-fit:cover;
-transition:.3s
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:brightness(.78) saturate(.75);
+  transition:.5s;
 }
-.product:hover .photo img{transform:scale(1.04)}
+
+.product:hover .photo img{
+  transform:scale(1.07);
+  filter:brightness(.9) saturate(.9);
+}
+
 .badge{
-position:absolute;
-left:10px;
-top:10px;
-background:#fee2e2;
-color:#c62828;
-font-size:10px;
-font-weight:800;
-padding:5px 7px
+  position:absolute;
+  left:10px;
+  top:10px;
+  z-index:2;
+  padding:5px 7px;
+  font-size:9px;
+  font-weight:800;
+  color:#ff8b8b;
+  background:#32181b;
+  border:1px solid #522328;
 }
-.info{padding:15px}
+
+.info{
+  padding:15px;
+}
+
 .cat{
-font-size:10px;
-color:#858b94;
-text-transform:uppercase;
-letter-spacing:.7px
+  color:#6e7785;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:1px;
 }
+
 .info h3{
-font-size:14px;
-margin:7px 0
+  font-size:14px;
+  margin:8px 0;
 }
+
 .rating{
-font-size:11px;
-color:#f59e0b
+  color:#f6ae2d;
+  font-size:10px;
 }
+
 .rating span{
-color:#8a9099;
-margin-left:4px
+  color:#687180;
+  margin-left:5px;
 }
+
 .price{
-font-size:17px;
-font-weight:800;
-margin-top:10px
+  margin-top:10px;
+  font-size:16px;
+  font-weight:800;
 }
+
 .old{
-color:#9ca3af;
-text-decoration:line-through;
-font-size:11px;
-font-weight:400;
-margin-left:5px
+  color:#5e6570;
+  text-decoration:line-through;
+  font-size:10px;
+  margin-left:5px;
+  font-weight:400;
 }
+
 .stock{
-font-size:11px;
-color:var(--green);
-margin-top:6px
+  color:var(--green);
+  font-size:10px;
+  margin-top:7px;
 }
+
 .add{
-width:100%;
-margin-top:13px;
-padding:10px;
-background:#fff;
-border:1px solid #d5d9df;
-border-radius:4px;
-font-size:12px;
-font-weight:700
+  width:100%;
+  margin-top:13px;
+  padding:10px;
+  border:1px solid #29313d;
+  background:#0d1117;
+  color:#dce1e8;
+  border-radius:4px;
+  font-size:11px;
+  font-weight:700;
+  transition:.2s;
 }
+
 .add:hover{
-border-color:var(--blue);
-color:var(--blue)
+  background:var(--blue);
+  border-color:var(--blue);
+  color:white;
 }
 
 /* TRUST */
+
 .trust{
-margin-top:45px;
-background:#fff;
-border:1px solid var(--line);
-display:grid;
-grid-template-columns:repeat(4,1fr)
+  margin-top:45px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--border);
+  background:#090b0f;
 }
+
 .trust-item{
-padding:25px;
-border-right:1px solid var(--line)
+  padding:25px;
+  border-right:1px solid var(--border);
 }
-.trust-item:last-child{border:0}
+
+.trust-item:last-child{
+  border:0;
+}
+
 .trust-item h3{
-font-size:13px;
-margin-bottom:5px
+  font-size:12px;
+  margin-bottom:6px;
 }
+
 .trust-item p{
-font-size:11px;
-color:#777;
-line-height:1.5
+  color:#737c89;
+  font-size:10px;
+  line-height:1.6;
 }
 
 /* FOOTER */
+
 footer{
-background:#111827;
-color:#9ca3af
-}
-.footer{
-max-width:1200px;
-margin:auto;
-padding:40px 20px;
-display:grid;
-grid-template-columns:2fr 1fr 1fr 1fr;
-gap:35px
-}
-.footer h3{
-color:#fff;
-font-size:20px;
-margin-bottom:10px
-}
-.footer h3 span{color:#4f9cff}
-.footer h4{
-color:white;
-font-size:12px;
-margin-bottom:13px
-}
-.footer a{
-display:block;
-font-size:11px;
-margin-bottom:9px
-}
-.footer p{
-font-size:11px;
-line-height:1.7;
-max-width:350px
-}
-.copy{
-border-top:1px solid #293142;
-text-align:center;
-padding:15px;
-font-size:10px
+  background:#080a0e;
+  border-top:1px solid var(--border);
 }
 
-/* OVERLAY */
+.footer{
+  max-width:1240px;
+  margin:auto;
+  padding:45px 22px;
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr;
+  gap:40px;
+}
+
+.footer h3{
+  font-size:21px;
+  margin-bottom:10px;
+}
+
+.footer h3 span{
+  color:var(--blue);
+}
+
+.footer h4{
+  font-size:11px;
+  color:white;
+  margin-bottom:14px;
+}
+
+.footer p,
+.footer a{
+  color:#707987;
+  font-size:10px;
+  line-height:1.8;
+}
+
+.footer a{
+  display:block;
+  margin-bottom:5px;
+}
+
+.copy{
+  border-top:1px solid var(--border);
+  text-align:center;
+  color:#59616e;
+  font-size:9px;
+  padding:16px;
+}
+
+/* MODAL */
+
 .overlay{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.48);
-z-index:100;
-align-items:center;
-justify-content:center;
-padding:18px
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:200;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(5px);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
 }
+
 .modal{
-background:white;
-width:100%;
-max-width:500px;
-max-height:90vh;
-overflow:auto;
-padding:25px;
-border-radius:5px
+  width:100%;
+  max-width:510px;
+  max-height:90vh;
+  overflow:auto;
+  background:#0c0f14;
+  border:1px solid #272e39;
+  padding:24px;
+  box-shadow:0 30px 100px rgba(0,0,0,.6);
 }
+
 .modal-head{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding-bottom:15px;
-border-bottom:1px solid var(--line);
-margin-bottom:15px
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  padding-bottom:15px;
+  margin-bottom:15px;
 }
-.modal-head h2{font-size:19px}
+
+.modal-head h2{
+  font-size:18px;
+}
+
 .close{
-background:none;
-border:0;
-font-size:25px
+  background:none;
+  border:0;
+  color:#9ba3af;
+  font-size:24px;
 }
+
 .cart-row{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-padding:12px 0;
-border-bottom:1px solid #eee;
-font-size:12px
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid var(--border);
+  padding:12px 0;
+  font-size:11px;
 }
+
 .remove{
-border:0;
-background:none;
-color:#dc2626;
-font-size:11px
+  border:0;
+  background:none;
+  color:#ff6b6b;
+  font-size:10px;
 }
+
 .total{
-display:flex;
-justify-content:space-between;
-padding:17px 0;
-font-size:15px
+  display:flex;
+  justify-content:space-between;
+  padding:17px 0;
+}
+
+.checkout{
+  width:100%;
+  padding:12px;
+  border:0;
+  background:var(--blue);
+  color:white;
+  border-radius:4px;
+  font-size:11px;
+  font-weight:800;
 }
 
 /* CHECKOUT */
+
 .checkout-modal{
-max-width:650px
+  max-width:680px;
 }
+
 .checkout-grid{
-display:grid;
-grid-template-columns:1.2fr .8fr;
-gap:25px
+  display:grid;
+  grid-template-columns:1.15fr .85fr;
+  gap:25px;
 }
+
 .form-group{
-margin-bottom:13px
+  margin-bottom:13px;
 }
+
 .form-group label{
-display:block;
-font-size:11px;
-font-weight:700;
-margin-bottom:6px
+  display:block;
+  color:#aeb5c0;
+  font-size:10px;
+  font-weight:700;
+  margin-bottom:6px;
 }
+
 .form-group input,
 .form-group textarea,
 .form-group select{
-width:100%;
-border:1px solid #d8dce1;
-padding:10px;
-border-radius:4px;
-outline:none;
-font-size:12px
+  width:100%;
+  color:white;
+  background:#080b0f;
+  border:1px solid #252c36;
+  padding:10px;
+  border-radius:4px;
+  outline:none;
+  font-size:11px;
 }
+
 .form-group textarea{
-height:75px;
-resize:vertical
+  height:75px;
+  resize:vertical;
 }
+
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus{
-border-color:var(--blue)
-}
-.summary{
-background:#f7f8fa;
-padding:17px;
-height:max-content
-}
-.summary h3{
-font-size:14px;
-margin-bottom:14px
-}
-.summary-line{
-display:flex;
-justify-content:space-between;
-font-size:11px;
-margin-bottom:10px;
-gap:10px
-}
-.summary-total{
-border-top:1px solid #ddd;
-padding-top:12px;
-margin-top:12px;
-display:flex;
-justify-content:space-between;
-font-weight:800;
-font-size:14px
-}
-.pay{
-width:100%;
-border:0;
-background:var(--blue);
-color:white;
-padding:12px;
-border-radius:4px;
-font-weight:700;
-font-size:12px;
-margin-top:15px
+  border-color:var(--blue);
 }
 
-/* RESPONSIVE */
-@media(max-width:900px){
-.head{flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
-.search{order:3;flex-basis:100%}
-.hero-box{grid-template-columns:1fr}
-.hero-img{display:none}
-.products{grid-template-columns:repeat(2,1fr)}
-.categories{grid-template-columns:repeat(3,1fr)}
-.footer{grid-template-columns:1fr 1fr}
-.checkout-grid{grid-template-columns:1fr}
+.summary{
+  background:#080b0f;
+  border:1px solid var(--border);
+  padding:16px;
+  height:max-content;
 }
+
+.summary h3{
+  font-size:13px;
+  margin-bottom:15px;
+}
+
+.summary-line{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  color:#9aa2ae;
+  font-size:10px;
+  margin-bottom:10px;
+}
+
+.summary-total{
+  border-top:1px solid var(--border);
+  margin-top:12px;
+  padding-top:13px;
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+}
+
+.pay{
+  width:100%;
+  border:0;
+  background:var(--blue);
+  color:white;
+  padding:12px;
+  border-radius:4px;
+  font-weight:800;
+  font-size:11px;
+}
+
+/* SCROLL REVEAL */
+
+.reveal{
+  opacity:0;
+  transform:translateY(20px);
+  transition:
+    opacity .7s ease,
+    transform .7s ease;
+}
+
+.reveal.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+  .head{
+    flex-wrap:wrap;
+    height:auto;
+    padding-top:12px;
+    padding-bottom:12px;
+  }
+
+  .search{
+    order:3;
+    flex-basis:100%;
+  }
+
+  .hero-box{
+    grid-template-columns:1fr;
+  }
+
+  .hero-image{
+    display:none;
+  }
+
+  .products{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .categories{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .footer{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .checkout-grid{
+    grid-template-columns:1fr;
+  }
+}
+
 @media(max-width:560px){
-.account{display:none}
-.nav{overflow-x:auto}
-.hero-content{padding:40px 25px}
-.hero h1{font-size:34px}
-.products{gap:9px}
-.photo{height:170px}
-.info{padding:11px}
-.info h3{font-size:12px}
-.price{font-size:14px}
-.categories{grid-template-columns:repeat(2,1fr)}
-.trust{grid-template-columns:1fr 1fr}
-.trust-item{border-bottom:1px solid var(--line)}
-.footer{grid-template-columns:1fr}
+
+  .account{
+    display:none;
+  }
+
+  .nav{
+    overflow-x:auto;
+  }
+
+  .hero-content{
+    padding:45px 25px;
+  }
+
+  .hero h1{
+    font-size:35px;
+  }
+
+  .categories{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .products{
+    gap:9px;
+  }
+
+  .photo{
+    height:170px;
+  }
+
+  .info{
+    padding:11px;
+  }
+
+  .info h3{
+    font-size:12px;
+  }
+
+  .price{
+    font-size:13px;
+  }
+
+  .trust{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .trust-item{
+    border-bottom:1px solid var(--border);
+  }
+
+  .footer{
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -546,16 +897,22 @@ margin-top:15px
 <body>
 
 <div class="top">
-Gratis ongkir untuk pembelian tertentu • Promo elektronik pilihan setiap minggu
+  ZIPHELP ELECTRONICS — Teknologi untuk kebutuhanmu
 </div>
 
 <header>
 <div class="head">
 
-<a href="#" class="logo">ZIP<span>HELP</span></a>
+<a href="#" class="logo">
+ZIP<span>HELP</span>
+</a>
 
 <div class="search">
-<input id="search" placeholder="Cari produk, merek, atau kategori..." oninput="searchProducts()">
+<input
+id="search"
+placeholder="Cari produk, merek, atau kategori..."
+oninput="searchProducts()"
+>
 <span class="search-icon">⌕</span>
 </div>
 
@@ -578,99 +935,105 @@ Masuk / Daftar
 <a href="#kategori">Kategori</a>
 <a href="#produk">Produk</a>
 <a href="#promo">Promo</a>
-<a href="#tentang">Tentang Kami</a>
+<a href="#tentang">Tentang</a>
 </div>
 </nav>
 
-<section class="hero">
+<section class="hero reveal">
+
 <div class="hero-box">
 
 <div class="hero-content">
-<div class="label">ZIPHELP ELECTRONICS</div>
 
-<h1>Teknologi pilihan untuk kebutuhanmu.</h1>
+<div class="label">
+ZIPHELP ELECTRONICS
+</div>
+
+<h1>
+Teknologi <span>tanpa batas.</span>
+</h1>
 
 <p>
-Temukan smartphone, laptop, gaming gear,
-audio dan berbagai aksesori elektronik pilihan
-dengan pengalaman belanja yang mudah.
+Temukan perangkat elektronik pilihan untuk
+gaming, produktivitas, hiburan, dan kebutuhan
+sehari-hari.
 </p>
 
 <a href="#produk" class="primary">
-Belanja sekarang
+Jelajahi produk
 </a>
+
 </div>
 
-<div class="hero-img">
+<div class="hero-image">
+
 <img
-src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=85"
+src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=85"
 alt="Laptop"
 >
+
 </div>
 
 </div>
+
 </section>
 
 <main class="container">
 
-<section id="kategori">
+<section id="kategori" class="reveal">
 
 <div class="title">
-<div>
-<h2>Belanja berdasarkan kategori</h2>
-<p>Temukan perangkat yang kamu butuhkan.</p>
-</div>
+<h2>Kategori</h2>
+<p>Temukan perangkat berdasarkan kebutuhan.</p>
 </div>
 
 <div class="categories">
 
-<div class="category" onclick="filter('smartphone')">
+<div class="category" onclick="filterProducts('smartphone')">
 <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=150&q=80">
 <span>Smartphone</span>
 </div>
 
-<div class="category" onclick="filter('laptop')">
+<div class="category" onclick="filterProducts('laptop')">
 <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=150&q=80">
 <span>Laptop</span>
 </div>
 
-<div class="category" onclick="filter('gaming')">
+<div class="category" onclick="filterProducts('gaming')">
 <img src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=150&q=80">
 <span>Gaming</span>
 </div>
 
-<div class="category" onclick="filter('audio')">
+<div class="category" onclick="filterProducts('audio')">
 <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=150&q=80">
 <span>Audio</span>
 </div>
 
-<div class="category" onclick="filter('accessories')">
-<img src="https://images.unsplash.com/photo-1609592424614-9b8f2dcbf6a9?auto=format&fit=crop&w=150&q=80">
+<div class="category" onclick="filterProducts('accessories')">
+<img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=150&q=80">
 <span>Aksesori</span>
 </div>
 
-<div class="category" onclick="filter('all')">
+<div class="category" onclick="filterProducts('all')">
 <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=150&q=80">
-<span>Semua Produk</span>
+<span>Semua</span>
 </div>
 
 </div>
+
 </section>
 
 
-<section id="produk">
+<section id="produk" class="reveal">
 
 <div class="title">
-<div>
-<h2>Produk populer</h2>
-<p>Pilihan produk elektronik ZIPHELP.</p>
-</div>
+<h2>Produk pilihan</h2>
+<p>Perangkat yang sedang populer di ZIPHELP.</p>
 </div>
 
 <div class="products" id="products">
 
-
-<!-- PRODUCT 1 -->
+<!-- 1 -->
 
 <article class="product"
 data-category="smartphone"
@@ -678,13 +1041,16 @@ data-name="Smartphone Pro X">
 
 <div class="photo">
 <span class="badge">-12%</span>
+
 <img
 src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=700&q=85"
 alt="Smartphone"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Smartphone</div>
 
 <h3>Smartphone Pro X 256GB</h3>
@@ -698,18 +1064,22 @@ Rp 7.999.000
 <span class="old">Rp 9.099.000</span>
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('Smartphone Pro X 256GB',7999000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
 
+<button
+class="add"
+onclick="addCart('Smartphone Pro X 256GB',7999000)"
+>
+Tambah ke keranjang
+</button>
+
+</div>
 </article>
 
 
-<!-- PRODUCT 2 -->
+<!-- 2 -->
 
 <article class="product"
 data-category="laptop"
@@ -717,13 +1087,16 @@ data-name="ZIPBOOK Ultra">
 
 <div class="photo">
 <span class="badge">-8%</span>
+
 <img
 src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=700&q=85"
 alt="Laptop"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Laptop</div>
 
 <h3>ZIPBOOK Ultra 14"</h3>
@@ -737,18 +1110,22 @@ Rp 12.499.000
 <span class="old">Rp 13.599.000</span>
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('ZIPBOOK Ultra 14',12499000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
 
+<button
+class="add"
+onclick="addCart('ZIPBOOK Ultra 14',12499000)"
+>
+Tambah ke keranjang
+</button>
+
+</div>
 </article>
 
 
-<!-- PRODUCT 3 -->
+<!-- 3 -->
 
 <article class="product"
 data-category="audio"
@@ -756,13 +1133,16 @@ data-name="AirBuds Pro">
 
 <div class="photo">
 <span class="badge">-15%</span>
+
 <img
 src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=85"
 alt="Headphones"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Audio</div>
 
 <h3>AirBuds Pro ANC</h3>
@@ -776,31 +1156,38 @@ Rp 899.000
 <span class="old">Rp 1.059.000</span>
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('AirBuds Pro ANC',899000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
 
+<button
+class="add"
+onclick="addCart('AirBuds Pro ANC',899000)"
+>
+Tambah ke keranjang
+</button>
+
+</div>
 </article>
 
 
-<!-- PRODUCT 4 -->
+<!-- 4 -->
 
 <article class="product"
 data-category="gaming"
 data-name="Gaming Console">
 
 <div class="photo">
+
 <img
 src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?auto=format&fit=crop&w=700&q=85"
 alt="Gaming"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Gaming</div>
 
 <h3>Gaming Console Pro</h3>
@@ -813,31 +1200,38 @@ alt="Gaming"
 Rp 6.499.000
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('Gaming Console Pro',6499000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
 
+<button
+class="add"
+onclick="addCart('Gaming Console Pro',6499000)"
+>
+Tambah ke keranjang
+</button>
+
+</div>
 </article>
 
 
-<!-- PRODUCT 5 -->
+<!-- 5 -->
 
 <article class="product"
 data-category="gaming"
-data-name="Gaming Keyboard">
+data-name="Mechanical Keyboard">
 
 <div class="photo">
+
 <img
 src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=700&q=85"
 alt="Keyboard"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Gaming</div>
 
 <h3>Mechanical Keyboard RGB</h3>
@@ -850,31 +1244,38 @@ alt="Keyboard"
 Rp 749.000
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('Mechanical Keyboard RGB',749000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
 
+<button
+class="add"
+onclick="addCart('Mechanical Keyboard RGB',749000)"
+>
+Tambah ke keranjang
+</button>
+
+</div>
 </article>
 
 
-<!-- PRODUCT 6 -->
+<!-- 6 -->
 
 <article class="product"
 data-category="gaming"
 data-name="Gaming Mouse">
 
 <div class="photo">
+
 <img
 src="https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=700&q=85"
-alt="Gaming Mouse"
+alt="Mouse"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Gaming</div>
 
 <h3>Gaming Mouse Wireless X</h3>
@@ -887,68 +1288,38 @@ alt="Gaming Mouse"
 Rp 599.000
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('Gaming Mouse Wireless X',599000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
 
-</article>
-
-
-<!-- PRODUCT 7 -->
-
-<article class="product"
-data-category="accessories"
-data-name="Powerbank">
-
-<div class="photo">
-<img
-src="https://images.unsplash.com/photo-1609592424614-9b8f2dcbf6a9?auto=format&fit=crop&w=700&q=85"
-alt="Powerbank"
+<button
+class="add"
+onclick="addCart('Gaming Mouse Wireless X',599000)"
 >
-</div>
-
-<div class="info">
-<div class="cat">Aksesori</div>
-
-<h3>Powerbank 20.000mAh</h3>
-
-<div class="rating">
-★★★★☆ <span>(48)</span>
-</div>
-
-<div class="price">
-Rp 399.000
-</div>
-
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('Powerbank 20.000mAh',399000)">
 Tambah ke keranjang
 </button>
-</div>
 
+</div>
 </article>
 
 
-<!-- PRODUCT 8 -->
+<!-- 7 -->
 
 <article class="product"
 data-category="accessories"
 data-name="Smartwatch">
 
 <div class="photo">
+
 <img
 src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=85"
 alt="Smartwatch"
 >
+
 </div>
 
 <div class="info">
+
 <div class="cat">Aksesori</div>
 
 <h3>Smartwatch Active</h3>
@@ -961,301 +1332,54 @@ alt="Smartwatch"
 Rp 1.299.000
 </div>
 
-<div class="stock">✓ Stok tersedia</div>
-
-<button class="add"
-onclick="addCart('Smartwatch Active',1299000)">
-Tambah ke keranjang
-</button>
+<div class="stock">
+● Stok tersedia
 </div>
-
-</article>
-
-</div>
-</section>
-
-
-<section class="trust">
-
-<div class="trust-item">
-<h3>🚚 Pengiriman terpercaya</h3>
-<p>Pesanan diproses dengan aman dan cepat.</p>
-</div>
-
-<div class="trust-item">
-<h3>🔒 Pembayaran aman</h3>
-<p>Checkout dirancang dengan keamanan transaksi.</p>
-</div>
-
-<div class="trust-item">
-<h3>✓ Produk berkualitas</h3>
-<p>Pilihan elektronik untuk berbagai kebutuhan.</p>
-</div>
-
-<div class="trust-item">
-<h3>💬 Customer support</h3>
-<p>Tim ZIPHELP siap membantu pelanggan.</p>
-</div>
-
-</section>
-
-</main>
-
-
-<footer>
-
-<div class="footer">
-
-<div>
-<h3>ZIP<span>HELP</span></h3>
-<p>
-Toko elektronik online dengan berbagai
-produk teknologi untuk kebutuhan sehari-hari.
-</p>
-</div>
-
-<div>
-<h4>Belanja</h4>
-<a href="#produk">Produk</a>
-<a href="#kategori">Kategori</a>
-<a href="#">Promo</a>
-</div>
-
-<div>
-<h4>Bantuan</h4>
-<a href="#">Cara Belanja</a>
-<a href="#">Pengiriman</a>
-<a href="#">Pembayaran</a>
-</div>
-
-<div>
-<h4>Perusahaan</h4>
-<a href="#tentang">Tentang ZIPHELP</a>
-<a href="#">Kontak</a>
-<a href="#">Privasi</a>
-</div>
-
-</div>
-
-<div class="copy">
-© 2026 ZIPHELP. All rights reserved.
-</div>
-
-</footer>
-
-
-<!-- CART MODAL -->
-
-<div class="overlay" id="cartModal">
-
-<div class="modal">
-
-<div class="modal-head">
-<h2>Keranjang</h2>
-<button class="close" onclick="closeCart()">×</button>
-</div>
-
-<div id="cartItems">
-Keranjang masih kosong.
-</div>
-
-<div class="total">
-<strong>Total</strong>
-<strong id="total">Rp 0</strong>
-</div>
-
-<button class="primary"
-style="width:100%"
-onclick="openCheckout()">
-Lanjut ke checkout
-</button>
-
-</div>
-</div>
-
-
-<!-- CHECKOUT MODAL -->
-
-<div class="overlay" id="checkoutModal">
-
-<div class="modal checkout-modal">
-
-<div class="modal-head">
-<h2>Checkout ZIPHELP</h2>
-<button class="close" onclick="closeCheckout()">×</button>
-</div>
-
-<div class="checkout-grid">
-
-<div>
-
-<div class="form-group">
-<label>Nama lengkap</label>
-<input id="name" placeholder="Nama penerima">
-</div>
-
-<div class="form-group">
-<label>Nomor HP</label>
-<input id="phone" placeholder="08xxxxxxxxxx">
-</div>
-
-<div class="form-group">
-<label>Alamat lengkap</label>
-<textarea id="address"
-placeholder="Nama jalan, nomor rumah, kecamatan..."></textarea>
-</div>
-
-<div class="form-group">
-<label>Kota</label>
-<input id="city" placeholder="Kota / Kabupaten">
-</div>
-
-<div class="form-group">
-<label>Metode pembayaran</label>
-
-<select id="payment">
-<option value="Transfer Bank">Transfer Bank</option>
-<option value="E-Wallet">E-Wallet</option>
-<option value="COD">COD</option>
-</select>
-
-</div>
-
-<button class="pay" onclick="placeOrder()">
-Buat pesanan
-</button>
-
-</div>
-
-<div class="summary">
-
-<h3>Ringkasan pesanan</h3>
-
-<div id="summaryItems"></div>
-
-<div class="summary-total">
-<span>Total</span>
-<span id="summaryTotal">Rp 0</span>
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-
-<script>
-
-let cart=[];
-
-
-/* RUPIAH */
-
-function rupiah(n){
-return new Intl.NumberFormat("id-ID",{
-style:"currency",
-currency:"IDR",
-maximumFractionDigits:0
-}).format(n);
-}
-
-
-/* ADD */
-
-function addCart(name,price){
-
-cart.push({
-name:name,
-price:price
-});
-
-updateCart();
-
-}
-
-
-/* UPDATE CART */
-
-function updateCart(){
-
-document.getElementById("count").textContent=cart.length;
-
-let box=document.getElementById("cartItems");
-
-if(cart.length===0){
-
-box.innerHTML="Keranjang masih kosong.";
-document.getElementById("total").textContent="Rp 0";
-
-return;
-
-}
-
-let total=0;
-
-box.innerHTML=cart.map((item,index)=>{
-
-total+=item.price;
-
-return `
-<div class="cart-row">
-
-<span>${item.name}</span>
-
-<strong>${rupiah(item.price)}</strong>
 
 <button
-class="remove"
-onclick="removeItem(${index})">
-Hapus
+class="add"
+onclick="addCart('Smartwatch Active',1299000)"
+>
+Tambah ke keranjang
 </button>
 
 </div>
-`;
-
-}).join("");
-
-document.getElementById("total").textContent=rupiah(total);
-
-}
+</article>
 
 
-/* REMOVE */
+<!-- 8 -->
 
-function removeItem(index){
+<article class="product"
+data-category="accessories"
+data-name="Powerbank">
 
-cart.splice(index,1);
+<div class="photo">
 
-updateCart();
+<img
+src="https://images.unsplash.com/photo-1609592424614-9b8f2dcbf6a9?auto=format&fit=crop&w=700&q=85"
+alt="Powerbank"
+>
 
-}
+</div>
 
+<div class="info">
 
-/* CART */
+<div class="cat">Aksesori</div>
 
-function openCart(){
+<h3>Powerbank 20.000mAh</h3>
 
-document.getElementById("cartModal").style.display="flex";
+<div class="rating">
+★★★★☆ <span>(48)</span>
+</div>
 
-updateCart();
+<div class="price">
+Rp 399.000
+</div>
 
-}
+<div class="stock">
+● Stok tersedia
+</div>
 
-function closeCart(){
-
-document.getElementById("cartModal").style.display="none";
-
-}
-
-
-/* CHECKOUT */
-
-function openCheckout(){
-
-if(cart.length===0){
-
-alert("Keranjang masih kosong.");
-
-retur
+<button
+class="add"
+onclick="addCart('Powerbank 20.000mAh',39900
