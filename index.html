@@ -1382,4 +1382,432 @@ Rp 399.000
 
 <button
 class="add"
-onclick="addCart('Powerbank 20.000mAh',39900
+onclick="addCart('Powerbank 20.000mAh',399000)"
+>
+Tambah ke keranjang
+</button>
+
+</div>
+</article>
+
+</div>
+
+</section>
+
+
+<section class="trust reveal">
+
+<div class="trust-item">
+<h3>Pengiriman terpercaya</h3>
+<p>Pesanan diproses dengan aman dan cepat.</p>
+</div>
+
+<div class="trust-item">
+<h3>Pembayaran aman</h3>
+<p>Checkout dirancang untuk pengalaman transaksi yang mudah.</p>
+</div>
+
+<div class="trust-item">
+<h3>Produk berkualitas</h3>
+<p>Pilihan perangkat untuk berbagai kebutuhan.</p>
+</div>
+
+<div class="trust-item">
+<h3>Customer support</h3>
+<p>Tim ZIPHELP siap membantu pelanggan.</p>
+</div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+<div class="footer">
+
+<div>
+<h3>ZIP<span>HELP</span></h3>
+<p>
+Electronic store dengan pilihan perangkat
+teknologi untuk gaming, kerja, hiburan,
+dan kebutuhan sehari-hari.
+</p>
+</div>
+
+<div>
+<h4>Belanja</h4>
+<a href="#produk">Produk</a>
+<a href="#kategori">Kategori</a>
+<a href="#">Promo</a>
+</div>
+
+<div>
+<h4>Bantuan</h4>
+<a href="#">Cara Belanja</a>
+<a href="#">Pengiriman</a>
+<a href="#">Pembayaran</a>
+</div>
+
+<div>
+<h4>ZIPHELP</h4>
+<a href="#">Tentang Kami</a>
+<a href="#">Kontak</a>
+<a href="#">Privasi</a>
+</div>
+
+</div>
+
+<div class="copy">
+© 2026 ZIPHELP. All rights reserved.
+</div>
+
+</footer>
+
+
+<!-- CART -->
+
+<div class="overlay" id="cartModal">
+
+<div class="modal">
+
+<div class="modal-head">
+<h2>Keranjang</h2>
+<button class="close" onclick="closeCart()">×</button>
+</div>
+
+<div id="cartItems">
+Keranjang masih kosong.
+</div>
+
+<div class="total">
+<strong>Total</strong>
+<strong id="total">Rp 0</strong>
+</div>
+
+<button class="checkout" onclick="openCheckout()">
+Lanjut ke checkout
+</button>
+
+</div>
+
+</div>
+
+
+<!-- CHECKOUT -->
+
+<div class="overlay" id="checkoutModal">
+
+<div class="modal checkout-modal">
+
+<div class="modal-head">
+<h2>Checkout ZIPHELP</h2>
+<button class="close" onclick="closeCheckout()">×</button>
+</div>
+
+<div class="checkout-grid">
+
+<div>
+
+<div class="form-group">
+<label>Nama lengkap</label>
+<input id="name" placeholder="Nama penerima">
+</div>
+
+<div class="form-group">
+<label>Nomor HP</label>
+<input id="phone" placeholder="08xxxxxxxxxx">
+</div>
+
+<div class="form-group">
+<label>Alamat</label>
+<textarea id="address"
+placeholder="Alamat lengkap"></textarea>
+</div>
+
+<div class="form-group">
+<label>Kota</label>
+<input id="city" placeholder="Kota / Kabupaten">
+</div>
+
+<div class="form-group">
+<label>Pembayaran</label>
+
+<select id="payment">
+<option>Transfer Bank</option>
+<option>E-Wallet</option>
+<option>COD</option>
+</select>
+
+</div>
+
+<button class="pay" onclick="placeOrder()">
+Buat pesanan
+</button>
+
+</div>
+
+<div class="summary">
+
+<h3>Ringkasan</h3>
+
+<div id="summaryItems"></div>
+
+<div class="summary-total">
+<span>Total</span>
+<span id="summaryTotal">Rp 0</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* CART */
+
+let cart=[];
+
+function rupiah(n){
+return new Intl.NumberFormat("id-ID",{
+style:"currency",
+currency:"IDR",
+maximumFractionDigits:0
+}).format(n);
+}
+
+function addCart(name,price){
+
+cart.push({name,price});
+
+updateCart();
+
+}
+
+function updateCart(){
+
+document.getElementById("count").textContent=cart.length;
+
+const box=document.getElementById("cartItems");
+
+if(cart.length===0){
+
+box.innerHTML="Keranjang masih kosong.";
+
+document.getElementById("total").textContent="Rp 0";
+
+return;
+}
+
+let total=0;
+
+box.innerHTML=cart.map((item,i)=>{
+
+total+=item.price;
+
+return `
+<div class="cart-row">
+
+<span>${item.name}</span>
+
+<strong>${rupiah(item.price)}</strong>
+
+<button
+class="remove"
+onclick="removeItem(${i})">
+Hapus
+</button>
+
+</div>
+`;
+
+}).join("");
+
+document.getElementById("total").textContent=rupiah(total);
+
+}
+
+function removeItem(i){
+
+cart.splice(i,1);
+
+updateCart();
+
+}
+
+function openCart(){
+
+document.getElementById("cartModal")
+.style.display="flex";
+
+updateCart();
+
+}
+
+function closeCart(){
+
+document.getElementById("cartModal")
+.style.display="none";
+
+}
+
+
+/* CHECKOUT */
+
+function openCheckout(){
+
+if(cart.length===0){
+
+alert("Keranjang masih kosong.");
+
+return;
+
+}
+
+closeCart();
+
+let total=0;
+
+document.getElementById("summaryItems")
+.innerHTML=cart.map(item=>{
+
+total+=item.price;
+
+return `
+<div class="summary-line">
+<span>${item.name}</span>
+<strong>${rupiah(item.price)}</strong>
+</div>
+`;
+
+}).join("");
+
+document.getElementById("summaryTotal")
+.textContent=rupiah(total);
+
+document.getElementById("checkoutModal")
+.style.display="flex";
+
+}
+
+function closeCheckout(){
+
+document.getElementById("checkoutModal")
+.style.display="none";
+
+}
+
+function placeOrder(){
+
+const name=document.getElementById("name").value.trim();
+const phone=document.getElementById("phone").value.trim();
+const address=document.getElementById("address").value.trim();
+const city=document.getElementById("city").value.trim();
+const payment=document.getElementById("payment").value;
+
+if(!name||!phone||!address||!city){
+
+alert("Lengkapi data pengiriman terlebih dahulu.");
+
+return;
+
+}
+
+alert(
+"Pesanan ZIPHELP berhasil dibuat!\\n\\n"+
+"Nama: "+name+"\\n"+
+"Pembayaran: "+payment+
+"\\n\\nCheckout ini masih DEMO."
+);
+
+cart=[];
+
+updateCart();
+
+closeCheckout();
+
+}
+
+
+/* SEARCH */
+
+function searchProducts(){
+
+const keyword=
+document.getElementById("search")
+.value
+.toLowerCase();
+
+document.querySelectorAll(".product")
+.forEach(product=>{
+
+const name=
+product.dataset.name.toLowerCase();
+
+product.style.display=
+name.includes(keyword)
+?""
+:"none";
+
+});
+
+}
+
+
+/* FILTER */
+
+function filterProducts(category){
+
+document.querySelectorAll(".product")
+.forEach(product=>{
+
+product.style.display=
+category==="all"||
+product.dataset.category===category
+?""
+:"none";
+
+});
+
+document.getElementById("produk")
+.scrollIntoView({
+behavior:"smooth"
+});
+
+}
+
+
+/* SCROLL ANIMATION */
+
+const observer=
+new IntersectionObserver(
+entries=>{
+
+entries.forEach(entry=>{
+
+if(entry.isIntersecting){
+
+entry.target.classList.add("show");
+
+}
+
+});
+
+},
+{
+threshold:.12
+}
+);
+
+document.querySelectorAll(".reveal")
+.forEach(el=>observer.observe(el));
+
+</script>
+
+</body>
+</html>
