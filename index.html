@@ -3,1810 +3,1025 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ZIPHELP — Dark Electronics</title>
+<title>ZIPHELP — Electronics Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:#050608;
-  --surface:#0b0d11;
-  --surface2:#10131a;
-  --border:#20242d;
-  --text:#f5f7fa;
-  --muted:#8b93a1;
-  --blue:#2583ff;
-  --blue2:#56a0ff;
-  --green:#28c76f;
+  --bg:#07080b;
+  --surface:#0d1016;
+  --surface2:#12161e;
+  --border:#1d2330;
+  --border-soft:#161b25;
+  --text:#f2f5f9;
+  --muted:#818a99;
+  --muted2:#5b6472;
+  --blue:#3b82f6;
+  --blue-dim:#1c3a6b;
+  --amber:#ffb020;
+  --green:#2ecc71;
+  --red:#ff6b6b;
+  --radius:10px;
+  --ease:cubic-bezier(.22,1,.36,1);
 }
 
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
 body{
   background:var(--bg);
   color:var(--text);
-  font-family:Inter,Arial,sans-serif;
+  font-family:'Inter',Arial,sans-serif;
   overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{text-decoration:none;color:inherit;}
+button,input,select,textarea{font:inherit;}
+button{cursor:pointer;}
+
+.mono{font-family:'JetBrains Mono',monospace;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
 }
 
-/* MOVING BACKGROUND */
-
-body::before{
-  content:"";
-  position:fixed;
-  width:600px;
-  height:600px;
-  left:-300px;
-  top:-250px;
-  background:radial-gradient(
-    circle,
-    rgba(37,131,255,.13),
-    transparent 65%
-  );
-  animation:float 10s ease-in-out infinite alternate;
-  pointer-events:none;
-  z-index:-1;
-}
-
+/* AMBIENT BACKGROUND */
+body::before,
 body::after{
   content:"";
   position:fixed;
-  width:500px;
-  height:500px;
-  right:-250px;
-  bottom:-200px;
-  background:radial-gradient(
-    circle,
-    rgba(37,131,255,.08),
-    transparent 65%
-  );
-  animation:float2 13s ease-in-out infinite alternate;
+  border-radius:50%;
   pointer-events:none;
   z-index:-1;
+  filter:blur(10px);
 }
-
-@keyframes float{
-  from{transform:translate(0,0)}
-  to{transform:translate(150px,120px)}
+body::before{
+  width:620px;height:620px;left:-320px;top:-260px;
+  background:radial-gradient(circle,rgba(59,130,246,.14),transparent 65%);
+  animation:driftA 16s ease-in-out infinite alternate;
 }
-
-@keyframes float2{
-  from{transform:translate(0,0)}
-  to{transform:translate(-130px,-100px)}
+body::after{
+  width:520px;height:520px;right:-260px;bottom:-220px;
+  background:radial-gradient(circle,rgba(255,176,32,.06),transparent 65%);
+  animation:driftB 19s ease-in-out infinite alternate;
 }
+@keyframes driftA{from{transform:translate(0,0)}to{transform:translate(120px,90px)}}
+@keyframes driftB{from{transform:translate(0,0)}to{transform:translate(-100px,-80px)}}
 
-a{
-  text-decoration:none;
-  color:inherit;
-}
-
-button,input,select,textarea{
-  font:inherit;
-}
-
-/* TOP */
-
+/* TOP TICKER */
 .top{
-  height:34px;
-  background:#080a0e;
-  border-bottom:1px solid var(--border);
+  height:32px;
+  background:#050608;
+  border-bottom:1px solid var(--border-soft);
   display:flex;
   align-items:center;
   justify-content:center;
-  color:#8f98a7;
-  font-size:11px;
+  gap:8px;
+  color:var(--muted);
+  font-size:10.5px;
+  letter-spacing:.3px;
+}
+.top .dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 0 0 rgba(46,204,113,.5);
+  animation:pulseDot 2.2s infinite;
+}
+@keyframes pulseDot{
+  0%{box-shadow:0 0 0 0 rgba(46,204,113,.5)}
+  70%{box-shadow:0 0 0 6px rgba(46,204,113,0)}
+  100%{box-shadow:0 0 0 0 rgba(46,204,113,0)}
 }
 
 /* HEADER */
-
 header{
-  position:sticky;
-  top:0;
-  z-index:100;
-  background:rgba(5,6,8,.82);
+  position:sticky;top:0;z-index:100;
+  background:rgba(7,8,11,.78);
   backdrop-filter:blur(18px);
   border-bottom:1px solid rgba(255,255,255,.06);
+  transition:border-color .3s,box-shadow .3s;
 }
-
+header.scrolled{
+  border-color:rgba(255,255,255,.1);
+  box-shadow:0 12px 30px -20px rgba(0,0,0,.6);
+}
 .head{
-  max-width:1240px;
-  height:72px;
-  margin:auto;
-  padding:0 22px;
-  display:flex;
-  align-items:center;
-  gap:30px;
+  max-width:1240px;height:70px;margin:auto;padding:0 22px;
+  display:flex;align-items:center;gap:26px;
 }
-
 .logo{
-  font-size:25px;
-  font-weight:900;
-  letter-spacing:-1.5px;
+  font-family:'Sora',sans-serif;
+  font-size:22px;font-weight:800;letter-spacing:-1px;
+  display:flex;align-items:center;gap:8px;
+  flex-shrink:0;
 }
-
-.logo span{
-  color:var(--blue);
+.logo .mark{
+  width:26px;height:26px;
+  border-radius:6px;
+  background:linear-gradient(135deg,var(--blue),#1e4fc7);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;
+  box-shadow:0 4px 14px -4px rgba(59,130,246,.7);
 }
+.logo span{color:var(--blue);}
 
-.search{
-  flex:1;
-  position:relative;
-}
-
+.search{flex:1;position:relative;max-width:480px;}
 .search input{
-  width:100%;
-  height:42px;
-  padding:0 45px 0 15px;
-  color:white;
-  background:#0b0e13;
-  border:1px solid #242a34;
-  border-radius:7px;
-  outline:none;
-  transition:.25s;
+  width:100%;height:40px;padding:0 42px 0 14px;
+  color:var(--text);background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;
+  outline:none;transition:.2s var(--ease);
 }
-
 .search input:focus{
   border-color:var(--blue);
-  box-shadow:0 0 0 3px rgba(37,131,255,.08);
+  box-shadow:0 0 0 3px rgba(59,130,246,.12);
+  background:#0f131a;
 }
-
 .search-icon{
-  position:absolute;
-  right:15px;
-  top:10px;
-  color:#707988;
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  color:var(--muted2);pointer-events:none;font-size:14px;
 }
 
-.account{
-  color:#9aa2af;
-  font-size:11px;
-  white-space:nowrap;
+.head-right{display:flex;align-items:center;gap:20px;margin-left:auto;}
+
+.account{color:var(--muted);font-size:11px;white-space:nowrap;line-height:1.5;}
+.account strong{color:var(--text);display:block;font-size:12px;font-weight:600;}
+
+.cart-btn{
+  position:relative;
+  width:40px;height:40px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  transition:.2s var(--ease);
+}
+.cart-btn:hover{border-color:var(--blue);background:#0f1826;}
+.cart-btn.bump{animation:bump .35s var(--ease);}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+.cart-count{
+  position:absolute;right:-6px;top:-6px;
+  min-width:17px;height:17px;padding:0 3px;
+  background:var(--blue);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;font-weight:700;
+  border:2px solid var(--bg);
 }
 
-.account strong{
-  color:white;
-  display:block;
-  font-size:12px;
+.burger{
+  display:none;
+  width:36px;height:36px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:8px;
+  position:relative;
+  flex-shrink:0;
 }
+.burger span{
+  position:absolute;left:9px;right:9px;height:2px;
+  background:var(--text);border-radius:2px;
+  transition:.3s var(--ease);
+}
+.burger span:nth-child(1){top:13px;}
+.burger span:nth-child(2){top:17.5px;}
+.burger span:nth-child(3){top:22px;}
+.burger.open span:nth-child(1){transform:translateY(4.5px) rotate(45deg);}
+.burger.open span:nth-child(2){opacity:0;}
+.burger.open span:nth-child(3){transform:translateY(-4.5px) rotate(-45deg);}
 
-.cart{
-  cursor:pointer;
-  font-size:20px;
+/* NAV with sliding indicator */
+nav{
+  border-bottom:1px solid var(--border-soft);
+  background:rgba(7,8,11,.6);
+}
+.nav{
+  max-width:1240px;margin:auto;padding:0 22px;
+  height:44px;display:flex;align-items:center;gap:4px;
   position:relative;
 }
-
-.cart-count{
-  position:absolute;
-  right:-9px;
-  top:-8px;
-  width:18px;
-  height:18px;
-  background:var(--blue);
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:9px;
-  font-weight:bold;
-}
-
-/* NAV */
-
-nav{
-  border-bottom:1px solid var(--border);
-  background:rgba(5,6,8,.7);
-}
-
-.nav{
-  max-width:1240px;
-  margin:auto;
-  padding:0 22px;
-  height:45px;
-  display:flex;
-  align-items:center;
-  gap:28px;
-}
-
 .nav a{
-  color:#929aa8;
-  font-size:12px;
+  position:relative;
+  color:var(--muted);font-size:12.5px;font-weight:500;
+  padding:0 14px;height:44px;
+  display:flex;align-items:center;
+  transition:color .2s;
+}
+.nav a:hover,.nav a.active{color:var(--text);}
+.nav-indicator{
+  position:absolute;bottom:0;height:2px;
+  background:var(--blue);border-radius:2px 2px 0 0;
+  transition:left .32s var(--ease),width .32s var(--ease);
+  box-shadow:0 0 10px rgba(59,130,246,.6);
+}
+
+/* MOBILE DRAWER */
+.drawer-backdrop{
+  display:none;position:fixed;inset:0;z-index:150;
+  background:rgba(0,0,0,0);
+  transition:background .3s var(--ease);
+}
+.drawer-backdrop.open{display:block;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:78%;max-width:300px;
+  background:#0a0c11;border-left:1px solid var(--border);
+  z-index:151;
+  transform:translateX(100%);
+  transition:transform .38s var(--ease);
+  padding:20px;
+  display:flex;flex-direction:column;gap:4px;
+}
+.drawer.open{transform:translateX(0);}
+.drawer a{
+  padding:13px 10px;border-radius:8px;
+  color:var(--muted);font-size:14px;font-weight:500;
   transition:.2s;
 }
-
-.nav a:hover{
-  color:white;
-}
+.drawer a:hover{background:var(--surface2);color:var(--text);}
 
 /* HERO */
-
-.hero{
-  max-width:1240px;
-  margin:25px auto;
-  padding:0 22px;
-}
-
+.hero{max-width:1240px;margin:24px auto;padding:0 22px;}
 .hero-box{
-  min-height:390px;
-  display:grid;
-  grid-template-columns:1.05fr .95fr;
+  min-height:380px;
+  display:grid;grid-template-columns:1.05fr .95fr;
   border:1px solid var(--border);
-  background:
-    linear-gradient(
-      120deg,
-      #0b0e14,
-      #07090d
-    );
-  overflow:hidden;
-  position:relative;
+  background:linear-gradient(120deg,#0c0f16,#07090d);
+  border-radius:var(--radius);
+  overflow:hidden;position:relative;
 }
-
 .hero-box::before{
-  content:"";
-  position:absolute;
-  width:450px;
-  height:450px;
-  background:radial-gradient(
-    circle,
-    rgba(37,131,255,.16),
-    transparent 65%
-  );
-  right:20%;
-  top:-250px;
-  animation:heroGlow 7s infinite alternate;
+  content:"";position:absolute;width:440px;height:440px;
+  background:radial-gradient(circle,rgba(59,130,246,.17),transparent 65%);
+  right:22%;top:-240px;
+  animation:heroGlow 8s ease-in-out infinite alternate;
 }
+@keyframes heroGlow{from{transform:translateX(-40px)}to{transform:translateX(70px)}}
 
-@keyframes heroGlow{
-  from{transform:translateX(-50px)}
-  to{transform:translateX(80px)}
-}
-
-.hero-content{
-  padding:65px 55px;
-  display:flex;
-  justify-content:center;
-  flex-direction:column;
-  position:relative;
-  z-index:2;
-}
-
+.hero-content{padding:56px 52px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;}
 .label{
-  color:var(--blue2);
-  font-size:10px;
-  letter-spacing:2px;
-  font-weight:800;
-  margin-bottom:15px;
+  display:inline-flex;align-items:center;gap:7px;
+  color:var(--blue);font-size:10.5px;letter-spacing:1.6px;
+  font-weight:700;margin-bottom:16px;width:max-content;
 }
-
+.label::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber);}
 .hero h1{
-  max-width:600px;
-  font-size:50px;
-  line-height:1.02;
-  letter-spacing:-2.8px;
-  margin-bottom:18px;
+  font-family:'Sora',sans-serif;
+  max-width:600px;font-size:46px;line-height:1.06;
+  letter-spacing:-1.6px;margin-bottom:16px;font-weight:700;
 }
-
-.hero h1 span{
-  color:var(--blue);
-}
-
-.hero p{
-  max-width:510px;
-  color:#8992a0;
-  font-size:14px;
-  line-height:1.7;
-  margin-bottom:28px;
-}
+.hero h1 span{color:var(--blue);}
+.hero p{max-width:480px;color:var(--muted);font-size:13.5px;line-height:1.75;margin-bottom:26px;}
 
 .primary{
-  width:max-content;
-  padding:12px 22px;
-  background:var(--blue);
-  color:white;
-  border:0;
-  border-radius:5px;
-  font-size:12px;
-  font-weight:800;
-  transition:.25s;
+  width:max-content;padding:12px 22px;
+  background:var(--blue);color:#fff;border:0;border-radius:7px;
+  font-size:12.5px;font-weight:700;
+  transition:.25s var(--ease);
+  display:flex;align-items:center;gap:8px;
 }
+.primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px -8px rgba(59,130,246,.5);}
+.primary:active{transform:translateY(0);}
+.primary .arrow{transition:transform .25s var(--ease);}
+.primary:hover .arrow{transform:translateX(3px);}
 
-.primary:hover{
-  transform:translateY(-2px);
-  box-shadow:0 10px 30px rgba(37,131,255,.25);
+/* signature: signal meter */
+.signal{display:flex;align-items:end;gap:3px;margin-top:26px;height:20px;}
+.signal i{
+  width:3px;background:var(--blue);border-radius:2px;
+  opacity:.35;animation:signalBar 1.2s ease-in-out infinite;
 }
+.signal i:nth-child(1){height:40%;animation-delay:0s;}
+.signal i:nth-child(2){height:70%;animation-delay:.12s;}
+.signal i:nth-child(3){height:100%;animation-delay:.24s;}
+.signal i:nth-child(4){height:60%;animation-delay:.36s;}
+.signal i:nth-child(5){height:85%;animation-delay:.48s;}
+@keyframes signalBar{0%,100%{opacity:.35;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
+.signal-label{font-size:9.5px;color:var(--muted2);margin-left:8px;letter-spacing:.4px;}
 
-.hero-image{
-  overflow:hidden;
-  position:relative;
-}
-
+.hero-image{overflow:hidden;position:relative;}
 .hero-image::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(
-    90deg,
-    #0b0e14 0%,
-    transparent 45%
-  );
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,#0c0f16 0%,transparent 45%);
 }
+.hero-image img{width:100%;height:100%;object-fit:cover;filter:saturate(.7) contrast(1.05);transition:transform 1.1s var(--ease);}
+.hero-box:hover .hero-image img{transform:scale(1.045);}
 
-.hero-image img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:saturate(.7) contrast(1.05);
-  transition:transform 1s ease;
-}
-
-.hero-box:hover .hero-image img{
-  transform:scale(1.045);
-}
-
-/* CONTENT */
-
-.container{
-  max-width:1240px;
-  margin:auto;
-  padding:10px 22px 70px;
-}
-
-.title{
-  margin:45px 0 20px;
-}
-
-.title h2{
-  font-size:24px;
-  letter-spacing:-.5px;
-}
-
-.title p{
-  color:var(--muted);
-  font-size:12px;
-  margin-top:6px;
-}
+/* CONTAINER */
+.container{max-width:1240px;margin:auto;padding:10px 22px 70px;}
+.title{margin:44px 0 20px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.title h2{font-family:'Sora',sans-serif;font-size:22px;letter-spacing:-.4px;font-weight:700;}
+.title p{color:var(--muted);font-size:12px;margin-top:5px;}
 
 /* CATEGORIES */
-
-.categories{
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:10px;
-}
-
+.categories{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
 .category{
-  border:1px solid var(--border);
-  background:rgba(12,15,20,.7);
-  padding:22px 8px;
-  text-align:center;
-  cursor:pointer;
-  transition:.25s;
+  border:1px solid var(--border);background:rgba(13,16,22,.7);
+  padding:20px 8px;text-align:center;
+  border-radius:var(--radius);
+  transition:.25s var(--ease);
+  position:relative;overflow:hidden;
 }
-
-.category:hover{
-  transform:translateY(-4px);
-  border-color:#28558e;
-  background:#0e131c;
-  box-shadow:0 10px 30px rgba(0,0,0,.2);
+.category::after{
+  content:"";position:absolute;left:50%;bottom:0;
+  width:0;height:2px;background:var(--blue);
+  transition:.3s var(--ease);transform:translateX(-50%);
 }
-
-.category img{
-  width:52px;
-  height:52px;
-  object-fit:contain;
-  border-radius:5px;
-  margin-bottom:10px;
-  filter:brightness(.85);
-}
-
-.category span{
-  display:block;
-  font-size:12px;
-  color:#c3c8d0;
-}
+.category:hover{transform:translateY(-4px);border-color:#28558e;background:#10151f;box-shadow:0 14px 30px -10px rgba(0,0,0,.4);}
+.category:hover::after{width:60%;}
+.category img{width:46px;height:46px;object-fit:contain;border-radius:6px;margin-bottom:9px;filter:brightness(.85);transition:transform .3s var(--ease);}
+.category:hover img{transform:scale(1.08) rotate(-2deg);}
+.category span{display:block;font-size:12px;color:#c3c8d0;font-weight:500;}
+.category.active{border-color:var(--blue);background:#0f1826;}
+.category.active::after{width:60%;}
 
 /* PRODUCTS */
-
-.products{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
 .product{
-  background:var(--surface);
-  border:1px solid var(--border);
-  overflow:hidden;
-  transition:
-    transform .3s,
-    border-color .3s,
-    box-shadow .3s;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:transform .3s var(--ease),border-color .3s,box-shadow .3s;
 }
-
-.product:hover{
-  transform:translateY(-6px);
-  border-color:#273d5d;
-  box-shadow:0 18px 45px rgba(0,0,0,.3);
-}
-
-.photo{
-  height:230px;
-  background:#0e1117;
-  position:relative;
-  overflow:hidden;
-}
-
-.photo img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:brightness(.78) saturate(.75);
-  transition:.5s;
-}
-
-.product:hover .photo img{
-  transform:scale(1.07);
-  filter:brightness(.9) saturate(.9);
-}
-
+.product:hover{transform:translateY(-6px);border-color:#2a3d5c;box-shadow:0 20px 40px -16px rgba(0,0,0,.5);}
+.photo{height:220px;background:#0e1117;position:relative;overflow:hidden;}
+.photo img{width:100%;height:100%;object-fit:cover;filter:brightness(.8) saturate(.78);transition:.5s var(--ease);}
+.product:hover .photo img{transform:scale(1.07);filter:brightness(.92) saturate(.92);}
 .badge{
-  position:absolute;
-  left:10px;
-  top:10px;
-  z-index:2;
-  padding:5px 7px;
-  font-size:9px;
-  font-weight:800;
-  color:#ff8b8b;
-  background:#32181b;
-  border:1px solid #522328;
+  position:absolute;left:10px;top:10px;z-index:2;
+  padding:5px 8px;font-size:9px;font-weight:800;
+  color:#ffb3b3;background:#32181b;border:1px solid #522328;
+  border-radius:4px;letter-spacing:.3px;
 }
-
-.info{
-  padding:15px;
-}
-
-.cat{
-  color:#6e7785;
-  font-size:9px;
-  text-transform:uppercase;
-  letter-spacing:1px;
-}
-
-.info h3{
-  font-size:14px;
-  margin:8px 0;
-}
-
-.rating{
-  color:#f6ae2d;
-  font-size:10px;
-}
-
-.rating span{
-  color:#687180;
-  margin-left:5px;
-}
-
-.price{
-  margin-top:10px;
-  font-size:16px;
-  font-weight:800;
-}
-
-.old{
-  color:#5e6570;
-  text-decoration:line-through;
-  font-size:10px;
-  margin-left:5px;
-  font-weight:400;
-}
-
-.stock{
-  color:var(--green);
-  font-size:10px;
-  margin-top:7px;
-}
+.info{padding:15px;}
+.cat{color:var(--muted2);font-size:9px;text-transform:uppercase;letter-spacing:1.2px;font-family:'JetBrains Mono',monospace;}
+.info h3{font-size:13.5px;margin:8px 0;font-weight:600;line-height:1.35;}
+.rating{color:#f6ae2d;font-size:10px;}
+.rating span{color:var(--muted2);margin-left:5px;}
+.price{margin-top:10px;font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.old{color:var(--muted2);text-decoration:line-through;font-size:10px;margin-left:6px;font-weight:400;}
+.stock{color:var(--green);font-size:10px;margin-top:7px;display:flex;align-items:center;gap:5px;}
+.stock::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(46,204,113,.7);}
 
 .add{
-  width:100%;
-  margin-top:13px;
-  padding:10px;
-  border:1px solid #29313d;
-  background:#0d1117;
-  color:#dce1e8;
-  border-radius:4px;
-  font-size:11px;
-  font-weight:700;
-  transition:.2s;
+  width:100%;margin-top:13px;padding:10px;
+  border:1px solid #262d38;background:#0f1319;color:#dce1e8;
+  border-radius:6px;font-size:11px;font-weight:700;
+  transition:.2s var(--ease);
+  position:relative;overflow:hidden;
 }
-
-.add:hover{
-  background:var(--blue);
-  border-color:var(--blue);
-  color:white;
-}
+.add:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+.add.done{background:var(--green);border-color:var(--green);color:#06210f;}
 
 /* TRUST */
-
-.trust{
-  margin-top:45px;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  border:1px solid var(--border);
-  background:#090b0f;
-}
-
-.trust-item{
-  padding:25px;
-  border-right:1px solid var(--border);
-}
-
-.trust-item:last-child{
-  border:0;
-}
-
-.trust-item h3{
-  font-size:12px;
-  margin-bottom:6px;
-}
-
-.trust-item p{
-  color:#737c89;
-  font-size:10px;
-  line-height:1.6;
-}
+.trust{margin-top:42px;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);background:#0a0c10;border-radius:var(--radius);overflow:hidden;}
+.trust-item{padding:22px;border-right:1px solid var(--border);}
+.trust-item:last-child{border:0;}
+.trust-item h3{font-size:12px;margin-bottom:5px;font-weight:600;}
+.trust-item p{color:var(--muted2);font-size:10px;line-height:1.6;}
 
 /* FOOTER */
-
-footer{
-  background:#080a0e;
-  border-top:1px solid var(--border);
-}
-
-.footer{
-  max-width:1240px;
-  margin:auto;
-  padding:45px 22px;
-  display:grid;
-  grid-template-columns:2fr 1fr 1fr 1fr;
-  gap:40px;
-}
-
-.footer h3{
-  font-size:21px;
-  margin-bottom:10px;
-}
-
-.footer h3 span{
-  color:var(--blue);
-}
-
-.footer h4{
-  font-size:11px;
-  color:white;
-  margin-bottom:14px;
-}
-
-.footer p,
-.footer a{
-  color:#707987;
-  font-size:10px;
-  line-height:1.8;
-}
-
-.footer a{
-  display:block;
-  margin-bottom:5px;
-}
-
-.copy{
-  border-top:1px solid var(--border);
-  text-align:center;
-  color:#59616e;
-  font-size:9px;
-  padding:16px;
-}
+footer{background:#050608;border-top:1px solid var(--border-soft);}
+.footer{max-width:1240px;margin:auto;padding:44px 22px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:38px;}
+.footer h3{font-family:'Sora',sans-serif;font-size:19px;margin-bottom:9px;font-weight:700;}
+.footer h3 span{color:var(--blue);}
+.footer h4{font-size:11px;color:var(--text);margin-bottom:13px;letter-spacing:.3px;}
+.footer p,.footer a{color:var(--muted2);font-size:10.5px;line-height:1.8;}
+.footer a{display:block;margin-bottom:5px;transition:color .2s;}
+.footer a:hover{color:var(--blue2,#56a0ff);}
+.copy{border-top:1px solid var(--border-soft);text-align:center;color:#4a5260;font-size:9px;padding:15px;}
 
 /* MODAL */
-
 .overlay{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:200;
-  background:rgba(0,0,0,.72);
-  backdrop-filter:blur(5px);
-  align-items:center;
-  justify-content:center;
-  padding:18px;
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(5px);
+  align-items:center;justify-content:center;padding:18px;
 }
-
+.overlay.show{display:flex;}
 .modal{
-  width:100%;
-  max-width:510px;
-  max-height:90vh;
-  overflow:auto;
-  background:#0c0f14;
-  border:1px solid #272e39;
-  padding:24px;
-  box-shadow:0 30px 100px rgba(0,0,0,.6);
+  width:100%;max-width:480px;max-height:90vh;overflow:auto;
+  background:#0c0f14;border:1px solid #272e39;border-radius:12px;
+  padding:22px;box-shadow:0 30px 100px rgba(0,0,0,.6);
+  animation:modalIn .28s var(--ease);
 }
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:14px;}
+.modal-head h2{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;}
+.close{background:none;border:0;color:var(--muted);font-size:22px;width:32px;height:32px;border-radius:8px;transition:.2s;}
+.close:hover{background:var(--surface2);color:var(--text);}
+.cart-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding:12px 0;font-size:11.5px;}
+.cart-row b{font-family:'JetBrains Mono',monospace;}
+.remove{border:0;background:none;color:var(--red);font-size:10px;font-weight:600;}
+.empty-cart{padding:30px 0;text-align:center;color:var(--muted2);font-size:12px;}
+.total{display:flex;justify-content:space-between;padding:16px 0;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.checkout{width:100%;padding:12px;border:0;background:var(--blue);color:#fff;border-radius:7px;font-size:11.5px;font-weight:800;transition:.2s var(--ease);}
+.checkout:hover{box-shadow:0 10px 24px -8px rgba(59,130,246,.5);}
+.checkout:disabled{opacity:.4;cursor:not-allowed;}
 
-.modal-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  border-bottom:1px solid var(--border);
-  padding-bottom:15px;
-  margin-bottom:15px;
+.checkout-modal{max-width:660px;}
+.checkout-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;color:#aeb5c0;font-size:10px;font-weight:700;margin-bottom:6px;letter-spacing:.2px;}
+.form-group input,.form-group textarea,.form-group select{
+  width:100%;color:var(--text);background:#080b0f;border:1px solid #252c36;
+  padding:10px;border-radius:6px;outline:none;font-size:11.5px;transition:.2s;
 }
+.form-group textarea{height:70px;resize:vertical;}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+.summary{background:#080b0f;border:1px solid var(--border);padding:16px;border-radius:8px;height:max-content;}
+.summary h3{font-size:12.5px;margin-bottom:14px;font-weight:700;}
+.summary-line{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10.5px;margin-bottom:10px;}
+.summary-total{border-top:1px solid var(--border);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.pay{width:100%;border:0;background:var(--blue);color:#fff;padding:12px;border-radius:7px;font-weight:800;font-size:11.5px;margin-top:14px;transition:.2s var(--ease);}
+.pay:hover{box-shadow:0 10px 24px -8px rgba(59,130,246,.5);}
 
-.modal-head h2{
-  font-size:18px;
+.toast{
+  position:fixed;bottom:22px;left:50%;
+  transform:translate(-50%,20px);
+  background:#101520;border:1px solid #2a3444;color:var(--text);
+  padding:11px 18px;border-radius:8px;font-size:12px;font-weight:500;
+  z-index:300;opacity:0;pointer-events:none;
+  transition:.32s var(--ease);
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 14px 32px -10px rgba(0,0,0,.6);
 }
-
-.close{
-  background:none;
-  border:0;
-  color:#9ba3af;
-  font-size:24px;
-}
-
-.cart-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  border-bottom:1px solid var(--border);
-  padding:12px 0;
-  font-size:11px;
-}
-
-.remove{
-  border:0;
-  background:none;
-  color:#ff6b6b;
-  font-size:10px;
-}
-
-.total{
-  display:flex;
-  justify-content:space-between;
-  padding:17px 0;
-}
-
-.checkout{
-  width:100%;
-  padding:12px;
-  border:0;
-  background:var(--blue);
-  color:white;
-  border-radius:4px;
-  font-size:11px;
-  font-weight:800;
-}
-
-/* CHECKOUT */
-
-.checkout-modal{
-  max-width:680px;
-}
-
-.checkout-grid{
-  display:grid;
-  grid-template-columns:1.15fr .85fr;
-  gap:25px;
-}
-
-.form-group{
-  margin-bottom:13px;
-}
-
-.form-group label{
-  display:block;
-  color:#aeb5c0;
-  font-size:10px;
-  font-weight:700;
-  margin-bottom:6px;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select{
-  width:100%;
-  color:white;
-  background:#080b0f;
-  border:1px solid #252c36;
-  padding:10px;
-  border-radius:4px;
-  outline:none;
-  font-size:11px;
-}
-
-.form-group textarea{
-  height:75px;
-  resize:vertical;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus{
-  border-color:var(--blue);
-}
-
-.summary{
-  background:#080b0f;
-  border:1px solid var(--border);
-  padding:16px;
-  height:max-content;
-}
-
-.summary h3{
-  font-size:13px;
-  margin-bottom:15px;
-}
-
-.summary-line{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  color:#9aa2ae;
-  font-size:10px;
-  margin-bottom:10px;
-}
-
-.summary-total{
-  border-top:1px solid var(--border);
-  margin-top:12px;
-  padding-top:13px;
-  display:flex;
-  justify-content:space-between;
-  font-size:13px;
-}
-
-.pay{
-  width:100%;
-  border:0;
-  background:var(--blue);
-  color:white;
-  padding:12px;
-  border-radius:4px;
-  font-weight:800;
-  font-size:11px;
-}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast .tick{color:var(--green);}
 
 /* SCROLL REVEAL */
-
-.reveal{
-  opacity:0;
-  transform:translateY(20px);
-  transition:
-    opacity .7s ease,
-    transform .7s ease;
-}
-
-.reveal.show{
-  opacity:1;
-  transform:translateY(0);
-}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .7s var(--ease);}
+.reveal.show{opacity:1;transform:translateY(0);}
 
 /* MOBILE */
-
 @media(max-width:900px){
-
-  .head{
-    flex-wrap:wrap;
-    height:auto;
-    padding-top:12px;
-    padding-bottom:12px;
-  }
-
-  .search{
-    order:3;
-    flex-basis:100%;
-  }
-
-  .hero-box{
-    grid-template-columns:1fr;
-  }
-
-  .hero-image{
-    display:none;
-  }
-
-  .products{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .categories{
-    grid-template-columns:repeat(3,1fr);
-  }
-
-  .footer{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .checkout-grid{
-    grid-template-columns:1fr;
-  }
+  .head{padding-top:12px;padding-bottom:12px;}
+  .search{order:3;flex-basis:100%;max-width:none;}
+  .nav-wrap{display:none;}
+  .burger{display:block;}
+  .hero-box{grid-template-columns:1fr;}
+  .hero-image{display:none;}
+  .products{grid-template-columns:repeat(2,1fr);}
+  .categories{grid-template-columns:repeat(3,1fr);}
+  .footer{grid-template-columns:1fr 1fr;}
+  .checkout-grid{grid-template-columns:1fr;}
 }
-
 @media(max-width:560px){
-
-  .account{
-    display:none;
-  }
-
-  .nav{
-    overflow-x:auto;
-  }
-
-  .hero-content{
-    padding:45px 25px;
-  }
-
-  .hero h1{
-    font-size:35px;
-  }
-
-  .categories{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .products{
-    gap:9px;
-  }
-
-  .photo{
-    height:170px;
-  }
-
-  .info{
-    padding:11px;
-  }
-
-  .info h3{
-    font-size:12px;
-  }
-
-  .price{
-    font-size:13px;
-  }
-
-  .trust{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .trust-item{
-    border-bottom:1px solid var(--border);
-  }
-
-  .footer{
-    grid-template-columns:1fr;
-  }
+  .account{display:none;}
+  .hero-content{padding:40px 22px;}
+  .hero h1{font-size:31px;}
+  .categories{grid-template-columns:repeat(2,1fr);}
+  .products{gap:9px;}
+  .photo{height:160px;}
+  .info{padding:11px;}
+  .info h3{font-size:12px;}
+  .price{font-size:13px;}
+  .trust{grid-template-columns:1fr 1fr;}
+  .trust-item{border-bottom:1px solid var(--border);}
+  .footer{grid-template-columns:1fr;}
 }
 </style>
 </head>
 
 <body>
 
-<div class="top">
-  ZIPHELP ELECTRONICS — Teknologi untuk kebutuhanmu
-</div>
+<div class="top"><span class="dot"></span> ZIPHELP ELECTRONICS — Teknologi untuk kebutuhanmu</div>
 
-<header>
+<header id="siteHeader">
 <div class="head">
 
-<a href="#" class="logo">
-ZIP<span>HELP</span>
-</a>
+  <a href="#" class="logo"><span class="mark">Z</span>ZIP<span>HELP</span></a>
 
-<div class="search">
-<input
-id="search"
-placeholder="Cari produk, merek, atau kategori..."
-oninput="searchProducts()"
->
-<span class="search-icon">⌕</span>
-</div>
+  <div class="search">
+    <input id="search" placeholder="Cari produk, merek, atau kategori..." oninput="searchProducts()">
+    <span class="search-icon">⌕</span>
+  </div>
 
-<div class="account">
-<strong>Akun</strong>
-Masuk / Daftar
-</div>
+  <div class="head-right">
+    <div class="account">
+      <strong>Akun</strong>
+      Masuk / Daftar
+    </div>
 
-<div class="cart" onclick="openCart()">
-🛒
-<span class="cart-count" id="count">0</span>
-</div>
+    <button class="cart-btn" id="cartBtn" onclick="openCart()" aria-label="Keranjang">
+      🛒
+      <span class="cart-count" id="count">0</span>
+    </button>
+
+    <button class="burger" id="burger" aria-label="Menu" onclick="toggleDrawer()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 
 </div>
 </header>
 
-<nav>
-<div class="nav">
-<a href="#">Home</a>
-<a href="#kategori">Kategori</a>
-<a href="#produk">Produk</a>
-<a href="#promo">Promo</a>
-<a href="#tentang">Tentang</a>
+<nav class="nav-wrap">
+<div class="nav" id="nav">
+  <a href="#" class="active" data-nav>Home</a>
+  <a href="#kategori" data-nav>Kategori</a>
+  <a href="#produk" data-nav>Produk</a>
+  <a href="#promo" data-nav>Promo</a>
+  <a href="#tentang" data-nav>Tentang</a>
+  <span class="nav-indicator" id="navIndicator"></span>
 </div>
 </nav>
 
-<section class="hero reveal">
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer()"></div>
+<div class="drawer" id="drawer">
+  <a href="#" onclick="toggleDrawer()">Home</a>
+  <a href="#kategori" onclick="toggleDrawer()">Kategori</a>
+  <a href="#produk" onclick="toggleDrawer()">Produk</a>
+  <a href="#promo" onclick="toggleDrawer()">Promo</a>
+  <a href="#tentang" onclick="toggleDrawer()">Tentang</a>
+</div>
 
+<section class="hero reveal">
 <div class="hero-box">
 
-<div class="hero-content">
+  <div class="hero-content">
+    <div class="label">ZIPHELP ELECTRONICS</div>
+    <h1>Teknologi <span>tanpa batas.</span></h1>
+    <p>Temukan perangkat elektronik pilihan untuk gaming, produktivitas, hiburan, dan kebutuhan sehari-hari.</p>
+    <a href="#produk" class="primary">Jelajahi produk <span class="arrow">→</span></a>
+    <div class="signal">
+      <i></i><i></i><i></i><i></i><i></i>
+      <span class="signal-label mono">LIVE STOCK SIGNAL</span>
+    </div>
+  </div>
 
-<div class="label">
-ZIPHELP ELECTRONICS
-</div>
-
-<h1>
-Teknologi <span>tanpa batas.</span>
-</h1>
-
-<p>
-Temukan perangkat elektronik pilihan untuk
-gaming, produktivitas, hiburan, dan kebutuhan
-sehari-hari.
-</p>
-
-<a href="#produk" class="primary">
-Jelajahi produk
-</a>
+  <div class="hero-image">
+    <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=85" alt="Laptop">
+  </div>
 
 </div>
-
-<div class="hero-image">
-
-<img
-src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=85"
-alt="Laptop"
->
-
-</div>
-
-</div>
-
 </section>
 
 <main class="container">
 
 <section id="kategori" class="reveal">
+  <div class="title">
+    <h2>Kategori</h2>
+    <p>Temukan perangkat berdasarkan kebutuhan.</p>
+  </div>
 
-<div class="title">
-<h2>Kategori</h2>
-<p>Temukan perangkat berdasarkan kebutuhan.</p>
-</div>
-
-<div class="categories">
-
-<div class="category" onclick="filterProducts('smartphone')">
-<img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=150&q=80">
-<span>Smartphone</span>
-</div>
-
-<div class="category" onclick="filterProducts('laptop')">
-<img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=150&q=80">
-<span>Laptop</span>
-</div>
-
-<div class="category" onclick="filterProducts('gaming')">
-<img src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=150&q=80">
-<span>Gaming</span>
-</div>
-
-<div class="category" onclick="filterProducts('audio')">
-<img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=150&q=80">
-<span>Audio</span>
-</div>
-
-<div class="category" onclick="filterProducts('accessories')">
-<img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=150&q=80">
-<span>Aksesori</span>
-</div>
-
-<div class="category" onclick="filterProducts('all')">
-<img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=150&q=80">
-<span>Semua</span>
-</div>
-
-</div>
-
+  <div class="categories" id="categories">
+    <div class="category" data-cat="smartphone" onclick="filterProducts('smartphone',this)">
+      <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=150&q=80">
+      <span>Smartphone</span>
+    </div>
+    <div class="category" data-cat="laptop" onclick="filterProducts('laptop',this)">
+      <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=150&q=80">
+      <span>Laptop</span>
+    </div>
+    <div class="category" data-cat="gaming" onclick="filterProducts('gaming',this)">
+      <img src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=150&q=80">
+      <span>Gaming</span>
+    </div>
+    <div class="category" data-cat="audio" onclick="filterProducts('audio',this)">
+      <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=150&q=80">
+      <span>Audio</span>
+    </div>
+    <div class="category" data-cat="accessories" onclick="filterProducts('accessories',this)">
+      <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=150&q=80">
+      <span>Aksesori</span>
+    </div>
+    <div class="category active" data-cat="all" onclick="filterProducts('all',this)">
+      <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=150&q=80">
+      <span>Semua</span>
+    </div>
+  </div>
 </section>
-
 
 <section id="produk" class="reveal">
-
-<div class="title">
-<h2>Produk pilihan</h2>
-<p>Perangkat yang sedang populer di ZIPHELP.</p>
-</div>
-
-<div class="products" id="products">
-
-<!-- 1 -->
-
-<article class="product"
-data-category="smartphone"
-data-name="Smartphone Pro X">
-
-<div class="photo">
-<span class="badge">-12%</span>
-
-<img
-src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=700&q=85"
-alt="Smartphone"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Smartphone</div>
-
-<h3>Smartphone Pro X 256GB</h3>
-
-<div class="rating">
-★★★★★ <span>(128)</span>
-</div>
-
-<div class="price">
-Rp 7.999.000
-<span class="old">Rp 9.099.000</span>
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('Smartphone Pro X 256GB',7999000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 2 -->
-
-<article class="product"
-data-category="laptop"
-data-name="ZIPBOOK Ultra">
-
-<div class="photo">
-<span class="badge">-8%</span>
-
-<img
-src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=700&q=85"
-alt="Laptop"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Laptop</div>
-
-<h3>ZIPBOOK Ultra 14"</h3>
-
-<div class="rating">
-★★★★★ <span>(94)</span>
-</div>
-
-<div class="price">
-Rp 12.499.000
-<span class="old">Rp 13.599.000</span>
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('ZIPBOOK Ultra 14',12499000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 3 -->
-
-<article class="product"
-data-category="audio"
-data-name="AirBuds Pro">
-
-<div class="photo">
-<span class="badge">-15%</span>
-
-<img
-src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=85"
-alt="Headphones"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Audio</div>
-
-<h3>AirBuds Pro ANC</h3>
-
-<div class="rating">
-★★★★★ <span>(211)</span>
-</div>
-
-<div class="price">
-Rp 899.000
-<span class="old">Rp 1.059.000</span>
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('AirBuds Pro ANC',899000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 4 -->
-
-<article class="product"
-data-category="gaming"
-data-name="Gaming Console">
-
-<div class="photo">
-
-<img
-src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?auto=format&fit=crop&w=700&q=85"
-alt="Gaming"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Gaming</div>
-
-<h3>Gaming Console Pro</h3>
-
-<div class="rating">
-★★★★★ <span>(86)</span>
-</div>
-
-<div class="price">
-Rp 6.499.000
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('Gaming Console Pro',6499000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 5 -->
-
-<article class="product"
-data-category="gaming"
-data-name="Mechanical Keyboard">
-
-<div class="photo">
-
-<img
-src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=700&q=85"
-alt="Keyboard"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Gaming</div>
-
-<h3>Mechanical Keyboard RGB</h3>
-
-<div class="rating">
-★★★★☆ <span>(76)</span>
-</div>
-
-<div class="price">
-Rp 749.000
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('Mechanical Keyboard RGB',749000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 6 -->
-
-<article class="product"
-data-category="gaming"
-data-name="Gaming Mouse">
-
-<div class="photo">
-
-<img
-src="https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=700&q=85"
-alt="Mouse"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Gaming</div>
-
-<h3>Gaming Mouse Wireless X</h3>
-
-<div class="rating">
-★★★★★ <span>(63)</span>
-</div>
-
-<div class="price">
-Rp 599.000
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('Gaming Mouse Wireless X',599000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 7 -->
-
-<article class="product"
-data-category="accessories"
-data-name="Smartwatch">
-
-<div class="photo">
-
-<img
-src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=85"
-alt="Smartwatch"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Aksesori</div>
-
-<h3>Smartwatch Active</h3>
-
-<div class="rating">
-★★★★★ <span>(117)</span>
-</div>
-
-<div class="price">
-Rp 1.299.000
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('Smartwatch Active',1299000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-
-<!-- 8 -->
-
-<article class="product"
-data-category="accessories"
-data-name="Powerbank">
-
-<div class="photo">
-
-<img
-src="https://images.unsplash.com/photo-1609592424614-9b8f2dcbf6a9?auto=format&fit=crop&w=700&q=85"
-alt="Powerbank"
->
-
-</div>
-
-<div class="info">
-
-<div class="cat">Aksesori</div>
-
-<h3>Powerbank 20.000mAh</h3>
-
-<div class="rating">
-★★★★☆ <span>(48)</span>
-</div>
-
-<div class="price">
-Rp 399.000
-</div>
-
-<div class="stock">
-● Stok tersedia
-</div>
-
-<button
-class="add"
-onclick="addCart('Powerbank 20.000mAh',399000)"
->
-Tambah ke keranjang
-</button>
-
-</div>
-</article>
-
-</div>
-
+  <div class="title">
+    <h2>Produk pilihan</h2>
+    <p>Perangkat yang sedang populer di ZIPHELP.</p>
+  </div>
+
+  <div class="products" id="products">
+
+    <article class="product" data-category="smartphone" data-name="Smartphone Pro X 256GB">
+      <div class="photo">
+        <span class="badge">-12%</span>
+        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=700&q=85" alt="Smartphone">
+      </div>
+      <div class="info">
+        <div class="cat">Smartphone</div>
+        <h3>Smartphone Pro X 256GB</h3>
+        <div class="rating">★★★★★ <span>(128)</span></div>
+        <div class="price">Rp 7.999.000<span class="old">Rp 9.099.000</span></div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('Smartphone Pro X 256GB',7999000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="laptop" data-name="ZIPBOOK Ultra 14&quot;">
+      <div class="photo">
+        <span class="badge">-8%</span>
+        <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=700&q=85" alt="Laptop">
+      </div>
+      <div class="info">
+        <div class="cat">Laptop</div>
+        <h3>ZIPBOOK Ultra 14"</h3>
+        <div class="rating">★★★★★ <span>(94)</span></div>
+        <div class="price">Rp 12.499.000<span class="old">Rp 13.599.000</span></div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('ZIPBOOK Ultra 14',12499000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="audio" data-name="AirBuds Pro ANC">
+      <div class="photo">
+        <span class="badge">-15%</span>
+        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=85" alt="Headphones">
+      </div>
+      <div class="info">
+        <div class="cat">Audio</div>
+        <h3>AirBuds Pro ANC</h3>
+        <div class="rating">★★★★★ <span>(211)</span></div>
+        <div class="price">Rp 899.000<span class="old">Rp 1.059.000</span></div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('AirBuds Pro ANC',899000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="gaming" data-name="Gaming Console Pro">
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?auto=format&fit=crop&w=700&q=85" alt="Gaming">
+      </div>
+      <div class="info">
+        <div class="cat">Gaming</div>
+        <h3>Gaming Console Pro</h3>
+        <div class="rating">★★★★★ <span>(86)</span></div>
+        <div class="price">Rp 6.499.000</div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('Gaming Console Pro',6499000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="gaming" data-name="Mechanical Keyboard RGB">
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=700&q=85" alt="Keyboard">
+      </div>
+      <div class="info">
+        <div class="cat">Gaming</div>
+        <h3>Mechanical Keyboard RGB</h3>
+        <div class="rating">★★★★☆ <span>(76)</span></div>
+        <div class="price">Rp 749.000</div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('Mechanical Keyboard RGB',749000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="gaming" data-name="Gaming Mouse Wireless X">
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=700&q=85" alt="Mouse">
+      </div>
+      <div class="info">
+        <div class="cat">Gaming</div>
+        <h3>Gaming Mouse Wireless X</h3>
+        <div class="rating">★★★★★ <span>(63)</span></div>
+        <div class="price">Rp 599.000</div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('Gaming Mouse Wireless X',599000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="accessories" data-name="Smartwatch Active">
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=85" alt="Smartwatch">
+      </div>
+      <div class="info">
+        <div class="cat">Aksesori</div>
+        <h3>Smartwatch Active</h3>
+        <div class="rating">★★★★★ <span>(117)</span></div>
+        <div class="price">Rp 1.299.000</div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('Smartwatch Active',1299000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+    <article class="product" data-category="accessories" data-name="Powerbank 20.000mAh">
+      <div class="photo">
+        <img src="https://images.unsplash.com/photo-1609592424614-9b8f2dcbf6a9?auto=format&fit=crop&w=700&q=85" alt="Powerbank">
+      </div>
+      <div class="info">
+        <div class="cat">Aksesori</div>
+        <h3>Powerbank 20.000mAh</h3>
+        <div class="rating">★★★★☆ <span>(48)</span></div>
+        <div class="price">Rp 399.000</div>
+        <div class="stock">Stok tersedia</div>
+        <button class="add" onclick="addCart('Powerbank 20.000mAh',399000,this)">Tambah ke keranjang</button>
+      </div>
+    </article>
+
+  </div>
 </section>
 
-
-<section class="trust reveal">
-
-<div class="trust-item">
-<h3>Pengiriman terpercaya</h3>
-<p>Pesanan diproses dengan aman dan cepat.</p>
-</div>
-
-<div class="trust-item">
-<h3>Pembayaran aman</h3>
-<p>Checkout dirancang untuk pengalaman transaksi yang mudah.</p>
-</div>
-
-<div class="trust-item">
-<h3>Produk berkualitas</h3>
-<p>Pilihan perangkat untuk berbagai kebutuhan.</p>
-</div>
-
-<div class="trust-item">
-<h3>Customer support</h3>
-<p>Tim ZIPHELP siap membantu pelanggan.</p>
-</div>
-
+<section id="promo" class="reveal">
+  <div class="trust">
+    <div class="trust-item">
+      <h3>Gratis Ongkir</h3>
+      <p>Untuk pembelian minimal Rp 500.000 ke seluruh Indonesia.</p>
+    </div>
+    <div class="trust-item">
+      <h3>Garansi Resmi</h3>
+      <p>Semua produk bergaransi resmi 1 tahun.</p>
+    </div>
+    <div class="trust-item">
+      <h3>Pembayaran Aman</h3>
+      <p>Transaksi terenkripsi dan terverifikasi.</p>
+    </div>
+    <div class="trust-item">
+      <h3>Dukungan 24/7</h3>
+      <p>Tim support siap membantu kapan saja.</p>
+    </div>
+  </div>
 </section>
 
 </main>
 
-
-<footer>
-
+<footer id="tentang">
 <div class="footer">
-
-<div>
-<h3>ZIP<span>HELP</span></h3>
-<p>
-Electronic store dengan pilihan perangkat
-teknologi untuk gaming, kerja, hiburan,
-dan kebutuhan sehari-hari.
-</p>
+  <div>
+    <h3>ZIP<span>HELP</span></h3>
+    <p>Toko elektronik terpercaya untuk kebutuhan gaming, produktivitas, dan hiburan Anda.</p>
+  </div>
+  <div>
+    <h4>Belanja</h4>
+    <a href="#">Smartphone</a>
+    <a href="#">Laptop</a>
+    <a href="#">Gaming</a>
+    <a href="#">Audio</a>
+  </div>
+  <div>
+    <h4>Bantuan</h4>
+    <a href="#">Cara belanja</a>
+    <a href="#">Pengiriman</a>
+    <a href="#">Pengembalian</a>
+    <a href="#">FAQ</a>
+  </div>
+  <div>
+    <h4>Perusahaan</h4>
+    <a href="#">Tentang kami</a>
+    <a href="#">Karier</a>
+    <a href="#">Kontak</a>
+  </div>
 </div>
-
-<div>
-<h4>Belanja</h4>
-<a href="#produk">Produk</a>
-<a href="#kategori">Kategori</a>
-<a href="#">Promo</a>
-</div>
-
-<div>
-<h4>Bantuan</h4>
-<a href="#">Cara Belanja</a>
-<a href="#">Pengiriman</a>
-<a href="#">Pembayaran</a>
-</div>
-
-<div>
-<h4>ZIPHELP</h4>
-<a href="#">Tentang Kami</a>
-<a href="#">Kontak</a>
-<a href="#">Privasi</a>
-</div>
-
-</div>
-
-<div class="copy">
-© 2026 ZIPHELP. All rights reserved.
-</div>
-
+<div class="copy">© 2026 ZIPHELP Electronics. Seluruh hak cipta dilindungi.</div>
 </footer>
 
-
-<!-- CART -->
-
-<div class="overlay" id="cartModal">
-
-<div class="modal">
-
-<div class="modal-head">
-<h2>Keranjang</h2>
-<button class="close" onclick="closeCart()">×</button>
+<!-- CART MODAL -->
+<div class="overlay" id="cartOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Keranjang belanja</h2>
+      <button class="close" onclick="closeModal('cartOverlay')">×</button>
+    </div>
+    <div id="cartItems"></div>
+    <div class="total">
+      <span>Total</span>
+      <span id="cartTotal">Rp 0</span>
+    </div>
+    <button class="checkout" id="checkoutBtn" onclick="openCheckout()">Checkout</button>
+  </div>
 </div>
 
-<div id="cartItems">
-Keranjang masih kosong.
+<!-- CHECKOUT MODAL -->
+<div class="overlay" id="checkoutOverlay">
+  <div class="modal checkout-modal">
+    <div class="modal-head">
+      <h2>Checkout</h2>
+      <button class="close" onclick="closeModal('checkoutOverlay')">×</button>
+    </div>
+    <div class="checkout-grid">
+      <div>
+        <div class="form-group">
+          <label>Nama lengkap</label>
+          <input type="text" placeholder="Nama penerima">
+        </div>
+        <div class="form-group">
+          <label>Nomor HP</label>
+          <input type="text" placeholder="08xxxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label>Alamat pengiriman</label>
+          <textarea placeholder="Jalan, nomor rumah, kelurahan, kecamatan..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Metode pembayaran</label>
+          <select>
+            <option>Transfer bank</option>
+            <option>QRIS</option>
+            <option>Kartu kredit / debit</option>
+            <option>COD</option>
+          </select>
+        </div>
+      </div>
+      <div class="summary">
+        <h3>Ringkasan pesanan</h3>
+        <div id="summaryItems"></div>
+        <div class="summary-line">
+          <span>Ongkos kirim</span>
+          <span>Rp 0</span>
+        </div>
+        <div class="summary-total">
+          <span>Total</span>
+          <span id="summaryTotal">Rp 0</span>
+        </div>
+        <button class="pay" onclick="placeOrder()">Bayar sekarang</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="total">
-<strong>Total</strong>
-<strong id="total">Rp 0</strong>
-</div>
-
-<button class="checkout" onclick="openCheckout()">
-Lanjut ke checkout
-</button>
-
-</div>
-
-</div>
-
-
-<!-- CHECKOUT -->
-
-<div class="overlay" id="checkoutModal">
-
-<div class="modal checkout-modal">
-
-<div class="modal-head">
-<h2>Checkout ZIPHELP</h2>
-<button class="close" onclick="closeCheckout()">×</button>
-</div>
-
-<div class="checkout-grid">
-
-<div>
-
-<div class="form-group">
-<label>Nama lengkap</label>
-<input id="name" placeholder="Nama penerima">
-</div>
-
-<div class="form-group">
-<label>Nomor HP</label>
-<input id="phone" placeholder="08xxxxxxxxxx">
-</div>
-
-<div class="form-group">
-<label>Alamat</label>
-<textarea id="address"
-placeholder="Alamat lengkap"></textarea>
-</div>
-
-<div class="form-group">
-<label>Kota</label>
-<input id="city" placeholder="Kota / Kabupaten">
-</div>
-
-<div class="form-group">
-<label>Pembayaran</label>
-
-<select id="payment">
-<option>Transfer Bank</option>
-<option>E-Wallet</option>
-<option>COD</option>
-</select>
-
-</div>
-
-<button class="pay" onclick="placeOrder()">
-Buat pesanan
-</button>
-
-</div>
-
-<div class="summary">
-
-<h3>Ringkasan</h3>
-
-<div id="summaryItems"></div>
-
-<div class="summary-total">
-<span>Total</span>
-<span id="summaryTotal">Rp 0</span>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+<div class="toast" id="toast"><span class="tick">✓</span><span id="toastMsg">Produk ditambahkan</span></div>
 
 <script>
+/* ---------- STATE ---------- */
+let cart = JSON.parse(localStorage.getItem('ziphelp_cart') || '[]');
 
-/* CART */
-
-let cart=[];
-
-function rupiah(n){
-return new Intl.NumberFormat("id-ID",{
-style:"currency",
-currency:"IDR",
-maximumFractionDigits:0
-}).format(n);
+function saveCart(){
+  localStorage.setItem('ziphelp_cart', JSON.stringify(cart));
 }
 
-function addCart(name,price){
-
-cart.push({name,price});
-
-updateCart();
-
+function formatRp(n){
+  return 'Rp ' + n.toLocaleString('id-ID');
 }
 
-function updateCart(){
+/* ---------- HEADER SCROLL STATE ---------- */
+const header = document.getElementById('siteHeader');
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 8);
+});
 
-document.getElementById("count").textContent=cart.length;
+/* ---------- NAV SLIDING INDICATOR ---------- */
+const navLinks = document.querySelectorAll('[data-nav]');
+const navIndicator = document.getElementById('navIndicator');
 
-const box=document.getElementById("cartItems");
-
-if(cart.length===0){
-
-box.innerHTML="Keranjang masih kosong.";
-
-document.getElementById("total").textContent="Rp 0";
-
-return;
+function moveIndicator(el){
+  if(!el) return;
+  navIndicator.style.width = el.offsetWidth + 'px';
+  navIndicator.style.left = el.offsetLeft + 'px';
 }
 
-let total=0;
+navLinks.forEach(link => {
+  link.addEventListener('mouseenter', () => moveIndicator(link));
+});
+document.getElementById('nav').addEventListener('mouseleave', () => {
+  const active = document.querySelector('[data-nav].active');
+  moveIndicator(active);
+});
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+    moveIndicator(link);
+  });
+});
+window.addEventListener('load', () => {
+  moveIndicator(document.querySelector('[data-nav].active'));
+});
+window.addEventListener('resize', () => {
+  moveIndicator(document.querySelector('[data-nav].active'));
+});
 
-box.innerHTML=cart.map((item,i)=>{
+/* ---------- MOBILE DRAWER ---------- */
+const burger = document.getElementById('burger');
+const drawer = document.getElementById('drawer');
+const drawerBackdrop = document.getElementById('drawerBackdrop');
 
-total+=item.price;
-
-return `
-<div class="cart-row">
-
-<span>${item.name}</span>
-
-<strong>${rupiah(item.price)}</strong>
-
-<button
-class="remove"
-onclick="removeItem(${i})">
-Hapus
-</button>
-
-</div>
-`;
-
-}).join("");
-
-document.getElementById("total").textContent=rupiah(total);
-
+function toggleDrawer(){
+  const isOpen = drawer.classList.toggle('open');
+  drawerBackdrop.classList.toggle('open', isOpen);
+  burger.classList.toggle('open', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 
-function removeItem(i){
-
-cart.splice(i,1);
-
-updateCart();
-
-}
-
-function openCart(){
-
-document.getElementById("cartModal")
-.style.display="flex";
-
-updateCart();
-
-}
-
-function closeCart(){
-
-document.getElementById("cartModal")
-.style.display="none";
-
-}
-
-
-/* CHECKOUT */
-
-function openCheckout(){
-
-if(cart.length===0){
-
-alert("Keranjang masih kosong.");
-
-return;
-
-}
-
-closeCart();
-
-let total=0;
-
-document.getElementById("summaryItems")
-.innerHTML=cart.map(item=>{
-
-total+=item.price;
-
-return `
-<div class="summary-line">
-<span>${item.name}</span>
-<strong>${rupiah(item.price)}</strong>
-</div>
-`;
-
-}).join("");
-
-document.getElementById("summaryTotal")
-.textContent=rupiah(total);
-
-document.getElementById("checkoutModal")
-.style.display="flex";
-
-}
-
-function closeCheckout(){
-
-document.getElementById("checkoutModal")
-.style.display="none";
-
-}
-
-function placeOrder(){
-
-const name=document.getElementById("name").value.trim();
-const phone=document.getElementById("phone").value.trim();
-const address=document.getElementById("address").value.trim();
-const city=document.getElementById("city").value.trim();
-const payment=document.getElementById("payment").value;
-
-if(!name||!phone||!address||!city){
-
-alert("Lengkapi data pengiriman terlebih dahulu.");
-
-return;
-
-}
-
-alert(
-"Pesanan ZIPHELP berhasil dibuat!\\n\\n"+
-"Nama: "+name+"\\n"+
-"Pembayaran: "+payment+
-"\\n\\nCheckout ini masih DEMO."
-);
-
-cart=[];
-
-updateCart();
-
-closeCheckout();
-
-}
-
-
-/* SEARCH */
-
+/* ---------- SEARCH & FILTER ---------- */
 function searchProducts(){
-
-const keyword=
-document.getElementById("search")
-.value
-.toLowerCase();
-
-document.querySelectorAll(".product")
-.forEach(product=>{
-
-const name=
-product.dataset.name.toLowerCase();
-
-product.style.display=
-name.includes(keyword)
-?""
-:"none";
-
-});
-
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  document.querySelectorAll('.product').forEach(p => {
+    const name = p.dataset.name.toLowerCase();
+    p.style.display = name.includes(q) ? '' : 'none';
+  });
 }
 
-
-/* FILTER */
-
-function filterProducts(category){
-
-document.querySelectorAll(".product")
-.forEach(product=>{
-
-product.style.display=
-category==="all"||
-product.dataset.category===category
-?""
-:"none";
-
-});
-
-document.getElementById("produk")
-.scrollIntoView({
-behavior:"smooth"
-});
-
+function filterProducts(cat, el){
+  document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.product').forEach(p => {
+    p.style.display = (cat === 'all' || p.dataset.category === cat) ? '' : 'none';
+  });
+  document.getElementById('produk').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+/* ---------- CART ---------- */
+function addCart(name, price, btn){
+  const existing = cart.find(i => i.name === name);
+  if(existing){ existing.qty++; } else { cart.push({name, price, qty:1}); }
+  saveCart();
+  renderCartCount();
+  showToast(name + ' ditambahkan ke keranjang');
 
-/* SCROLL ANIMATION */
+  if(btn){
+    const original = btn.textContent;
+    btn.textContent = 'Ditambahkan ✓';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('done'); }, 1100);
+  }
 
-const observer=
-new IntersectionObserver(
-entries=>{
-
-entries.forEach(entry=>{
-
-if(entry.isIntersecting){
-
-entry.target.classList.add("show");
-
+  const cartBtn = document.getElementById('cartBtn');
+  cartBtn.classList.remove('bump');
+  void cartBtn.offsetWidth;
+  cartBtn.classList.add('bump');
 }
 
+function removeCart(name){
+  cart = cart.filter(i => i.name !== name);
+  saveCart();
+  renderCartCount();
+  renderCartModal();
+}
+
+function cartTotal(){
+  return cart.reduce((sum,i) => sum + i.price * i.qty, 0);
+}
+
+function renderCartCount(){
+  document.getElementById('count').textContent = cart.reduce((s,i)=>s+i.qty,0);
+}
+
+function renderCartModal(){
+  const wrap = document.getElementById('cartItems');
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  if(cart.length === 0){
+    wrap.innerHTML = '<div class="empty-cart">Keranjang kamu masih kosong.</div>';
+    checkoutBtn.disabled = true;
+  } else {
+    wrap.innerHTML = cart.map(i => `
+      <div class="cart-row">
+        <span>${i.name} <span class="mono" style="color:var(--muted2)">×${i.qty}</span></span>
+        <b>${formatRp(i.price * i.qty)}</b>
+        <button class="remove" onclick="removeCart('${i.name.replace(/'/g,"\\'")}')">Hapus</button>
+      </div>
+    `).join('');
+    checkoutBtn.disabled = false;
+  }
+  document.getElementById('cartTotal').textContent = formatRp(cartTotal());
+}
+
+/* ---------- MODALS ---------- */
+function openCart(){
+  renderCartModal();
+  document.getElementById('cartOverlay').classList.add('show');
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
+}
+function openCheckout(){
+  if(cart.length === 0) return;
+  closeModal('cartOverlay');
+  const wrap = document.getElementById('summaryItems');
+  wrap.innerHTML = cart.map(i => `
+    <div class="summary-line">
+      <span>${i.name} ×${i.qty}</span>
+      <span>${formatRp(i.price * i.qty)}</span>
+    </div>
+  `).join('');
+  document.getElementById('summaryTotal').textContent = formatRp(cartTotal());
+  document.getElementById('checkoutOverlay').classList.add('show');
+}
+function placeOrder(){
+  showToast('Pesanan berhasil dibuat, terima kasih!');
+  cart = [];
+  saveCart();
+  renderCartCount();
+  closeModal('checkoutOverlay');
+}
+
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if(e.target === ov) ov.classList.remove('show'); });
 });
 
-},
-{
-threshold:.12
+/* ---------- TOAST ---------- */
+let toastTimer;
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
-);
 
-document.querySelectorAll(".reveal")
-.forEach(el=>observer.observe(el));
+/* ---------- SCROLL REVEAL ---------- */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('show'); });
+}, {threshold:.12});
+revealEls.forEach(el => io.observe(el));
 
+/* ---------- INIT ---------- */
+renderCartCount();
 </script>
 
 </body>
