@@ -451,6 +451,76 @@ footer{background:#050608;border-top:1px solid var(--border-soft);}
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .7s var(--ease);}
 .reveal.show{opacity:1;transform:translateY(0);}
 
+/* INTRO SPLASH */
+#intro{
+  position:fixed;inset:0;z-index:500;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  transition:opacity .6s var(--ease),visibility .6s var(--ease);
+}
+#intro.hide{opacity:0;visibility:hidden;pointer-events:none;}
+body.intro-active{overflow:hidden;}
+#intro::before{
+  content:"";position:absolute;width:520px;height:520px;
+  background:radial-gradient(circle,rgba(59,130,246,.16),transparent 65%);
+  animation:driftA 6s ease-in-out infinite alternate;
+}
+.intro-mark{
+  width:58px;height:58px;border-radius:14px;
+  background:linear-gradient(135deg,var(--blue),#1e4fc7);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:#fff;
+  box-shadow:0 10px 34px -8px rgba(59,130,246,.7);
+  position:relative;z-index:2;
+  opacity:0;transform:scale(.7);
+  animation:markIn .6s var(--ease) .1s forwards;
+}
+@keyframes markIn{to{opacity:1;transform:scale(1);}}
+.intro-text{
+  position:relative;z-index:2;
+  margin-top:22px;
+  font-family:'Sora',sans-serif;font-size:26px;font-weight:700;
+  letter-spacing:-.5px;
+  display:flex;gap:2px;
+}
+.intro-text span{
+  display:inline-block;
+  opacity:0;
+  transform:translateY(14px);
+  animation:letterIn .5s var(--ease) forwards;
+}
+.intro-text .accent{color:var(--blue);}
+.intro-sub{
+  position:relative;z-index:2;
+  margin-top:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:2px;color:var(--muted2);
+  opacity:0;
+  animation:fadeUp .5s var(--ease) .9s forwards;
+}
+@keyframes letterIn{to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{to{opacity:1;}}
+.intro-bar{
+  position:relative;z-index:2;
+  width:150px;height:2px;margin-top:20px;
+  background:var(--border);
+  border-radius:2px;overflow:hidden;
+  opacity:0;
+  animation:fadeUp .4s var(--ease) .95s forwards;
+}
+.intro-bar i{
+  display:block;height:100%;width:0%;
+  background:var(--blue);
+  border-radius:2px;
+  box-shadow:0 0 10px rgba(59,130,246,.7);
+  animation:barFill 1.1s var(--ease) 1s forwards;
+}
+@keyframes barFill{to{width:100%;}}
+@media (prefers-reduced-motion: reduce){
+  #intro{display:none;}
+}
+
 /* MOBILE */
 @media(max-width:900px){
   .head{padding-top:12px;padding-bottom:12px;}
@@ -481,7 +551,14 @@ footer{background:#050608;border-top:1px solid var(--border-soft);}
 </style>
 </head>
 
-<body>
+<body class="intro-active">
+
+<div id="intro">
+  <div class="intro-mark">Z</div>
+  <div class="intro-text" id="introText"></div>
+  <div class="intro-sub">TEKNOLOGI TANPA BATAS</div>
+  <div class="intro-bar"><i></i></div>
+</div>
 
 <div class="top"><span class="dot"></span> ZIPHELP ELECTRONICS — Teknologi untuk kebutuhanmu</div>
 
@@ -837,6 +914,40 @@ footer{background:#050608;border-top:1px solid var(--border-soft);}
 <div class="toast" id="toast"><span class="tick">✓</span><span id="toastMsg">Produk ditambahkan</span></div>
 
 <script>
+/* ---------- INTRO SPLASH ---------- */
+(function(){
+  const text = "Welcome ziphelp";
+  const introText = document.getElementById('introText');
+  let delay = 0;
+  text.split('').forEach((ch, idx) => {
+    const span = document.createElement('span');
+    span.textContent = ch === ' ' ? '\u00A0' : ch;
+    if(idx >= 8) span.classList.add('accent'); // "ziphelp" bagian aksen biru
+    span.style.animationDelay = delay + 's';
+    introText.appendChild(span);
+    delay += 0.035;
+  });
+
+  function dismissIntro(){
+    const intro = document.getElementById('intro');
+    intro.classList.add('hide');
+    document.body.classList.remove('intro-active');
+    setTimeout(() => intro.remove(), 650);
+  }
+
+  const seen = sessionStorage.getItem('ziphelp_intro_seen');
+  if(seen){
+    dismissIntro();
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        dismissIntro();
+        sessionStorage.setItem('ziphelp_intro_seen', '1');
+      }, 2100);
+    });
+  }
+})();
+
 /* ---------- STATE ---------- */
 let cart = JSON.parse(localStorage.getItem('ziphelp_cart') || '[]');
 
